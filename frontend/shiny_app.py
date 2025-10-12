@@ -9,6 +9,7 @@ import os
 import pandas as pd
 import requests
 from dotenv import load_dotenv
+from pathlib import Path
 from shiny import App, reactive, render, ui
 
 # Load environment variables
@@ -29,28 +30,50 @@ def check_backend_health():
         return False
 
 
-def fetch_data(limit: int = 100, offset: int = 0):
+def fetch_data(limit: int = 40, offset: int = 0, test=True):
     """Fetch data from the backend API."""
-    try:
-        response = requests.get(
-            f"{API_BASE_URL}/api/emi-retail",
-            params={"limit": limit, "offset": offset},
-            timeout=10,
+    if test:
+        # Read directly from settings.gold_dir / "emi_retail" / "emi_retail_analytics.csv"
+        path = (
+            Path(os.getenv("GOLD_DIR", "data/gold"))
+            / "emi_retail"
+            / "emi_retail_analytics.csv"
         )
-        response.raise_for_status()
-        return response.json()
-    except requests.RequestException as e:
-        return {"error": str(e)}
+        try:
+            df = pd.read_csv(path)
+            total_rows = len(df)
+            data = df.iloc[offset : offset + limit].to_dict(orient="records")
+            return {
+                "metadata": {
+                    "total_rows": total_rows,
+                    "returned_rows": len(data),
+                    "offset": offset,
+                },
+                "data": data,
+            }
+        except Exception as e:
+            return {"error": str(e)}
+    else:
+        try:
+            response = requests.get(
+                f"{API_BASE_URL}/api/emi-retail",
+                params={"limit": limit, "offset": offset},
+                timeout=10,
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e)}
 
 
-def fetch_summary():
-    """Fetch summary statistics from the backend API."""
-    try:
-        response = requests.get(f"{API_BASE_URL}/api/emi-retail/summary", timeout=10)
-        response.raise_for_status()
-        return response.json()
-    except requests.RequestException as e:
-        return {"error": str(e)}
+# def fetch_summary():
+#     """Fetch summary statistics from the backend API."""
+#     try:
+#         response = requests.get(f"{API_BASE_URL}/api/emi-retail/summary", timeout=10)
+#         response.raise_for_status()
+#         return response.json()
+#     except requests.RequestException as e:
+#         return {"error": str(e)}
 
 
 # UI Definition
@@ -61,30 +84,20 @@ app_ui = ui.page_fluid(
     ui.layout_sidebar(
         ui.sidebar(
             ui.h4("Controls"),
-            ui.input_slider("limit", "Rows to display:", min=10, max=500, value=100, step=10),
+            ui.input_slider(
+                "limit", "Rows to display:", min=10, max=50, value=40, step=1
+            ),
             ui.input_numeric("offset", "Offset:", value=0, min=0, step=10),
             ui.input_action_button("refresh", "Refresh Data", class_="btn-primary"),
             ui.hr(),
             ui.output_text("backend_status"),
         ),
-        ui.navset_tab(
-            ui.nav_panel(
-                "Data View",
-                ui.h3("Electricity Market Data"),
-                ui.output_text("data_info"),
-                ui.br(),
-                ui.output_data_frame("data_table"),
-                ui.br(),
-                ui.download_button("download_data", "Download CSV"),
-            ),
-            ui.nav_panel(
-                "Summary",
-                ui.h3("Summary Statistics"),
-                ui.output_text("summary_metrics"),
-                ui.br(),
-                ui.output_data_frame("summary_sample"),
-            ),
-        ),
+        ui.h3("Electricity Market Data"),
+        ui.output_text("data_info"),
+        ui.br(),
+        ui.output_data_frame("data_table"),
+        ui.br(),
+        ui.download_button("download_data", "Download CSV"),
     ),
     ui.hr(),
     ui.markdown("*Data source: Electricity Authority EMI Retail Portal*"),
@@ -145,37 +158,6 @@ def server(input, output, session):
             return pd.DataFrame(data)
         else:
             return pd.DataFrame({"Message": ["No data available"]})
-
-    @output
-    @render.text
-    def summary_metrics():
-        """Display summary metrics."""
-        data_refresh()  # React to refresh
-        summary = fetch_summary()
-
-        if "error" in summary:
-            return f"Error: {summary['error']}"
-
-        return (
-            f"Total Rows: {summary.get('total_rows', 'N/A')} | "
-            f"Total Columns: {summary.get('total_columns', 'N/A')}"
-        )
-
-    @output
-    @render.data_frame
-    def summary_sample():
-        """Render summary sample data."""
-        data_refresh()  # React to refresh
-        summary = fetch_summary()
-
-        if "error" in summary:
-            return pd.DataFrame({"Error": [summary["error"]]})
-
-        sample_data = summary.get("sample_data", [])
-        if sample_data:
-            return pd.DataFrame(sample_data)
-        else:
-            return pd.DataFrame({"Message": ["No sample data available"]})
 
     @session.download(filename="emi_retail_data.csv")
     def download_data():

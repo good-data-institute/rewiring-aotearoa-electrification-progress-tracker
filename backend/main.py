@@ -4,8 +4,6 @@ This API provides endpoints for accessing processed electrification data
 from the gold layer for visualization in dashboards.
 """
 
-from pathlib import Path
-
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -60,11 +58,11 @@ async def health_check():
 
 
 @app.get("/api/emi-retail")
-async def get_emi_retail_data(limit: int = 100, offset: int = 0):
+async def get_emi_retail_data(limit: int = 40, offset: int = 0):
     """Get EMI retail electricity data from gold layer.
 
     Args:
-        limit: Maximum number of rows to return (default 100)
+        limit: Maximum number of rows to return (default 40)
         offset: Number of rows to skip (default 0)
 
     Returns:
@@ -119,7 +117,7 @@ async def get_emi_retail_summary():
     if not gold_data_path.exists():
         raise HTTPException(
             status_code=404,
-            detail=f"Gold layer data not found. Please run ETL pipeline first.",
+            detail="Gold layer data not found. Please run ETL pipeline first.",
         )
 
     try:
@@ -142,7 +140,9 @@ async def get_emi_retail_summary():
         return summary
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating summary: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Error generating summary: {str(e)}"
+        )
 
 
 if __name__ == "__main__":

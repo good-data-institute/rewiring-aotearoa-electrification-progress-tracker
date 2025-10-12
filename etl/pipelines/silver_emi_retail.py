@@ -26,7 +26,7 @@ class EMIRetailSilverProcessor(SilverLayer):
             output_path: Path to save silver CSV file
         """
         print(f"\nReading bronze data from: {input_path}")
-        df = self.read_csv(input_path)
+        df = self.read_csv(input_path, skiprows=12)
         print(f"Loaded {len(df)} rows, {len(df.columns)} columns")
 
         # Display sample of raw data
@@ -36,60 +36,60 @@ class EMIRetailSilverProcessor(SilverLayer):
         # Data cleaning steps
         print("\n--- Data Cleaning ---")
 
-        # 1. Remove exact duplicates
-        initial_rows = len(df)
-        df = df.drop_duplicates()
-        print(f"1. Removed {initial_rows - len(df)} duplicate rows")
+        # # 1. Remove exact duplicates
+        # initial_rows = len(df)
+        # df = df.drop_duplicates()
+        # print(f"1. Removed {initial_rows - len(df)} duplicate rows")
 
-        # 2. Standardize column names (lowercase, replace spaces with underscores)
-        df.columns = df.columns.str.lower().str.replace(" ", "_").str.replace("-", "_")
-        print(f"2. Standardized {len(df.columns)} column names")
+        # # 2. Standardize column names (lowercase, replace spaces with underscores)
+        # df.columns = df.columns.str.lower().str.replace(" ", "_").str.replace("-", "_")
+        # print(f"2. Standardized {len(df.columns)} column names")
 
-        # 3. Display info about missing values
-        missing_counts = df.isnull().sum()
-        if missing_counts.sum() > 0:
-            print("\n3. Missing values by column:")
-            print(missing_counts[missing_counts > 0])
-        else:
-            print("3. No missing values found")
+        # # 3. Display info about missing values
+        # missing_counts = df.isnull().sum()
+        # if missing_counts.sum() > 0:
+        #     print("\n3. Missing values by column:")
+        #     print(missing_counts[missing_counts > 0])
+        # else:
+        #     print("3. No missing values found")
 
-        # 4. Basic data validation using DuckDB SQL
-        print("\n4. Running data quality checks with DuckDB SQL...")
+        # # 4. Basic data validation using DuckDB SQL
+        # print("\n4. Running data quality checks with DuckDB SQL...")
 
-        # Save to temp location for DuckDB query
-        temp_path = output_path.parent / f"temp_{output_path.name}"
-        self.write_csv(df, temp_path)
+        # # Save to temp location for DuckDB query
+        # temp_path = output_path.parent / f"temp_{output_path.name}"
+        # self.write_csv(df, temp_path)
 
-        # Example DuckDB SQL queries for data quality checks
-        # This demonstrates how maintainers can use SQL for ETL
-        quality_check_query = f"""
-        SELECT
-            COUNT(*) as total_rows,
-            COUNT(DISTINCT *) as unique_rows,
-            COUNT(*) - COUNT(DISTINCT *) as duplicate_count
-        FROM read_csv_auto('{temp_path}')
-        """
+        # # Example DuckDB SQL queries for data quality checks
+        # # This demonstrates how maintainers can use SQL for ETL
+        # quality_check_query = f"""
+        # SELECT
+        #     COUNT(*) as total_rows,
+        #     COUNT(DISTINCT *) as unique_rows,
+        #     COUNT(*) - COUNT(DISTINCT *) as duplicate_count
+        # FROM read_csv_auto('{temp_path}')
+        # """
 
-        quality_results = self.execute_duckdb_query(quality_check_query)
-        print("\nData Quality Metrics:")
-        print(quality_results)
+        # quality_results = self.execute_duckdb_query(quality_check_query)
+        # print("\nData Quality Metrics:")
+        # print(quality_results)
 
-        # Additional SQL example: Column statistics
-        # Maintainers can add more complex SQL queries here
-        print("\n5. SQL-based column analysis (example):")
-        column_stats_query = f"""
-        SELECT
-            '{temp_path.stem}' as table_name,
-            COUNT(*) as row_count,
-            COUNT(COLUMNS(*)) as column_count
-        FROM read_csv_auto('{temp_path}')
-        """
+        # # Additional SQL example: Column statistics
+        # # Maintainers can add more complex SQL queries here
+        # print("\n5. SQL-based column analysis (example):")
+        # column_stats_query = f"""
+        # SELECT
+        #     '{temp_path.stem}' as table_name,
+        #     COUNT(*) as row_count,
+        #     COUNT(COLUMNS(*)) as column_count
+        # FROM read_csv_auto('{temp_path}')
+        # """
 
-        stats = self.execute_duckdb_query(column_stats_query)
-        print(stats)
+        # stats = self.execute_duckdb_query(column_stats_query)
+        # print(stats)
 
-        # Clean up temp file
-        temp_path.unlink()
+        # # Clean up temp file
+        # temp_path.unlink()
 
         # Write to silver layer
         print(f"\nWriting {len(df)} rows to silver layer...")
@@ -106,7 +106,7 @@ def main():
     settings = get_settings()
 
     # Define input and output paths
-    input_path = settings.bronze_dir / "emi_retail" / "emi_retail_20130901_20250831.csv"
+    input_path = settings.bronze_dir / "emi_retail" / "emi_retail_20250801_20250831.csv"
     output_path = settings.silver_dir / "emi_retail" / "emi_retail_cleaned.csv"
 
     print(f"\nInput (Bronze): {input_path}")

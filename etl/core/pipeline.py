@@ -26,7 +26,7 @@ class MedallionLayer(ABC):
         """
         pass
 
-    def read_csv(self, path: Path) -> pd.DataFrame:
+    def read_csv(self, path: Path, skiprows: int = 0) -> pd.DataFrame:
         """Read CSV file into pandas DataFrame.
 
         Args:
@@ -35,7 +35,7 @@ class MedallionLayer(ABC):
         Returns:
             DataFrame with CSV data
         """
-        return pd.read_csv(path)
+        return pd.read_csv(path, skiprows=skiprows)
 
     def write_csv(self, df: pd.DataFrame, path: Path) -> None:
         """Write DataFrame to CSV file.
@@ -75,23 +75,23 @@ class MedallionLayer(ABC):
         return result
 
 
-class BronzeLayer(MedallionLayer):
-    """Bronze layer: Raw data ingestion."""
+# class BronzeLayer(MedallionLayer):
+#     """Bronze layer: Raw data ingestion."""
 
-    def process(self, input_path: Path, output_path: Path) -> None:
-        """Copy raw data to bronze layer.
+#     def process(self, input_path: Path, output_path: Path) -> None:
+#         """Copy raw data to bronze layer.
 
-        Args:
-            input_path: Path to raw data file
-            output_path: Path to save in bronze layer
-        """
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+#         Args:
+#             input_path: Path to raw data file
+#             output_path: Path to save in bronze layer
+#         """
+#         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # For bronze, we typically just copy/move the raw data
-        df = self.read_csv(input_path)
-        print(f"Bronze layer: Loaded {len(df)} rows from {input_path}")
+#         # For bronze, we typically just copy/move the raw data
+#         df = self.read_csv(input_path)
+#         print(f"Bronze layer: Loaded {len(df)} rows from {input_path}")
 
-        self.write_csv(df, output_path)
+#         self.write_csv(df, output_path)
 
 
 class SilverLayer(MedallionLayer):

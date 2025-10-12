@@ -14,12 +14,14 @@ class BaseAPIClient(ABC):
     """Base class for API clients with Pydantic parameter validation.
 
     Subclasses should define:
-    - base_url: The base URL for the API
+    - base_url: The base URL for the API (can contain {placeholders} for path params)
     - params_model: A Pydantic model for parameter validation
+    - path_params: List of parameter names that should be path params (not query params)
     """
 
     base_url: str = ""
     params_model: type[BaseModel] | None = None
+    path_params: list[str] = []  # List of param names that are path params
 
     def __init__(self, **params):
         """Initialize API client with validated parameters.
@@ -35,15 +37,33 @@ class BaseAPIClient(ABC):
         else:
             self.params = None
 
+    def _get_path_params(self) -> dict[str, Any]:
+        """Extract path parameters from the params model.
+
+        Returns:
+            Dictionary of path parameters
+        """
+        if not self.params:
+            return {}
+
+        params_dict = self.params.model_dump()
+
+        # Only include params that are in the path_params list
+        return {k: v for k, v in params_dict.items() if k in self.path_params}
+
     def _build_url(self, path_params: dict[str, Any] | None = None) -> str:
         """Build the complete URL with path parameters.
 
         Args:
-            path_params: Dictionary of path parameters to substitute in URL
+            path_params: Optional dictionary of path parameters to substitute in URL.
+                        If not provided, will extract from self.params.
 
         Returns:
             Complete URL string
         """
+        if path_params is None:
+            path_params = self._get_path_params()
+
         url = self.base_url
         if path_params:
             url = url.format(**path_params)
@@ -53,16 +73,20 @@ class BaseAPIClient(ABC):
         """Extract query parameters from the params model.
 
         Returns:
-            Dictionary of query parameters
+            Dictionary of query parameters (excluding path params)
         """
         if not self.params:
             return {}
 
-        # Convert Pydantic model to dict, excluding path params
+        # Convert Pydantic model to dict
         params_dict = self.params.model_dump()
 
-        # Filter out None values
-        return {k: v for k, v in params_dict.items() if v is not None}
+        # Filter out None values and path parameters
+        return {
+            k: v
+            for k, v in params_dict.items()
+            if v is not None and k not in self.path_params
+        }
 
     def fetch_data(
         self, path_params: dict[str, Any] | None = None, output_path: Path | None = None

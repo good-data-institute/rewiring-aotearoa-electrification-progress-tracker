@@ -86,8 +86,9 @@ class EMIRetailAPI(BaseAPIClient):
         >>> api.fetch_data(output_path=Path("data/bronze/emi_retail.csv"))
     """
 
-    base_url = "https://www.emi.ea.govt.nz/Retail/Download/DataReport/CSV"
+    base_url = "https://www.emi.ea.govt.nz/Retail/Download/DataReport/CSV/{report_id}"
     params_model = EMIRetailParams
+    path_params = ["report_id"]  # report_id is a path parameter
 
     def __init__(self, **params):
         """Initialize EMI Retail API client.
