@@ -48,7 +48,9 @@ class MedallionLayer(ABC):
         df.to_csv(path, index=False)
         print(f"Data written to: {path}")
 
-    def execute_duckdb_query(self, query: str, input_path: Path | None = None) -> pd.DataFrame:
+    def execute_duckdb_query(
+        self, query: str, input_path: Path | None = None
+    ) -> pd.DataFrame:
         """Execute a DuckDB query and return results as DataFrame.
 
         Args:
@@ -63,7 +65,9 @@ class MedallionLayer(ABC):
         if input_path:
             # Register the CSV file as a table
             table_name = input_path.stem
-            con.execute(f"CREATE TABLE {table_name} AS SELECT * FROM read_csv_auto('{input_path}')")
+            con.execute(
+                f"CREATE TABLE {table_name} AS SELECT * FROM read_csv_auto('{input_path}')"
+            )
 
         result = con.execute(query).fetchdf()
         con.close()

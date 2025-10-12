@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from etl.core.base_api import BaseAPIClient
 
 
+# TODO: Update this model with all valid parameters and options
 class EMIRetailParams(BaseModel):
     """Parameters for EMI Retail API with explicit valid options.
 
@@ -18,8 +19,8 @@ class EMIRetailParams(BaseModel):
         default="GUEHMT", description="Report ID for the data to retrieve"
     )
 
-    Capacity: Literal["All_Drilldown", "Generation", "Transmission", "Distribution"] = Field(
-        default="All_Drilldown", description="Capacity type to filter"
+    Capacity: Literal["All_Drilldown", "Generation", "Transmission", "Distribution"] = (
+        Field(default="All_Drilldown", description="Capacity type to filter")
     )
 
     DateFrom: str = Field(
@@ -34,13 +35,39 @@ class EMIRetailParams(BaseModel):
         pattern=r"^\d{8}$",
     )
 
-    _rsdr: Literal["ALL", "PARTIAL"] = Field(
-        default="ALL", description="Result set data range", alias="_rsdr"
+    RegionType: Literal[
+        "NZ",
+        "ZONE",
+        "MAIN_CENTRE",
+        "REG_COUNCIL",
+        "NWK_REPORTING_REGION_DIST",
+        "NWKP",
+        "NSP_ROOT",
+    ] = Field(
+        default="NZ", description="Region type for data aggregation", alias="RegionType"
     )
 
-    _si: Literal["v|4", "v|3", "v|2"] = Field(
-        default="v|4", description="Schema interface version", alias="_si"
+    Capacity: Literal["All_Drilldown", "Generation", "Transmission", "Distribution"] = (
+        Field(
+            default="All_Drilldown",
+            description="Capacity type to filter",
+            alias="Capacity",
+        )
     )
+
+    FuelType: Literal[
+        "All_Drilldown", "Coal", "Gas", "Hydro", "Wind", "Solar", "Other"
+    ] = Field(
+        default="All_Drilldown", description="Fuel type to filter", alias="FuelType"
+    )
+
+    # _rsdr: Literal["ALL", "PARTIAL"] = Field(
+    #     default="ALL", description="Result set data range", alias="_rsdr"
+    # )
+
+    # _si: Literal["v|4", "v|3", "v|2"] = Field(
+    #     default="v|4", description="Schema interface version", alias="_si"
+    # )
 
     class Config:
         """Pydantic model configuration."""

@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 from etl.core.config import get_settings
-from etl.core.medallion import SilverLayer
+from etl.core.pipeline import SilverLayer
 
 
 class EMIRetailSilverProcessor(SilverLayer):

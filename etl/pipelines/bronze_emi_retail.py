@@ -4,8 +4,6 @@ This script fetches raw electricity market data from the EMI Retail API
 and stores it in the bronze layer (raw data storage).
 """
 
-from pathlib import Path
-
 from etl.apis.emi_retail import EMIRetailAPI
 from etl.core.config import get_settings
 
@@ -23,10 +21,12 @@ def main():
     api = EMIRetailAPI(
         report_id="GUEHMT",
         Capacity="All_Drilldown",
-        DateFrom="20130901",
+        DateFrom="20250801",
         DateTo="20250831",
-        _rsdr="ALL",
-        _si="v|4",
+        RegionType="NZ",
+        FuelType="All_Drilldown",
+        # _rsdr="ALL",
+        # _si="v|4",
     )
 
     # Define output path in bronze layer
@@ -39,7 +39,7 @@ def main():
     # Fetch and save data
     try:
         api.fetch_data(output_path=output_path)
-        print(f"\n✓ Bronze layer ingestion completed successfully")
+        print("\n✓ Bronze layer ingestion completed successfully")
         print(f"✓ Data saved to: {output_path}")
     except Exception as e:
         print(f"\n✗ Bronze layer ingestion failed: {e}")

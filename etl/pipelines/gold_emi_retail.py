@@ -12,7 +12,7 @@ from pathlib import Path
 import pandas as pd
 
 from etl.core.config import get_settings
-from etl.core.medallion import GoldLayer
+from etl.core.pipeline import GoldLayer
 
 
 class EMIRetailGoldProcessor(GoldLayer):
