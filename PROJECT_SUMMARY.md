@@ -110,26 +110,40 @@ rewiring-aotearoa-electrification-progress-tracker/
 
 ## 📊 Data Flow
 
-```
-1. INGEST (Bronze)
-   ↓
-   EMI Retail API → Bronze Layer (CSV)
-   ↓
-2. CLEAN (Silver)
-   ↓
-   Bronze CSV → Pandas/DuckDB → Silver Layer (CSV)
-   ↓
-3. TRANSFORM (Gold)
-   ↓
-   Silver CSV → Pandas/DuckDB → Gold Layer (CSV)
-   ↓
-4. SERVE (Backend)
-   ↓
-   Gold CSV → FastAPI → JSON
-   ↓
-5. VISUALIZE (Frontend)
-   ↓
-   FastAPI → Streamlit/Shiny → Interactive Dashboard
+```mermaid
+flowchart TB
+    API["EMI Retail API"]
+    Bronze["Bronze Layer<br/>(CSV)"]
+    BronzeTool["Pandas/DuckDB"]
+    Silver["Silver Layer<br/>(CSV)"]
+    SilverTool["Pandas/DuckDB"]
+    Gold["Gold Layer<br/>(CSV)"]
+    FastAPI["FastAPI"]
+    JSON["JSON"]
+    Frontend["Streamlit/Shiny"]
+    Dashboard["Interactive Dashboard"]
+
+    API -->|"INGEST (Bronze)"| Bronze
+    Bronze -->|"CLEAN (Silver)"| BronzeTool
+    BronzeTool --> Silver
+    Silver -->|"TRANSFORM (Gold)"| SilverTool
+    SilverTool --> Gold
+    Gold -->|"SERVE (Backend)"| FastAPI
+    FastAPI --> JSON
+    JSON -->|"VISUALIZE (Frontend)"| Frontend
+    Frontend --> Dashboard
+
+    classDef bronzeStyle color:#000000,fill:#f4a460,stroke:#8b4513,stroke-width:2px
+    classDef silverStyle color:#000000,fill:#c0c0c0,stroke:#808080,stroke-width:2px
+    classDef goldStyle color:#000000,fill:#ffd700,stroke:#b8860b,stroke-width:2px
+    classDef backendStyle color:#000000,fill:#87ceeb,stroke:#4682b4,stroke-width:2px
+    classDef frontendStyle color:#000000,fill:#98fb98,stroke:#228b22,stroke-width:2px
+
+    class API,Bronze bronzeStyle
+    class BronzeTool,Silver silverStyle
+    class SilverTool,Gold goldStyle
+    class FastAPI,JSON backendStyle
+    class Frontend,Dashboard frontendStyle
 ```
 
 ## 🎓 Design Patterns Used
@@ -171,14 +185,14 @@ streamlit run frontend/streamlit_app.py
 
 ## 🎉 What Makes This Project Minimal Yet Complete
 
-✅ No unnecessary dependencies  
-✅ No complex orchestration (manual execution)  
-✅ No database setup required (CSV files + DuckDB in-memory)  
-✅ No authentication/authorization (ready to add if needed)  
-✅ No Docker/containers (can be added later)  
-✅ Clear separation of concerns  
-✅ Extensible architecture for growth  
-✅ Production-ready patterns without over-engineering  
+✅ No unnecessary dependencies
+✅ No complex orchestration (manual execution)
+✅ No database setup required (CSV files + DuckDB in-memory)
+✅ No authentication/authorization (ready to add if needed)
+✅ No Docker/containers (can be added later)
+✅ Clear separation of concerns
+✅ Extensible architecture for growth
+✅ Production-ready patterns without over-engineering
 
 ## 📚 Documentation Provided
 
@@ -197,16 +211,16 @@ streamlit run frontend/streamlit_app.py
 
 ## 🎯 Success Criteria Met
 
-✅ Medallion architecture (Bronze/Silver/Gold)  
-✅ Base API class with Pydantic validation  
-✅ Extensible for multiple APIs  
-✅ DuckDB + Pandas support  
-✅ Python 3.12 + UV only  
-✅ Pre-commit + Ruff  
-✅ FastAPI backend  
-✅ Streamlit + Shiny dashboards  
-✅ Multi-OS setup instructions  
-✅ Minimal yet complete  
+✅ Medallion architecture (Bronze/Silver/Gold)
+✅ Base API class with Pydantic validation
+✅ Extensible for multiple APIs
+✅ DuckDB + Pandas support
+✅ Python 3.12 + UV only
+✅ Pre-commit + Ruff
+✅ FastAPI backend
+✅ Streamlit + Shiny dashboards
+✅ Multi-OS setup instructions
+✅ Minimal yet complete
 
 ---
 

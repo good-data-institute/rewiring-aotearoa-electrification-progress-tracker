@@ -53,6 +53,9 @@ Thumbs.db
 .coverage
 htmlcov/
 
+# Linting
+.ruff_cache/
+
 # Logs
 *.log
 

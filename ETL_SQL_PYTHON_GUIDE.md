@@ -12,12 +12,32 @@ This project supports **both SQL and Python** for ETL transformations:
 
 ## 📊 Architecture Overview
 
-```
-Bronze → Silver → Gold
-  ↓        ↓       ↓
- Raw    Clean   Analytics
-  ↓        ↓       ↓
-Both SQL and Python available at each layer
+```mermaid
+flowchart LR
+    Bronze["Bronze<br/>(Raw)"]
+    Silver["Silver<br/>(Clean)"]
+    Gold["Gold<br/>(Analytics)"]
+
+    Bronze --> Silver
+    Silver --> Gold
+
+    BronzeTools["SQL and/or Python"]
+    SilverTools["SQL and/or Python"]
+    GoldTools["SQL and/or Python"]
+
+    Bronze -.-> BronzeTools
+    Silver -.-> SilverTools
+    Gold -.-> GoldTools
+
+    classDef bronzeStyle color:#000000,fill:#f4a460,stroke:#8b4513,stroke-width:2px
+    classDef silverStyle color:#000000,fill:#c0c0c0,stroke:#808080,stroke-width:2px
+    classDef goldStyle color:#000000,fill:#ffd700,stroke:#b8860b,stroke-width:2px
+    classDef toolStyle color:#000000,fill:#e6f3ff,stroke:#4d94ff,stroke-width:2px,stroke-dasharray: 5 5
+
+    class Bronze bronzeStyle
+    class Silver silverStyle
+    class Gold goldStyle
+    class BronzeTools,SilverTools,GoldTools toolStyle
 ```
 
 ## 🔧 Basic Usage
