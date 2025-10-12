@@ -9,7 +9,6 @@ This script transforms silver layer data into business-ready analytics:
 
 from pathlib import Path
 
-import duckdb
 import pandas as pd
 
 from etl.core.config import get_settings
@@ -37,28 +36,46 @@ class EMIRetailGoldProcessor(GoldLayer):
         # Business logic and aggregations
         print("\n--- Creating Business-Ready Data ---")
 
-        # Example: Using DuckDB for complex aggregations
-        # This is a placeholder - customize based on actual data structure
-        print("\n1. Creating aggregated view with DuckDB...")
+        # Example: Using DuckDB SQL for complex aggregations
+        # Maintainers can define ETL logic using SQL queries
+        print("\n1. Creating aggregated view with DuckDB SQL...")
 
         # Save temp file for DuckDB
         temp_path = output_path.parent / f"temp_{output_path.name}"
         self.write_csv(df, temp_path)
 
-        # Example aggregation query (adjust based on actual columns)
-        # This demonstrates both SQL and the ability to use DuckDB
+        # Example: Complex SQL aggregation query
+        # This demonstrates how maintainers can use SQL for ETL transformations
+        # Adjust the query based on your actual column names and business logic
         aggregation_query = f"""
         SELECT
-            *
+            *,
+            ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) as row_id
         FROM read_csv_auto('{temp_path}')
         LIMIT 1000
         """
 
+        # Alternative example for time-series aggregation (uncomment and adjust):
+        # aggregation_query = f"""
+        # SELECT
+        #     date_column,
+        #     region,
+        #     SUM(value) as total_value,
+        #     AVG(price) as avg_price,
+        #     COUNT(*) as record_count,
+        #     MIN(value) as min_value,
+        #     MAX(value) as max_value
+        # FROM read_csv_auto('{temp_path}')
+        # WHERE date_column >= '2020-01-01'
+        # GROUP BY date_column, region
+        # ORDER BY date_column DESC, region
+        # """
+
         try:
             gold_df = self.execute_duckdb_query(aggregation_query)
-            print(f"   Created aggregated dataset with {len(gold_df)} rows")
+            print(f"   ✓ SQL aggregation successful: {len(gold_df)} rows")
         except Exception as e:
-            print(f"   Warning: DuckDB aggregation failed ({e}), using pandas instead")
+            print(f"   ⚠ SQL aggregation failed ({e}), using pandas instead")
             # Fallback to pandas processing
             gold_df = df.copy()
 
@@ -67,12 +84,13 @@ class EMIRetailGoldProcessor(GoldLayer):
             temp_path.unlink()
 
         # Additional pandas-based transformations
-        print("\n2. Applying business transformations with pandas...")
+        # Maintainers can mix SQL (DuckDB) and Python (Pandas) as needed
+        print("\n2. Applying business transformations with Pandas...")
 
         # Example: Add calculated columns, business metrics, etc.
-        # This is a placeholder - customize based on business needs
         gold_df["processed_date"] = pd.Timestamp.now().strftime("%Y-%m-%d")
-        print(f"   Added metadata columns")
+        gold_df["data_source"] = "emi_retail"
+        print("   ✓ Added metadata columns")
 
         # Write to gold layer
         print(f"\nWriting {len(gold_df)} rows to gold layer...")
@@ -84,7 +102,7 @@ class EMIRetailGoldProcessor(GoldLayer):
         print(f"Total columns: {len(gold_df.columns)}")
         print(f"\nColumn names: {list(gold_df.columns)}")
 
-        print(f"\n✓ Gold layer processing completed")
+        print("\n✓ Gold layer processing completed")
 
 
 def main():
@@ -112,7 +130,7 @@ def main():
     processor = EMIRetailGoldProcessor()
     try:
         processor.process(input_path, output_path)
-        print(f"\n✓ Gold layer processing completed successfully")
+        print("\n✓ Gold layer processing completed successfully")
     except Exception as e:
         print(f"\n✗ Gold layer processing failed: {e}")
         raise

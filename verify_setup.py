@@ -14,7 +14,9 @@ def check_python_version():
         print(f"✓ Python {version.major}.{version.minor}.{version.micro}")
         return True
     else:
-        print(f"✗ Python {version.major}.{version.minor}.{version.micro} (requires 3.12+)")
+        print(
+            f"✗ Python {version.major}.{version.minor}.{version.micro} (requires 3.12+)"
+        )
         return False
 
 
@@ -75,7 +77,10 @@ def check_files():
         if Path(file).exists():
             print(f"✓ {file}")
         else:
-            print(f"✗ {file} - missing")
+            if file == ".env":
+                print(f"✗ {file} - missing (copy .env.example to .env)")
+            else:
+                print(f"✗ {file} - missing")
             all_ok = False
 
     return all_ok
@@ -120,7 +125,7 @@ def check_env_file():
         "BACKEND_PORT",
     ]
 
-    content = env_file.read_text()
+    content = env_file.read_text(encoding="utf-8")
     all_ok = True
     for var in required_vars:
         if var in content:
@@ -177,7 +182,7 @@ def main():
         print("\n⚠️  Some checks failed. Please review the issues above.")
         print("\nTo fix:")
         print("1. Ensure virtual environment is activated")
-        print("2. Install dependencies: uv pip install -e '.[dev]'")
+        print("2. Sync dependencies: uv sync")
         print("3. Copy .env.example to .env if missing")
 
     return 0 if all_passed else 1

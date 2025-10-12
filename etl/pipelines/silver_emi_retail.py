@@ -10,7 +10,6 @@ This script processes bronze layer data by:
 
 from pathlib import Path
 
-import pandas as pd
 
 from etl.core.config import get_settings
 from etl.core.medallion import SilverLayer
@@ -54,23 +53,40 @@ class EMIRetailSilverProcessor(SilverLayer):
         else:
             print("3. No missing values found")
 
-        # 4. Basic data validation using DuckDB
-        print("\n4. Running data quality checks with DuckDB...")
+        # 4. Basic data validation using DuckDB SQL
+        print("\n4. Running data quality checks with DuckDB SQL...")
 
         # Save to temp location for DuckDB query
         temp_path = output_path.parent / f"temp_{output_path.name}"
         self.write_csv(df, temp_path)
 
-        # Example DuckDB query for data quality check
+        # Example DuckDB SQL queries for data quality checks
+        # This demonstrates how maintainers can use SQL for ETL
         quality_check_query = f"""
         SELECT
             COUNT(*) as total_rows,
-            COUNT(DISTINCT *) as unique_rows
+            COUNT(DISTINCT *) as unique_rows,
+            COUNT(*) - COUNT(DISTINCT *) as duplicate_count
         FROM read_csv_auto('{temp_path}')
         """
 
         quality_results = self.execute_duckdb_query(quality_check_query)
+        print("\nData Quality Metrics:")
         print(quality_results)
+
+        # Additional SQL example: Column statistics
+        # Maintainers can add more complex SQL queries here
+        print("\n5. SQL-based column analysis (example):")
+        column_stats_query = f"""
+        SELECT
+            '{temp_path.stem}' as table_name,
+            COUNT(*) as row_count,
+            COUNT(COLUMNS(*)) as column_count
+        FROM read_csv_auto('{temp_path}')
+        """
+
+        stats = self.execute_duckdb_query(column_stats_query)
+        print(stats)
 
         # Clean up temp file
         temp_path.unlink()
@@ -78,7 +94,7 @@ class EMIRetailSilverProcessor(SilverLayer):
         # Write to silver layer
         print(f"\nWriting {len(df)} rows to silver layer...")
         self.write_csv(df, output_path)
-        print(f"✓ Silver layer processing completed")
+        print("✓ Silver layer processing completed")
 
 
 def main():
@@ -106,7 +122,7 @@ def main():
     processor = EMIRetailSilverProcessor()
     try:
         processor.process(input_path, output_path)
-        print(f"\n✓ Silver layer processing completed successfully")
+        print("\n✓ Silver layer processing completed successfully")
     except Exception as e:
         print(f"\n✗ Silver layer processing failed: {e}")
         raise

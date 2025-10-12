@@ -8,7 +8,7 @@
 # Windows
 uv venv --python 3.12
 .venv\Scripts\Activate.ps1
-uv pip install -e ".[dev]"
+uv sync
 pre-commit install
 ```
 
@@ -16,7 +16,7 @@ pre-commit install
 # macOS/Linux
 uv venv --python 3.12
 source .venv/bin/activate
-uv pip install -e ".[dev]"
+uv sync
 pre-commit install
 ```
 
@@ -88,10 +88,23 @@ pre-commit run --all-files
 pytest
 ```
 
-### Update Dependencies
+### Manage Dependencies
 
 ```bash
-uv pip install --upgrade -e ".[dev]"
+# Add new dependency
+uv add package-name
+
+# Add dev dependency
+uv add --dev package-name
+
+# Remove dependency
+uv remove package-name
+
+# Update all dependencies
+uv sync --upgrade
+
+# List installed packages
+uv pip list
 ```
 
 ## File Locations
@@ -110,8 +123,8 @@ uv pip install --upgrade -e ".[dev]"
 .venv\Scripts\Activate.ps1  # Windows
 source .venv/bin/activate    # macOS/Linux
 
-# Reinstall project
-uv pip install -e ".[dev]"
+# Sync dependencies
+uv sync
 ```
 
 ### "Backend not available"

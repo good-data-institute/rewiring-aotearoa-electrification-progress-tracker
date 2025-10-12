@@ -9,9 +9,29 @@ This project implements a modern data engineering stack with:
 - **ETL Pipeline**: Medallion architecture (Bronze → Silver → Gold) with extensible API clients
 - **Backend**: FastAPI serving processed data
 - **Frontend**: Streamlit and Shiny for Python dashboards
-- **Data Processing**: DuckDB and Pandas for SQL and Python-based transformations
+- **Data Processing**: **DuckDB SQL and Pandas Python** - maintainers can define ETL using SQL and/or Python
 - **Validation**: Pydantic for schema and API parameter validation
 - **Quality**: Pre-commit hooks with Ruff for linting and formatting
+
+### 🔑 Key Feature: SQL + Python ETL
+
+Maintainers can write ETL transformations using **both DuckDB SQL and Pandas Python**:
+
+```python
+# Use SQL for data shaping
+query = """
+SELECT region, DATE_TRUNC('month', date) as month,
+       SUM(consumption) as total
+FROM read_csv_auto('data/silver/file.csv')
+GROUP BY region, month
+"""
+df = self.execute_duckdb_query(query)
+
+# Then use Pandas for business logic
+df['category'] = df['total'].apply(lambda x: 'High' if x > 1000 else 'Low')
+```
+
+See [ETL_SQL_PYTHON_GUIDE.md](ETL_SQL_PYTHON_GUIDE.md) and [etl/SQL_EXAMPLES.py](etl/SQL_EXAMPLES.py) for comprehensive examples.
 
 ### Project Structure
 
@@ -26,10 +46,11 @@ rewiring-aotearoa-electrification-progress-tracker/
 │   │   ├── base_api.py      # Base API client class
 │   │   ├── config.py        # Settings management
 │   │   └── medallion.py     # Bronze/Silver/Gold layer classes
-│   └── pipelines/      # ETL scripts
-│       ├── bronze_emi_retail.py   # Raw data ingestion
-│       ├── silver_emi_retail.py   # Data cleaning
-│       └── gold_emi_retail.py     # Business-ready aggregations
+│   ├── pipelines/      # ETL scripts
+│   │   ├── bronze_emi_retail.py   # Raw data ingestion
+│   │   ├── silver_emi_retail.py   # Data cleaning
+│   │   └── gold_emi_retail.py     # Business-ready aggregations
+│   └── SQL_EXAMPLES.py         # SQL query examples for ETL
 ├── frontend/            # Dashboard applications
 │   ├── streamlit_app.py
 │   └── shiny_app.py
@@ -42,7 +63,10 @@ rewiring-aotearoa-electrification-progress-tracker/
 ├── .gitignore         # Git ignore rules
 ├── .pre-commit-config.yaml  # Pre-commit hooks
 ├── pyproject.toml     # Project dependencies and configuration
-└── README.md          # This file
+├── README.md          # This file
+├── QUICKSTART.md      # Quick reference guide
+├── ETL_SQL_PYTHON_GUIDE.md  # Guide for SQL and Python in ETL
+└── run_pipeline.py    # Complete pipeline runner
 ```
 
 ## 📋 Prerequisites
@@ -55,22 +79,18 @@ rewiring-aotearoa-electrification-progress-tracker/
 #### Windows (PowerShell)
 
 ```powershell
-# Using pip
-pip install uv
-
-# Or using the standalone installer
+# Standalone installer (recommended)
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
 #### macOS/Linux
 
 ```bash
-# Using pip
-pip install uv
-
-# Or using curl
+# Standalone installer (recommended)
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
+
+See [uv documentation](https://docs.astral.sh/uv/) for more installation options.
 
 ## 🚀 Quick Start
 
@@ -92,8 +112,8 @@ uv venv --python 3.12
 # Activate virtual environment
 .venv\Scripts\Activate.ps1
 
-# Install dependencies
-uv pip install -e ".[dev]"
+# Sync dependencies from pyproject.toml
+uv sync
 
 # Set up pre-commit hooks
 pre-commit install
@@ -108,8 +128,8 @@ uv venv --python 3.12
 # Activate virtual environment
 source .venv/bin/activate
 
-# Install dependencies
-uv pip install -e ".[dev]"
+# Sync dependencies from pyproject.toml
+uv sync
 
 # Set up pre-commit hooks
 pre-commit install
@@ -260,11 +280,32 @@ Testing infrastructure is set up but no tests are included yet:
 pytest
 ```
 
+### Managing Dependencies
+
+Use `uv` commands to manage project dependencies:
+
+```bash
+# Add a new dependency
+uv add pandas numpy
+
+# Add a dev dependency
+uv add --dev pytest ruff
+
+# Remove a dependency
+uv remove package-name
+
+# Update all dependencies
+uv sync --upgrade
+
+# Show installed packages
+uv pip list
+```
+
 ## 📊 Using the System
 
-### ETL Pipeline
+### ETL Pipeline with SQL and Python
 
-The ETL pipeline follows the medallion architecture:
+The ETL pipeline follows the medallion architecture and supports **both DuckDB SQL and Pandas Python** for data transformations:
 
 1. **Bronze Layer** (`bronze_emi_retail.py`):
    - Ingests raw data from EMI Retail API
@@ -272,17 +313,49 @@ The ETL pipeline follows the medallion architecture:
    - Stores raw CSV in `data/bronze/`
 
 2. **Silver Layer** (`silver_emi_retail.py`):
-   - Cleans and validates bronze data
-   - Removes duplicates
-   - Standardizes column names
-   - Uses DuckDB for data quality checks
+   - **Pandas**: Data cleaning, deduplication, column standardization
+   - **DuckDB SQL**: Data quality checks and validation queries
+   - Example SQL query in code:
+     ```sql
+     SELECT COUNT(*) as total_rows,
+            COUNT(DISTINCT *) as unique_rows
+     FROM read_csv_auto('data.csv')
+     ```
    - Stores cleaned CSV in `data/silver/`
 
 3. **Gold Layer** (`gold_emi_retail.py`):
-   - Creates business-ready aggregations
-   - Applies business logic
-   - Uses DuckDB for complex queries
+   - **DuckDB SQL**: Complex aggregations and analytical queries
+   - **Pandas**: Business logic and calculated columns
+   - Maintainers can define ETL using either SQL or Python as needed
    - Stores analytics-ready CSV in `data/gold/`
+
+#### Example: Using DuckDB SQL in ETL
+
+```python
+# In your silver/gold processor
+from etl.core.medallion import SilverLayer
+
+class MyProcessor(SilverLayer):
+    def process(self, input_path, output_path):
+        # Use SQL for complex queries
+        query = """
+        SELECT
+            date,
+            region,
+            SUM(consumption) as total_consumption,
+            AVG(price) as avg_price
+        FROM read_csv_auto('{input_path}')
+        WHERE date >= '2020-01-01'
+        GROUP BY date, region
+        ORDER BY date DESC
+        """
+        df = self.execute_duckdb_query(query)
+
+        # Continue with Pandas if needed
+        df['calculated_field'] = df['total_consumption'] * df['avg_price']
+
+        self.write_csv(df, output_path)
+```
 
 ### Adding New API Sources
 
@@ -400,18 +473,18 @@ python -m etl.pipelines.gold_emi_retail
 
 ### Import errors
 
-Ensure virtual environment is activated and dependencies are installed:
+Ensure virtual environment is activated and dependencies are synced:
 
 **Windows**
 ```powershell
 .venv\Scripts\Activate.ps1
-uv pip install -e ".[dev]"
+uv sync
 ```
 
 **macOS/Linux**
 ```bash
 source .venv/bin/activate
-uv pip install -e ".[dev]"
+uv sync
 ```
 
 ### Permission errors (Windows)
