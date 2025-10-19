@@ -36,25 +36,20 @@ async def root():
     return {
         "message": "Rewiring Aotearoa Electrification Progress Tracker API",
         "version": "0.1.0",
-        "endpoints": {
-            "/health": "Health check",
-            "/api/emi-retail": "Get EMI retail electricity data",
-            "/api/emi-retail/summary": "Get summary statistics",
-        },
     }
 
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
-    analytics_data_path = settings.analytics_dir / "emi" / "emi_retail_analytics.csv"
-    data_available = analytics_data_path.exists()
-
-    return {
-        "status": "healthy",
-        "data_available": data_available,
-        "analytics_path": str(analytics_data_path),
-    }
+    """Health check endpoint - checks if docs endpoint is alive."""
+    try:
+        # Check if the docs endpoint (/) is working
+        await root()
+        return {
+            "status": "healthy",
+        }
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Service unhealthy: {str(e)}")
 
 
 @app.get("/api/emi-retail")

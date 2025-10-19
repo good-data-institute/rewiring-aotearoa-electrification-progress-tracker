@@ -1,3 +1,3 @@
-- Update APIs with all valid parameters and options
+- Update APIs with all valid parameters and options + split logically by e.g. by data source, dashboard page
 - Add S3 read/write
 - Create infra and move env variables into render.yaml (also needs to work for local though)
