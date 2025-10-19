@@ -13,10 +13,10 @@ import pandas as pd
 
 from etl.apis.gic import GICAPI
 from etl.core.config import get_settings
-from etl.core.pipeline import DataLayer
+from etl.core.pipeline import ProcessedLayer
 
 
-class GICGasConnectionsProcessor(DataLayer):
+class GICGasConnectionsProcessor(ProcessedLayer):
     """Data processor for GIC Gas Connections: Extract from API + Transform."""
 
     def __init__(

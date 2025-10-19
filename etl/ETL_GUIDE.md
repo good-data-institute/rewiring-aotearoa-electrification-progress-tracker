@@ -1,6 +1,6 @@
 # ETL Development Guide
 
-A comprehensive guide for building ETL pipelines using **DuckDB SQL** and **Pandas Python** in a 2-layer architecture.
+A comprehensive guide for building ETL pipelines using **DuckDB SQL** and **Pandas Python** in a 2-layer architecture. Includes practical examples for running pipelines, customizing parameters, and troubleshooting common issues.
 
 ## 📋 Table of Contents
 
@@ -13,6 +13,8 @@ A comprehensive guide for building ETL pipelines using **DuckDB SQL** and **Pand
 - [Best Practices](#-best-practices)
 - [Performance Tips](#-performance-tips)
 - [DuckDB Features](#-duckdb-features)
+- [Running Pipelines](#-running-pipelines)
+- [Data Sources & Implementation](#data-sources--implementation)
 
 ---
 
@@ -20,8 +22,8 @@ A comprehensive guide for building ETL pipelines using **DuckDB SQL** and **Pand
 
 This project uses a **2-layer architecture** with both SQL and Python for ETL transformations:
 
-- **Silver Layer (Data)**: Extract from sources + Transform/Clean → `DataLayer`
-- **Gold Layer (Analytics)**: Business-ready aggregations and metrics → `AnalyticsLayer`
+- **Processed Layer (Data)**: Extract from sources + Transform/Clean → `ProcessedLayer`
+- **Metrics Layer (Analytics)**: Business-ready aggregations and metrics → `MetricsLayer`
 - **Use SQL (DuckDB)** for: Set-based operations, aggregations, joins, filtering
 - **Use Python (Pandas)** for: Complex business logic, API calls, iterative processing
 - **Mix both**: Start with SQL for data shaping, then use Pandas for final touches
@@ -33,31 +35,31 @@ This project uses a **2-layer architecture** with both SQL and Python for ETL tr
 ```mermaid
 flowchart LR
     Source["Data Source<br/>(API/File)"]
-    Silver["Silver Layer<br/>(Extract & Transform)"]
-    Gold["Gold Layer<br/>(Analytics)"]
+    Processed["Processed Layer<br/>(Extract & Transform)"]
+    Metrics["Metrics Layer<br/>(Analytics)"]
 
-    Source --> Silver
-    Silver --> Gold
+    Source --> Processed
+    Processed --> Metrics
 
-    SilverTools["SQL and/or Python<br/>DataLayer"]
-    GoldTools["SQL and/or Python<br/>AnalyticsLayer"]
+    ProcessedTools["SQL and/or Python<br/>ProcessedLayer"]
+    MetricsTools["SQL and/or Python<br/>MetricsLayer"]
 
-    Silver -.-> SilverTools
-    Gold -.-> GoldTools
+    Processed -.-> ProcessedTools
+    Metrics -.-> MetricsTools
 
-    classDef silverStyle color:#000000,fill:#c0c0c0,stroke:#808080,stroke-width:2px
-    classDef goldStyle color:#000000,fill:#ffd700,stroke:#b8860b,stroke-width:2px
+    classDef ProcessedStyle color:#000000,fill:#c0c0c0,stroke:#808080,stroke-width:2px
+    classDef MetricsStyle color:#000000,fill:#ffd700,stroke:#b8860b,stroke-width:2px
     classDef toolStyle color:#000000,fill:#e6f3ff,stroke:#4d94ff,stroke-width:2px,stroke-dasharray: 5 5
 
-    class Source,Silver silverStyle
-    class Gold goldStyle
-    class SilverTools,GoldTools toolStyle
+    class Source,Processed ProcessedStyle
+    class Metrics MetricsStyle
+    class ProcessedTools,MetricsTools toolStyle
 ```
 
 ### Data Layers
 
-- **Silver (Data)**: Extract from source API/files + Clean/Transform (single step)
-- **Gold (Analytics)**: Business-ready analytics and aggregations
+- **Processed (Data)**: Extract from source API/files + Clean/Transform (single step)
+- **Metrics (Analytics)**: Business-ready analytics and aggregations
 
 ---
 
@@ -66,10 +68,10 @@ flowchart LR
 ### Basic Structure
 
 ```python
-from etl.core.medallion import GoldLayer, SilverLayer
+from etl.core.pipeline import MetricsLayer, ProcessedLayer
 from pathlib import Path
 
-class MyProcessor(GoldLayer):
+class MyProcessor(MetricsLayer):
     def process(self, input_path: Path, output_path: Path):
         # Your transformation logic here
         pass
@@ -101,10 +103,10 @@ self.write_csv(df, Path('data/output.csv'))
 **When to use:** Heavy aggregations, joins, filtering on large datasets
 
 ```python
-from etl.core.medallion import GoldLayer
+from etl.core.pipeline import MetricsLayer
 from pathlib import Path
 
-class SQLProcessor(GoldLayer):
+class SQLProcessor(MetricsLayer):
     def process(self, input_path: Path, output_path: Path):
         # Define transformation entirely in SQL
         query = f"""
@@ -130,11 +132,11 @@ class SQLProcessor(GoldLayer):
 **When to use:** Complex business logic, API calls, custom calculations
 
 ```python
-from etl.core.medallion import GoldLayer
+from etl.core.pipeline import MetricsLayer
 from pathlib import Path
 import pandas as pd
 
-class PandasProcessor(GoldLayer):
+class PandasProcessor(MetricsLayer):
     def process(self, input_path: Path, output_path: Path):
         # Read with Pandas
         df = self.read_csv(input_path)
@@ -148,6 +150,8 @@ class PandasProcessor(GoldLayer):
             'value': ['sum', 'mean', 'count']
         }).reset_index()
 
+        df['category'] = df['total'].apply(lambda x: 'High' if x > 1000 else 'Low')
+
         # Save
         self.write_csv(result, output_path)
 ```
@@ -157,11 +161,11 @@ class PandasProcessor(GoldLayer):
 **When to use:** Most real-world scenarios
 
 ```python
-from etl.core.medallion import GoldLayer
+from etl.core.pipeline import MetricsLayer
 from pathlib import Path
 import pandas as pd
 
-class HybridProcessor(GoldLayer):
+class HybridProcessor(MetricsLayer):
     def process(self, input_path: Path, output_path: Path):
         # Use SQL for heavy lifting
         query = f"""
@@ -191,10 +195,10 @@ class HybridProcessor(GoldLayer):
 
 ## 📚 Common Patterns
 
-### Pattern 1: Deduplication (Silver Layer)
+### Pattern 1: Deduplication (Processed Layer)
 
 ```python
-class DeduplicationProcessor(SilverLayer):
+class DeduplicationProcessor(ProcessedLayer):
     def process(self, input_path: Path, output_path: Path):
         # SQL approach - keep latest record per ID
         query = f"""
@@ -208,10 +212,10 @@ class DeduplicationProcessor(SilverLayer):
         self.write_csv(df, output_path)
 ```
 
-### Pattern 2: Time Series Aggregation (Gold Layer)
+### Pattern 2: Time Series Aggregation (Metrics Layer)
 
 ```python
-class TimeSeriesProcessor(GoldLayer):
+class TimeSeriesProcessor(MetricsLayer):
     def process(self, input_path: Path, output_path: Path):
         query = f"""
         SELECT
@@ -238,13 +242,13 @@ class TimeSeriesProcessor(GoldLayer):
         self.write_csv(df, output_path)
 ```
 
-### Pattern 3: Multi-File Join (Gold Layer)
+### Pattern 3: Multi-File Join (Metrics Layer)
 
 ```python
-class JoinProcessor(GoldLayer):
+class JoinProcessor(MetricsLayer):
     def process(self, input_path: Path, output_path: Path):
-        # Assume we have multiple files in silver layer
-        silver_dir = input_path.parent
+        # Assume we have multiple files in Processed layer
+        Processed_dir = input_path.parent
 
         query = f"""
         SELECT
@@ -255,10 +259,10 @@ class JoinProcessor(GoldLayer):
             c.consumption * p.price as cost,
             w.temperature,
             w.weather_type
-        FROM read_csv_auto('{silver_dir}/consumption.csv') c
-        LEFT JOIN read_csv_auto('{silver_dir}/prices.csv') p
+        FROM read_csv_auto('{Processed_dir}/consumption.csv') c
+        LEFT JOIN read_csv_auto('{Processed_dir}/prices.csv') p
             ON c.date = p.date AND c.region = p.region
-        LEFT JOIN read_csv_auto('{silver_dir}/weather.csv') w
+        LEFT JOIN read_csv_auto('{Processed_dir}/weather.csv') w
             ON c.date = w.date AND c.region = w.region
         WHERE c.date >= '2020-01-01'
         """
@@ -275,10 +279,10 @@ class JoinProcessor(GoldLayer):
         self.write_csv(df, output_path)
 ```
 
-### Pattern 4: Data Quality Checks (Silver Layer)
+### Pattern 4: Data Quality Checks (Processed Layer)
 
 ```python
-class QualityCheckProcessor(SilverLayer):
+class QualityCheckProcessor(ProcessedLayer):
     def process(self, input_path: Path, output_path: Path):
         # SQL-based quality checks
         quality_query = f"""
@@ -370,7 +374,7 @@ SELECT
     MIN(value) as min_value,
     MAX(value) as max_value,
     COUNT(*) as record_count
-FROM read_csv_auto('data/silver/file.csv')
+FROM read_csv_auto('data/Processed/file.csv')
 GROUP BY region, DATE_TRUNC('month', date_column)
 ORDER BY month DESC, region;
 ```
@@ -395,7 +399,7 @@ SELECT
         PARTITION BY region
         ORDER BY value DESC
     ) as value_rank
-FROM read_csv_auto('data/silver/file.csv')
+FROM read_csv_auto('data/Processed/file.csv')
 ORDER BY region, date_column;
 ```
 
@@ -446,7 +450,7 @@ SELECT
     PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY column_name) as q1,
     PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY column_name) as median,
     PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY column_name) as q3
-FROM read_csv_auto('data/silver/file.csv');
+FROM read_csv_auto('data/Processed/file.csv');
 ```
 
 ### Joins
@@ -460,8 +464,8 @@ SELECT
     a.consumption,
     b.price,
     a.consumption * b.price as total_cost
-FROM read_csv_auto('data/silver/consumption.csv') a
-LEFT JOIN read_csv_auto('data/silver/prices.csv') b
+FROM read_csv_auto('data/Processed/consumption.csv') a
+LEFT JOIN read_csv_auto('data/Processed/prices.csv') b
     ON a.date_column = b.date_column
     AND a.region = b.region;
 ```
@@ -481,7 +485,7 @@ SELECT
     value - LAG(value, 1) OVER (ORDER BY date_column) as day_over_day_change,
     (value - LAG(value, 1) OVER (ORDER BY date_column)) /
         LAG(value, 1) OVER (ORDER BY date_column) * 100 as pct_change
-FROM read_csv_auto('data/silver/file.csv')
+FROM read_csv_auto('data/Processed/file.csv')
 WHERE date_column >= CURRENT_DATE - INTERVAL '90 days'
 ORDER BY date_column;
 ```
@@ -489,7 +493,7 @@ ORDER BY date_column;
 #### Pivot Data
 
 ```sql
-PIVOT read_csv_auto('data/silver/file.csv')
+PIVOT read_csv_auto('data/Processed/file.csv')
 ON region
 USING SUM(value) as total_value
 GROUP BY date_column
@@ -525,7 +529,7 @@ SELECT
         WHEN DAYOFWEEK(date_column) IN (6, 7) THEN 'Weekend'
         ELSE 'Weekday'
     END as day_type
-FROM read_csv_auto('data/silver/file.csv');
+FROM read_csv_auto('data/Processed/file.csv');
 ```
 
 ### Export Results
@@ -537,9 +541,9 @@ COPY (
     SELECT
         region,
         SUM(value) as total_value
-    FROM read_csv_auto('data/silver/file.csv')
+    FROM read_csv_auto('data/Processed/file.csv')
     GROUP BY region
-) TO 'data/gold/aggregated.csv' (HEADER, DELIMITER ',');
+) TO 'data/Metrics/aggregated.csv' (HEADER, DELIMITER ',');
 ```
 
 ---
@@ -742,6 +746,179 @@ COVAR_POP(col1, col2)
 
 ---
 
+## 🚀 Running Pipelines
+
+### Individual Pipeline Execution
+
+#### EECA Energy Consumption
+
+**Extract & Transform:**
+```bash
+python -m etl.pipelines.eeca.extract_transform
+```
+- Input: EECA Excel file (API fetched)
+- Output: `data/processed/eeca/eeca_energy_consumption_cleaned.csv`
+
+**Analytics:**
+```bash
+python -m etl.pipelines.eeca.analytics
+```
+- Input: Cleaned data
+- Output: `data/analytics/eeca/eeca_electricity_percentage.csv`
+- Metric: `_13_P1_ElecCons` (Electricity % of total energy)
+
+#### GIC Gas Connections
+
+**Extract & Transform:**
+```bash
+python -m etl.pipelines.gic.extract_transform
+```
+- Input: GIC Excel file (API fetched)
+- Output: `data/processed/gic/gic_gas_connections_cleaned.csv`
+
+**Analytics:**
+```bash
+python -m etl.pipelines.gic.analytics
+```
+- Input: Cleaned data
+- Output: `data/analytics/gic/gic_gas_connections_analytics.csv`
+- Metric: `_10_P1_Gas` (Monthly new connections by region)
+
+#### EMI Electricity Generation
+
+**Extract & Transform:**
+```bash
+python -m etl.pipelines.emi_generation.extract_transform
+```
+- Input: EMI Azure Blob Storage CSVs
+- Output: `data/processed/emi_generation/emi_generation_cleaned.csv`
+- Note: Downloads multiple CSV files
+
+**Analytics:**
+```bash
+python -m etl.pipelines.emi_generation.analytics
+```
+- Input: Cleaned data
+- Output: `data/analytics/emi_generation/emi_generation_analytics.csv`
+- Metric: `_12_P1_EnergyRenew` (Renewable generation share)
+
+### Customizing Date Ranges
+
+#### EECA - Custom Years
+```python
+from pathlib import Path
+from etl.pipelines.eeca.extract_transform import EECAEnergyConsumptionProcessor
+
+processor = EECAEnergyConsumptionProcessor(
+    year_from=2018,
+    year_to=2022,
+)
+processor.process(
+    input_path=None,
+    output_path=Path("data/processed/eeca/eeca_energy_consumption_cleaned.csv")
+)
+```
+
+#### GIC - Custom Date Range
+```python
+from pathlib import Path
+from etl.pipelines.gic.extract_transform import GICGasConnectionsProcessor
+
+processor = GICGasConnectionsProcessor(
+    year_from=2020,
+    year_to=2023,
+    month_from=1,
+    month_to=6,
+)
+processor.process(
+    input_path=None,
+    output_path=Path("data/processed/gic/gic_gas_connections_cleaned.csv")
+)
+```
+
+#### EMI Generation - Custom Years
+```python
+from pathlib import Path
+from etl.pipelines.emi_generation.extract_transform import EMIGenerationProcessor
+
+processor = EMIGenerationProcessor(
+    year_from=2022,
+    year_to=2024,
+)
+processor.process(
+    input_path=None,
+    output_path=Path("data/processed/emi_generation/emi_generation_cleaned.csv")
+)
+```
+
+### Master Script - Run All Pipelines
+
+Create `run_all_pipelines.py` to execute all pipelines sequentially:
+
+```python
+from etl.pipelines.eeca.extract_transform import EECAEnergyConsumptionProcessor
+from etl.pipelines.eeca.analytics import EECAElectricityPercentageAnalytics
+from etl.pipelines.gic.extract_transform import GICGasConnectionsProcessor
+from etl.pipelines.gic.analytics import GICGasConnectionsAnalytics
+from etl.pipelines.emi_generation.extract_transform import EMIGenerationProcessor
+from etl.pipelines.emi_generation.analytics import EMIGenerationAnalytics
+from etl.core.config import get_settings
+
+def main():
+    settings = get_settings()
+
+    # EECA
+    print("Running EECA...")
+    eeca_processor = EECAEnergyConsumptionProcessor(year_from=2017, year_to=2023)
+    eeca_processor.process(
+        input_path=None,
+        output_path=settings.processed_dir / "eeca" / "eeca_energy_consumption_cleaned.csv"
+    )
+    eeca_analytics = EECAElectricityPercentageAnalytics()
+    eeca_analytics.process(
+        input_path=settings.processed_dir / "eeca" / "eeca_energy_consumption_cleaned.csv",
+        output_path=settings.analytics_dir / "eeca" / "eeca_electricity_percentage.csv"
+    )
+
+    # GIC
+    print("Running GIC...")
+    gic_processor = GICGasConnectionsProcessor()
+    gic_processor.process(
+        input_path=None,
+        output_path=settings.processed_dir / "gic" / "gic_gas_connections_cleaned.csv"
+    )
+    gic_analytics = GICGasConnectionsAnalytics()
+    gic_analytics.process(
+        input_path=settings.processed_dir / "gic" / "gic_gas_connections_cleaned.csv",
+        output_path=settings.analytics_dir / "gic" / "gic_gas_connections_analytics.csv"
+    )
+
+    # EMI Generation
+    print("Running EMI Generation...")
+    emi_processor = EMIGenerationProcessor(year_from=2020, year_to=2025)
+    emi_processor.process(
+        input_path=None,
+        output_path=settings.processed_dir / "emi_generation" / "emi_generation_cleaned.csv"
+    )
+    emi_analytics = EMIGenerationAnalytics()
+    emi_analytics.process(
+        input_path=settings.processed_dir / "emi_generation" / "emi_generation_cleaned.csv",
+        output_path=settings.analytics_dir / "emi_generation" / "emi_generation_analytics.csv"
+    )
+
+    print("All pipelines completed!")
+
+if __name__ == "__main__":
+    main()
+```
+
+Run:
+```bash
+python run_all_pipelines.py
+```
+
+---
+
 ## 💡 Quick Reference Card
 
 | Task | SQL | Python |
@@ -780,6 +957,21 @@ COVAR_POP(col1, col2)
 - Standardized fuel categories
 - Missing value reporting
 
+**Extract & Transform:**
+```powershell
+python -m etl.pipelines.eeca.extract_transform
+```
+- Input: EECA Excel file (API fetched)
+- Output: `data/processed/eeca/eeca_energy_consumption_cleaned.csv`
+
+**Analytics:**
+```powershell
+python -m etl.pipelines.eeca.analytics
+```
+- Input: Cleaned data
+- Output: `data/analytics/eeca/eeca_electricity_percentage.csv`
+- Metric: `_13_P1_ElecCons` (Electricity % of total energy)
+
 ---
 
 ### 2. GIC Gas Connections (Gas Industry Company)
@@ -800,6 +992,21 @@ COVAR_POP(col1, col2)
 
 **Metrics**:
 - `_10_P1_Gas`: Monthly new gas connections by region
+
+**Extract & Transform:**
+```powershell
+python -m etl.pipelines.gic.extract_transform
+```
+- Input: GIC Excel file (API fetched)
+- Output: `data/processed/gic/gic_gas_connections_cleaned.csv`
+
+**Analytics:**
+```powershell
+python -m etl.pipelines.gic.analytics
+```
+- Input: Cleaned data
+- Output: `data/analytics/gic/gic_gas_connections_analytics.csv`
+- Metric: `_10_P1_Gas` (Monthly new connections by region)
 
 ---
 
@@ -834,3 +1041,19 @@ COVAR_POP(col1, col2)
 - Regional concordance handling within pipeline
 - Renewable fuel classification (Hydro, Wind, Solar, Wood, Geo, etc.)
 - Trading period aggregation
+
+**Extract & Transform:**
+```powershell
+python -m etl.pipelines.emi_generation.extract_transform
+```
+- Input: EMI Azure Blob Storage CSVs
+- Output: `data/processed/emi_generation/emi_generation_cleaned.csv`
+- Note: Downloads multiple CSV files
+
+**Analytics:**
+```powershell
+python -m etl.pipelines.emi_generation.analytics
+```
+- Input: Cleaned data
+- Output: `data/analytics/emi_generation/emi_generation_analytics.csv`
+- Metric: `_12_P1_EnergyRenew` (Renewable generation share)

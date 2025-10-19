@@ -13,10 +13,10 @@ import pandas as pd
 
 from etl.apis.eeca import EECAAPI
 from etl.core.config import get_settings
-from etl.core.pipeline import DataLayer
+from etl.core.pipeline import ProcessedLayer
 
 
-class EECAEnergyConsumptionProcessor(DataLayer):
+class EECAEnergyConsumptionProcessor(ProcessedLayer):
     """Data processor for EECA Energy Consumption: Extract from API + Transform."""
 
     def __init__(

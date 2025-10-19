@@ -7,10 +7,10 @@ monthly renewable generation share by region.
 from pathlib import Path
 
 from etl.core.config import get_settings
-from etl.core.pipeline import AnalyticsLayer
+from etl.core.pipeline import MetricsLayer
 
 
-class EMIGenerationAnalytics(AnalyticsLayer):
+class EMIGenerationAnalytics(MetricsLayer):
     """Analytics processor for renewable generation share."""
 
     def process(self, input_path: Path, output_path: Path) -> None:

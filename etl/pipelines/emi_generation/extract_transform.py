@@ -11,12 +11,12 @@ from pathlib import Path
 
 import pandas as pd
 
-from etl.apis.emi_generation import EMIGenerationAPI
+from etl.apis.emi import EMIGenerationAPI
 from etl.core.config import get_settings
-from etl.core.pipeline import DataLayer
+from etl.core.pipeline import ProcessedLayer
 
 
-class EMIGenerationProcessor(DataLayer):
+class EMIGenerationProcessor(ProcessedLayer):
     """Data processor for EMI Generation: Extract from Azure Blob + Transform."""
 
     def __init__(

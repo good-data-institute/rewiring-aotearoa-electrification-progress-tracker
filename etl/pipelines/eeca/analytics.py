@@ -7,10 +7,10 @@ electricity's share of total energy consumption over time.
 from pathlib import Path
 
 from etl.core.config import get_settings
-from etl.core.pipeline import AnalyticsLayer
+from etl.core.pipeline import MetricsLayer
 
 
-class EECAElectricityPercentageAnalytics(AnalyticsLayer):
+class EECAElectricityPercentageAnalytics(MetricsLayer):
     """Analytics processor for electricity consumption percentage."""
 
     def process(self, input_path: Path, output_path: Path) -> None:

@@ -1,7 +1,7 @@
-"""FastAPI backend for serving gold layer data.
+"""FastAPI backend for serving metrics.
 
 This API provides endpoints for accessing processed electrification data
-from the gold layer for visualization in dashboards.
+from the metrics layer for visualization in dashboards.
 """
 
 import pandas as pd

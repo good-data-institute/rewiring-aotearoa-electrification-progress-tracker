@@ -87,9 +87,6 @@ def check_directories():
     settings = get_settings()
     directories = [
         settings.data_dir,
-        settings.bronze_dir,
-        settings.silver_dir,
-        settings.gold_dir,
     ]
 
     all_ok = True
@@ -112,9 +109,6 @@ def check_env_file():
 
     required_vars = [
         "DATA_DIR",
-        "BRONZE_DIR",
-        "SILVER_DIR",
-        "GOLD_DIR",
         "BACKEND_HOST",
         "BACKEND_PORT",
     ]

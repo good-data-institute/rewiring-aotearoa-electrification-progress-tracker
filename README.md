@@ -5,15 +5,7 @@ A minimal data engineering project for tracking electrification progress in Aote
 - Serving analytics via REST API
 - Visualizing data in interactive dashboards
 
-## 📖 Quick Links
-
-- **[QUICKSTART.md](docs/QUICKSTART.md)** - Daily commands reference
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System design and data flow
-- **[ETL_GUIDE.md](etl/ETL_GUIDE.md)** - ETL development patterns
-- **[PROJECT_SUMMARY.md](docs/PROJECT_SUMMARY.md)** - Project status and features
-
-## 🏗️ Key Features
-
+Key features:
 - **Dual ETL Approach**: Use DuckDB SQL and/or Pandas Python for transformations
 - **Multiple Data Sources**: EMI, EECA Energy, GIC
 - **REST API**: FastAPI backend serving processed data
@@ -115,20 +107,6 @@ pytest                    # Run tests
 ### Dual ETL Approach
 Write transformations using **DuckDB SQL** or **Pandas Python**:
 
-```python
-# Use SQL for aggregations
-query = """
-SELECT region, DATE_TRUNC('month', date) as month,
-       SUM(consumption) as total
-FROM read_csv_auto('data/silver/file.csv')
-GROUP BY region, month
-"""
-df = self.execute_query(query)
-
-# Use Pandas for business logic
-df['category'] = df['total'].apply(lambda x: 'High' if x > 1000 else 'Low')
-```
-
 See **[ETL_GUIDE.md](etl/ETL_GUIDE.md)** for comprehensive patterns and examples.
 
 ### Data Sources
@@ -138,9 +116,3 @@ See **[ETL_GUIDE.md](etl/ETL_GUIDE.md)** for comprehensive patterns and examples
 4. **EMI Generation**: Electricity generation by fuel type
 
 See **[ETL_IMPLEMENTATION_SUMMARY.md](docs/ETL_IMPLEMENTATION_SUMMARY.md)** for implementation details.
-
-## 🔌 API Endpoints
-
-- `GET /` - API info
-- `GET /health` - Health check
-- `GET /docs` - Interactive docs: http://localhost:8000/docs

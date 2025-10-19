@@ -11,10 +11,10 @@ from pathlib import Path
 import pandas as pd
 
 from etl.core.config import get_settings
-from etl.core.pipeline import AnalyticsLayer
+from etl.core.pipeline import MetricsLayer
 
 
-class DemoProcessor(AnalyticsLayer):
+class DemoProcessor(MetricsLayer):
     """Analytics processor for EMI Retail."""
 
     def process(self, input_path: Path, output_path: Path) -> None:

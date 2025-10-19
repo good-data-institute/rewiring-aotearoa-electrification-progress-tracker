@@ -1,8 +1,8 @@
 """Data processing layers for ETL pipelines.
 
 This module provides base classes for a 2-layer data architecture:
-- DataLayer: Extract from source + Transform/Clean
-- AnalyticsLayer: Business-ready analytics and aggregations
+- ProcessedLayer: Extract from source + Transform/Clean
+- MetricsLayer: Business-ready analytics and aggregations
 """
 
 from abc import ABC, abstractmethod
@@ -76,7 +76,7 @@ class BaseLayer(ABC):
         return result
 
 
-class DataLayer(BaseLayer):
+class ProcessedLayer(BaseLayer):
     """Data layer: Extract from source and transform/clean data.
 
     This layer combines data extraction and transformation:
@@ -102,7 +102,7 @@ class DataLayer(BaseLayer):
         raise NotImplementedError("Subclasses must implement process() method")
 
 
-class AnalyticsLayer(BaseLayer):
+class MetricsLayer(BaseLayer):
     """Analytics layer: Business-ready aggregated data.
 
     This layer creates analytics-ready data:

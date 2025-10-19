@@ -10,10 +10,10 @@ from pathlib import Path
 
 from etl.apis.emi_retail import EMIRetailAPI
 from etl.core.config import get_settings
-from etl.core.pipeline import DataLayer
+from etl.core.pipeline import ProcessedLayer
 
 
-class DemoIngester(DataLayer):
+class DemoIngester(ProcessedLayer):
     """Data processor for EMI Retail: Extract from API + Transform."""
 
     def __init__(

@@ -82,7 +82,7 @@ class EMIRetailAPI(HTTPAPIClient):
 
     Example usage:
         >>> api = EMIRetailAPI(DateFrom="20200101", DateTo="20240831")
-        >>> api.fetch_data(output_path=Path("data/bronze/emi_retail.csv"))
+        >>> api.fetch_data(output_path=Path("data/raw/emi_retail.csv"))
     """
 
     base_url = "https://www.emi.ea.govt.nz/Retail/Download/DataReport/CSV/{report_id}"

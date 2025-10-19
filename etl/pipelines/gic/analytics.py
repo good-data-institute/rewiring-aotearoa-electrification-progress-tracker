@@ -7,10 +7,10 @@ monthly new gas connections by region.
 from pathlib import Path
 
 from etl.core.config import get_settings
-from etl.core.pipeline import AnalyticsLayer
+from etl.core.pipeline import MetricsLayer
 
 
-class GICGasConnectionsAnalytics(AnalyticsLayer):
+class GICGasConnectionsAnalytics(MetricsLayer):
     """Analytics processor for gas connections aggregation."""
 
     def process(self, input_path: Path, output_path: Path) -> None:
