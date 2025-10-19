@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from etl.core.base_api import BaseAPIClient
+from etl.core.http_api import HTTPAPIClient
 
 
 class EMIRetailParams(BaseModel):
@@ -74,7 +74,7 @@ class EMIRetailParams(BaseModel):
         populate_by_name = True  # Allow using both field name and alias
 
 
-class EMIRetailAPI(BaseAPIClient):
+class EMIRetailAPI(HTTPAPIClient):
     """API client for EMI Retail electricity market data.
 
     This client fetches electricity market data from the New Zealand
