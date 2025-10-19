@@ -1,42 +1,49 @@
-"""Configuration management using Pydantic Settings."""
+"""Configuration management using environment variables."""
 
+import os
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
-class Settings(BaseSettings):
+class Settings:
     """Project-wide settings loaded from .env file."""
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    def __init__(self):
+        """Initialize settings from environment variables and create data directories."""
+        # Data directories
+        self.data_dir = Path(os.getenv("DATA_DIR", "./data"))
+        self.bronze_dir = Path(os.getenv("BRONZE_DIR", "./data/bronze"))
+        self.silver_dir = Path(os.getenv("SILVER_DIR", "./data/silver"))
+        self.gold_dir = Path(os.getenv("GOLD_DIR", "./data/gold"))
 
-    # Data directories
-    data_dir: Path = Path("./data")
-    bronze_dir: Path = Path("./data/bronze")
-    silver_dir: Path = Path("./data/silver")
-    gold_dir: Path = Path("./data/gold")
+        # API settings
+        self.api_timeout = int(os.getenv("API_TIMEOUT", "30"))
+        self.api_retry_attempts = int(os.getenv("API_RETRY_ATTEMPTS", "3"))
 
-    # API settings
-    api_timeout: int = 30
-    api_retry_attempts: int = 3
+        # Backend settings
+        self.backend_host = os.getenv("BACKEND_HOST", "localhost")
+        self.backend_port = int(os.getenv("BACKEND_PORT", "8000"))
 
-    # Backend settings
-    backend_host: str = "localhost"
-    backend_port: int = 8000
+        # Frontend settings
+        self.streamlit_port = int(os.getenv("STREAMLIT_PORT", "8501"))
+        self.shiny_port = int(os.getenv("SHINY_PORT", "8502"))
 
-    # Frontend settings
-    streamlit_port: int = 8501
-    shiny_port: int = 8502
-
-    def __init__(self, **kwargs):
-        """Initialize settings and create data directories."""
-        super().__init__(**kwargs)
+        # Create directories
         self._create_directories()
 
     def _create_directories(self) -> None:
         """Create data directories if they don't exist."""
-        for directory in [self.data_dir, self.bronze_dir, self.silver_dir, self.gold_dir]:
+        for directory in [
+            self.data_dir,
+            self.bronze_dir,
+            self.silver_dir,
+            self.gold_dir,
+        ]:
             directory.mkdir(parents=True, exist_ok=True)
 
 

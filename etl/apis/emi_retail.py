@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 from etl.core.base_api import BaseAPIClient
 
 
-# TODO: Update this model with all valid parameters and options
 class EMIRetailParams(BaseModel):
     """Parameters for EMI Retail API with explicit valid options.
 

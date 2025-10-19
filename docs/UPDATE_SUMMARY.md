@@ -156,7 +156,7 @@ class MyProcessor(GoldLayer):
         FROM read_csv_auto('{input_path}')
         GROUP BY region
         """
-        df = self.execute_duckdb_query(query)
+        df = self.execute_query(query)
         self.write_csv(df, output_path)
 ```
 
@@ -170,7 +170,7 @@ class MyProcessor(GoldLayer):
         FROM read_csv_auto('{input_path}')
         GROUP BY region, date
         """
-        df = self.execute_duckdb_query(query)
+        df = self.execute_query(query)
 
         # Python for business logic
         df['category'] = df['total'].apply(

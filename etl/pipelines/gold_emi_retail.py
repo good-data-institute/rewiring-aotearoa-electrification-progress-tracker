@@ -72,7 +72,7 @@ class EMIRetailGoldProcessor(GoldLayer):
         # """
 
         try:
-            gold_df = self.execute_duckdb_query(aggregation_query)
+            gold_df = self.execute_query(aggregation_query)
             print(f"   ✓ SQL aggregation successful: {len(gold_df)} rows")
         except Exception as e:
             print(f"   ⚠ SQL aggregation failed ({e}), using pandas instead")

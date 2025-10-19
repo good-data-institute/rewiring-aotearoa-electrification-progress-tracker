@@ -1,0 +1,3 @@
+- Update APIs with all valid parameters and options
+- Add S3 read/write
+- Create infra and move env variables into render.yaml (also needs to work for local though)

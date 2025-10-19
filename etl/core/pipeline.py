@@ -48,9 +48,7 @@ class MedallionLayer(ABC):
         df.to_csv(path, index=False)
         print(f"Data written to: {path}")
 
-    def execute_duckdb_query(
-        self, query: str, input_path: Path | None = None
-    ) -> pd.DataFrame:
+    def execute_query(self, query: str, input_path: Path | None = None) -> pd.DataFrame:
         """Execute a DuckDB query and return results as DataFrame.
 
         Args:

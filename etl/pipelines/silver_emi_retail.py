@@ -70,7 +70,7 @@ class EMIRetailSilverProcessor(SilverLayer):
         # FROM read_csv_auto('{temp_path}')
         # """
 
-        # quality_results = self.execute_duckdb_query(quality_check_query)
+        # quality_results = self.execute_query(quality_check_query)
         # print("\nData Quality Metrics:")
         # print(quality_results)
 
@@ -85,7 +85,7 @@ class EMIRetailSilverProcessor(SilverLayer):
         # FROM read_csv_auto('{temp_path}')
         # """
 
-        # stats = self.execute_duckdb_query(column_stats_query)
+        # stats = self.execute_query(column_stats_query)
         # print(stats)
 
         # # Clean up temp file

@@ -25,7 +25,7 @@ SELECT region, DATE_TRUNC('month', date) as month,
 FROM read_csv_auto('data/silver/file.csv')
 GROUP BY region, month
 """
-df = self.execute_duckdb_query(query)
+df = self.execute_query(query)
 
 # Then use Pandas for business logic
 df['category'] = df['total'].apply(lambda x: 'High' if x > 1000 else 'Low')
@@ -349,7 +349,7 @@ class MyProcessor(SilverLayer):
         GROUP BY date, region
         ORDER BY date DESC
         """
-        df = self.execute_duckdb_query(query)
+        df = self.execute_query(query)
 
         # Continue with Pandas if needed
         df['calculated_field'] = df['total_consumption'] * df['avg_price']
