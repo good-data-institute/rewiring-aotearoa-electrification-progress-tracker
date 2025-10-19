@@ -89,16 +89,6 @@ def fetch_data(limit: int = 20, offset: int = 0, test=True):
             return None
 
 
-# def fetch_summary():
-#     """Fetch summary statistics from the backend API."""
-#     try:
-#         response = requests.get(f"{API_BASE_URL}/api/emi-retail/summary", timeout=10)
-#         response.raise_for_status()
-#         return response.json()
-#     except requests.RequestException as e:
-#         st.error(f"Error fetching summary: {e}")
-#         return None
-
 # Check backend status
 if not check_backend_health():
     st.error(
@@ -110,23 +100,6 @@ if not check_backend_health():
 
 # Backend is healthy
 st.success(f"✓ Connected to backend at {API_BASE_URL}")
-
-# Fetch and display summary
-# with st.expander("📊 Summary Statistics", expanded=False):
-# summary = fetch_summary()
-# if summary:
-#     col1, col2, col3 = st.columns(3)
-#     with col1:
-#         st.metric("Total Rows", summary.get("total_rows", "N/A"))
-#     with col2:
-#         st.metric("Total Columns", summary.get("total_columns", "N/A"))
-#     with col3:
-#         st.metric("Columns", len(summary.get("columns", [])))
-
-#     st.subheader("Sample Data (First 5 Rows)")
-#     if "sample_data" in summary and summary["sample_data"]:
-#         sample_df = pd.DataFrame(summary["sample_data"])
-#         st.dataframe(sample_df, use_container_width=True)
 
 # Fetch and display main data
 st.header("Electricity Market Data")

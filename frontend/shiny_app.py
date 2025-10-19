@@ -66,16 +66,6 @@ def fetch_data(limit: int = 40, offset: int = 0, test=True):
             return {"error": str(e)}
 
 
-# def fetch_summary():
-#     """Fetch summary statistics from the backend API."""
-#     try:
-#         response = requests.get(f"{API_BASE_URL}/api/emi-retail/summary", timeout=10)
-#         response.raise_for_status()
-#         return response.json()
-#     except requests.RequestException as e:
-#         return {"error": str(e)}
-
-
 # UI Definition
 app_ui = ui.page_fluid(
     ui.panel_title("⚡ Rewiring Aotearoa Electrification Progress Tracker"),

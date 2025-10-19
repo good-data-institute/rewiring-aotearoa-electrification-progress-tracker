@@ -1,7 +1,7 @@
 """Analytics: EMI Retail analytics pipeline.
 
 This script creates business-ready analytics from processed data:
-- Aggregations and summary statistics
+- Aggregations and transformations
 - Business logic and calculated metrics
 - Data optimized for dashboard consumption
 """
@@ -107,7 +107,6 @@ class DemoProcessor(AnalyticsLayer):
         print("\n[3/3] Saving analytics...")
         self.write_csv(analytics_df, output_path)
 
-        # Summary statistics
         print(f"\n{'='*80}")
         print("✓ COMPLETED: Analytics ready")
         print(f"  Rows: {len(analytics_df)}")

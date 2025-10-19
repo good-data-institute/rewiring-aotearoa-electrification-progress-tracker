@@ -107,14 +107,6 @@ class DemoIngester(DataLayer):
         if temp_path.exists():
             temp_path.unlink()
 
-        # Summary
-        print(f"\n{'='*80}")
-        print("✓ COMPLETED: Processed data ready")
-        print(f"  Rows: {len(df)}")
-        print(f"  Columns: {len(df.columns)}")
-        print(f"  Output: {output_path}")
-        print(f"{'='*80}\n")
-
 
 def main():
     """Main function to run the extract and transform pipeline."""

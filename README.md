@@ -397,7 +397,6 @@ The FastAPI backend provides:
 - `GET /health` - Health check and data availability
 - `GET /api/emi-retail` - Get paginated electricity data
   - Query params: `limit` (default: 100), `offset` (default: 0)
-- `GET /api/emi-retail/summary` - Get summary statistics
 
 ### Dashboard Features
 
@@ -405,7 +404,6 @@ Both dashboards provide:
 
 - Connection status to backend API
 - Paginated data viewing
-- Summary statistics
 - Data download as CSV
 - Responsive layout
 

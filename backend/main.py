@@ -99,47 +99,6 @@ async def get_emi_retail_data(limit: int = 40, offset: int = 0):
         raise HTTPException(status_code=500, detail=f"Error reading data: {str(e)}")
 
 
-@app.get("/api/emi-retail/summary")
-async def get_emi_retail_summary():
-    """Get summary statistics for EMI retail data.
-
-    Returns:
-        JSON with summary statistics
-    """
-    analytics_data_path = settings.analytics_dir / "emi" / "emi_retail_analytics.csv"
-
-    # Check if data exists
-    if not analytics_data_path.exists():
-        raise HTTPException(
-            status_code=404,
-            detail="Analytics data not found. Please run ETL pipeline first.",
-        )
-
-    try:
-        # Read data
-        df = pd.read_csv(analytics_data_path)
-
-        # Generate summary statistics
-        summary = {
-            "total_rows": len(df),
-            "total_columns": len(df.columns),
-            "columns": list(df.columns),
-            "sample_data": df.head(5).to_dict(orient="records"),
-        }
-
-        # Add numeric column statistics if available
-        numeric_cols = df.select_dtypes(include=["int64", "float64"]).columns
-        if len(numeric_cols) > 0:
-            summary["numeric_summary"] = df[numeric_cols].describe().to_dict()
-
-        return summary
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error generating summary: {str(e)}"
-        )
-
-
 if __name__ == "__main__":
     import uvicorn
 

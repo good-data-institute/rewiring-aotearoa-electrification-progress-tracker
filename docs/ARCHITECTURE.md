@@ -28,7 +28,7 @@ flowchart TB
 
     subgraph "API SERVING - Backend"
         Gold2["Gold Layer"]
-        FastAPI["FastAPI Backend<br/><br/>backend/main.py<br/>Endpoints:<br/>- GET /<br/>- GET /health<br/>- GET /api/emi-retail<br/>- GET /api/.../summary"]
+        FastAPI["FastAPI Backend<br/><br/>backend/main.py<br/>Endpoints:<br/>- GET /<br/>- GET /health<br/>- GET /api/emi-retail<br/>"]
         HTTP["HTTP Response<br/>(JSON)<br/><br/>localhost:8000"]
 
         Gold2 -->|"Read CSV"| FastAPI
@@ -39,7 +39,7 @@ flowchart TB
         Backend["FastAPI Backend"]
         Streamlit["Streamlit<br/>Dashboard<br/>:8501"]
         Shiny["Shiny<br/>Dashboard<br/>:8502"]
-        Browser["User's Web Browser<br/>- Data tables<br/>- Summary stats<br/>- CSV downloads<br/>- Interactive controls"]
+        Browser["User's Web Browser<br/>- Data tables<br/>- CSV downloads<br/>- Interactive controls"]
 
         Backend -->|"HTTP GET"| Streamlit
         Backend -->|"HTTP GET"| Shiny

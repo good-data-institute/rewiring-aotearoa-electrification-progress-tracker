@@ -80,7 +80,7 @@ rewiring-aotearoa-electrification-progress-tracker/
 - **Streamlit Dashboard**: Modern, interactive data visualization
 - **Shiny for Python Dashboard**: Alternative framework option
 - Both connect to FastAPI backend
-- Features: data tables, summary stats, CSV download
+- Features: data tables, CSV download
 
 ### 5. Development Tools ✅
 - **UV Package Manager**: Fast, modern Python package management
