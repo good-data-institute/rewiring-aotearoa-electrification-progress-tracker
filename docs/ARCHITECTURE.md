@@ -1,8 +1,9 @@
-# Data Flow Visualization
+# System Architecture
 
-This document shows the complete data flow through the system using a **2-layer architecture**.
 
-## Data Flow Architecture
+This document describes the system design, data flow, and technical architecture.
+
+## Data Flow Visualization
 
 ```mermaid
 flowchart TB
@@ -128,18 +129,72 @@ flowchart TB
     class Backend,Frontend,Display serverStyle
 ```
 
-## Extensibility Points
+## Technology Stack by Layer
 
-**Add New Data Source:**
-1. Create `etl/pipelines/<source_name>/` directory
-2. `etl/apis/<source_name>.py` (API client + Pydantic model)
-3. `etl/pipelines/<source_name>/extract_transform.py` (extract & transform to silver)
-4. `etl/pipelines/<source_name>/analytics.py` (create gold layer analytics)
-5. `backend/main.py` (add endpoint)
-6. `frontend/*.py` (update dashboards)
+**Silver (Extract & Transform):**
+- HTTP Client: `requests`
+- Validation: `Pydantic`
+- Data Processing: `Pandas`, `DuckDB`
+- Storage: CSV files
 
-**Customize Processing:**
-- Override DataLayer.process() for extract & transform
-- Override AnalyticsLayer.process() for analytics
-- Add custom DuckDB queries for SQL-based transformations
-- Implement business logic in analytics layer with Pandas
+**Gold (Analytics):**
+- Data Processing: `Pandas`, `DuckDB`
+- Storage: CSV files
+
+**Backend:**
+- API Framework: `FastAPI`
+- Server: `Uvicorn` (ASGI)
+- Data Reading: `Pandas`
+
+**Frontend:**
+- Dashboards: `Streamlit`, `Shiny for Python`
+- HTTP Client: `requests`
+
+**Configuration & Quality:**
+- Settings: `Pydantic Settings`, `python-dotenv`
+- Code Quality: `Ruff`, `Pre-commit`
+- Package Manager: `uv`
+
+## Configuration Flow
+
+```mermaid
+flowchart LR
+    ENV[".env"] --> DotEnv["python-dotenv"]
+    DotEnv --> Components["All Components"]
+
+    Git["Git Commit"] --> PreCommit["Pre-commit Hooks"]
+    PreCommit --> Ruff["Ruff (lint/format)"]
+
+    PyProject["pyproject.toml"] --> UV["UV"]
+    UV --> VEnv["Virtual Environment"]
+
+    classDef configStyle fill:#e6f3ff,stroke:#4d94ff,stroke-width:2px
+    class ENV,DotEnv,Components,Git,PreCommit,Ruff,PyProject,UV,VEnv configStyle
+```
+
+## Extensibility
+
+### Adding New Data Source
+
+1. **API Client**: Create `etl/apis/<source>.py`
+   - Inherit from `BaseAPIClient`
+   - Define Pydantic parameter model
+
+2. **Pipelines**: Create `etl/pipelines/<source>/`
+   - `extract_transform.py` → Silver layer (cleaning)
+   - `analytics.py` → Gold layer (aggregations)
+
+3. **Backend**: Add endpoint in `backend/main.py`
+   - Read gold CSV
+   - Serve as JSON
+
+4. **Frontend**: Update dashboards
+   - Add visualizations in `frontend/streamlit_app.py`
+   - Add visualizations in `frontend/shiny_app.py`
+
+### Customizing Processing
+
+- **Silver Layer**: Override `DataLayer.process()` for extract & transform
+- **Gold Layer**: Override `AnalyticsLayer.process()` for analytics
+- **SQL Queries**: Add custom DuckDB queries for SQL-based transformations
+- **Business Logic**: Implement in analytics layer with Pandas

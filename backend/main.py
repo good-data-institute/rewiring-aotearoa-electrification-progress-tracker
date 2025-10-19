@@ -39,19 +39,6 @@ async def root():
     }
 
 
-@app.get("/health")
-async def health_check():
-    """Health check endpoint - checks if docs endpoint is alive."""
-    try:
-        # Check if the docs endpoint (/) is working
-        await root()
-        return {
-            "status": "healthy",
-        }
-    except Exception as e:
-        raise HTTPException(status_code=503, detail=f"Service unhealthy: {str(e)}")
-
-
 @app.get("/api/emi-retail")
 async def get_emi_retail_data(limit: int = 40, offset: int = 0):
     """Get EMI retail electricity data from analytics.

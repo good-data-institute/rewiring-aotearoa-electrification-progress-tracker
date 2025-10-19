@@ -1,6 +1,7 @@
 # ETL Development Guide
 
 A comprehensive guide for building ETL pipelines using **DuckDB SQL** and **Pandas Python** in a 2-layer architecture.
+
 ## 📋 Table of Contents
 
 - [Philosophy](#-philosophy)
@@ -756,5 +757,80 @@ COVAR_POP(col1, col2)
 
 ---
 
-**Last Updated:** October 2025
-**Maintainer:** Good Data Institute
+## Data Sources & Implementation
+
+### 1. EECA Energy Consumption (Energy End Use Database)
+
+**Source**: Energy Efficiency and Conservation Authority (EECA)
+- URL: `https://www.eeca.govt.nz/assets/EECA-Resources/Research-papers-guides/EEUD-Data-2017-2023.xlsx`
+- Format: Excel file with energy consumption by sector and fuel type
+
+**Files Created**:
+- API: `etl/apis/eeca.py` - Fetches Excel file from EECA
+- Extract/Transform: `etl/pipelines/eeca/extract_transform.py` - Cleans and standardizes data
+  - Fuel type mapping (Electricity, Petrol, Diesel, Coal, Wood, Other)
+  - Date extraction (year from periodEndDate)
+  - Configurable year range filtering
+- Analytics: `etl/pipelines/eeca/analytics.py` - Calculates electricity percentage
+  - Computes electricity share of total energy consumption by year
+  - Metric: `_13_P1_ElecCons` (percentage)
+
+**Key Features**:
+- Optional year_from/year_to filtering
+- Standardized fuel categories
+- Missing value reporting
+
+---
+
+### 2. GIC Gas Connections (Gas Industry Company)
+
+**Source**: Gas Industry Company Registry Statistics
+- URL: `https://weblink.blob.core.windows.net/%24web/RegistryStats.xlsx`
+- Format: Excel with "By Gas Gate" and "Gate Region" sheets
+
+**Files**:
+- API: `etl/apis/gic.py`
+- Extract/Transform: `etl/pipelines/gic/extract_transform.py`
+- Analytics: `etl/pipelines/gic/analytics.py`
+
+**Features**:
+- Regional mapping via concordance sheet
+- Date filtering (year/month)
+- Invalid gas gate filtering
+
+**Metrics**:
+- `_10_P1_Gas`: Monthly new gas connections by region
+
+---
+
+### 3. EMI Electricity Generation
+
+**Source**: Electricity Market Information (EMI) - Azure Blob Storage
+- Container: `https://emidatasets.blob.core.windows.net/publicdata`
+- Path: `Datasets/Wholesale/Generation/Generation_MD/`
+- Format: Multiple CSV files (one per month, 2020-2025)
+- Concordance: POC to Region mapping from EMI API
+
+**Files Created**:
+- API: `etl/apis/emi_generation.py` - Azure Blob Storage client
+  - Scans blob container for Generation_MD CSV files
+  - Filters by year range
+  - Fetches POC-to-Region concordance data
+  - Custom implementation (not using BaseAPIClient due to blob storage)
+- Extract/Transform: `etl/pipelines/emi_generation/extract_transform.py` - Processes generation data
+  - Concatenates multiple CSV files
+  - Joins with POC-to-Region concordance
+  - Classifies renewable vs non-renewable fuel types
+  - Sums trading periods (TP1-TP48) into total kWh
+  - Drops trading period columns to reduce size
+  - Configurable year range (year_from, year_to)
+- Analytics: `etl/pipelines/emi_generation/analytics.py` - Calculates renewable share
+  - Monthly renewable generation percentage by region
+  - Metric: `_12_P1_EnergyRenew` (share of renewable generation)
+
+**Key Features**:
+- Azure Blob Storage integration with azure-storage-blob library
+- Multi-file concatenation
+- Regional concordance handling within pipeline
+- Renewable fuel classification (Hydro, Wind, Solar, Wood, Geo, etc.)
+- Trading period aggregation
