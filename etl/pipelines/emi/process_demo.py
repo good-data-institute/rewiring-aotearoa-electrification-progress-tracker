@@ -14,7 +14,7 @@ from etl.core.config import get_settings
 from etl.core.pipeline import AnalyticsLayer
 
 
-class EMIRetailAnalyticsProcessor(AnalyticsLayer):
+class DemoProcessor(AnalyticsLayer):
     """Analytics layer processor for EMI Retail (Gold layer)."""
 
     def process(self, input_path: Path, output_path: Path) -> None:
@@ -135,7 +135,7 @@ def main():
         return
 
     # Create processor and run
-    processor = EMIRetailAnalyticsProcessor()
+    processor = DemoProcessor()
 
     try:
         processor.process(input_path, output_path)

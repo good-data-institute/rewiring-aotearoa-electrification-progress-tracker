@@ -15,7 +15,7 @@ from etl.core.config import get_settings
 from etl.core.pipeline import DataLayer
 
 
-class EMIRetailDataProcessor(DataLayer):
+class DemoIngester(DataLayer):
     """Data layer processor for EMI Retail: Extract from API + Transform."""
 
     def __init__(
@@ -127,7 +127,7 @@ def main():
 
     # Create processor with default parameters
     # Customize these parameters as needed for different date ranges or filters
-    processor = EMIRetailDataProcessor(
+    ingester = DemoIngester(
         report_id="GUEHMT",
         capacity="All_Drilldown",
         date_from="20250801",
@@ -138,7 +138,7 @@ def main():
 
     # Run the extract and transform process
     try:
-        processor.process(input_path=None, output_path=output_path)
+        ingester.process(input_path=None, output_path=output_path)
     except Exception as e:
         print(f"\n✗ Extract & Transform failed: {e}")
         raise
