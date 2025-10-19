@@ -15,9 +15,8 @@ class Settings:
 
     def __init__(self):
         """Initialize settings from environment variables and create data directories."""
-        # Data directories
+        # Data directories (2-layer architecture: Silver + Gold)
         self.data_dir = Path(os.getenv("DATA_DIR", "./data"))
-        self.bronze_dir = Path(os.getenv("BRONZE_DIR", "./data/bronze"))
         self.silver_dir = Path(os.getenv("SILVER_DIR", "./data/silver"))
         self.gold_dir = Path(os.getenv("GOLD_DIR", "./data/gold"))
 
@@ -38,12 +37,7 @@ class Settings:
 
     def _create_directories(self) -> None:
         """Create data directories if they don't exist."""
-        for directory in [
-            self.data_dir,
-            self.bronze_dir,
-            self.silver_dir,
-            self.gold_dir,
-        ]:
+        for directory in [self.data_dir, self.silver_dir, self.gold_dir]:
             directory.mkdir(parents=True, exist_ok=True)
 
 

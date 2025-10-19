@@ -47,7 +47,7 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    gold_data_path = settings.gold_dir / "emi_retail" / "emi_retail_analytics.csv"
+    gold_data_path = settings.gold_dir / "emi" / "emi_retail_analytics.csv"
     data_available = gold_data_path.exists()
 
     return {
@@ -68,7 +68,7 @@ async def get_emi_retail_data(limit: int = 40, offset: int = 0):
     Returns:
         JSON with data and metadata
     """
-    gold_data_path = settings.gold_dir / "emi_retail" / "emi_retail_analytics.csv"
+    gold_data_path = settings.gold_dir / "emi" / "emi_retail_analytics.csv"
 
     # Check if data exists
     if not gold_data_path.exists():
@@ -111,7 +111,7 @@ async def get_emi_retail_summary():
     Returns:
         JSON with summary statistics
     """
-    gold_data_path = settings.gold_dir / "emi_retail" / "emi_retail_analytics.csv"
+    gold_data_path = settings.gold_dir / "emi" / "emi_retail_analytics.csv"
 
     # Check if data exists
     if not gold_data_path.exists():

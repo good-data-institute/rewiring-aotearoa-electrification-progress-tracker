@@ -1,6 +1,15 @@
 # ETL Development Guide
 
-A comprehensive guide for building ETL pipelines using **DuckDB SQL** and **Pandas Python** in the medallion architecture.
+A comprehensive guide for building ETL pipelines using **DuckDB SQL** and **Pandas Python** in a 2-layer architecture.
+
+> **⚠️ Architecture Note:** This project uses a **2-layer architecture**:
+> - **Silver Layer (Data)**: Extract from source + Transform/Clean using `DataLayer` class
+> - **Gold Layer (Analytics)**: Business analytics using `AnalyticsLayer` class
+>
+> Legacy class names `SilverLayer` and `GoldLayer` are still supported for backward compatibility.
+>
+> **Code examples in this guide may reference the old 3-layer (Bronze/Silver/Gold) architecture.**
+> **For current 2-layer examples, see `etl/pipelines/emi/` directory.**
 
 ## 📋 Table of Contents
 
@@ -18,8 +27,10 @@ A comprehensive guide for building ETL pipelines using **DuckDB SQL** and **Pand
 
 ## 🎯 Philosophy
 
-This project supports **both SQL and Python** for ETL transformations:
+This project uses a **2-layer architecture** with both SQL and Python for ETL transformations:
 
+- **Silver Layer (Data)**: Extract from sources + Transform/Clean → `DataLayer`
+- **Gold Layer (Analytics)**: Business-ready aggregations and metrics → `AnalyticsLayer`
 - **Use SQL (DuckDB)** for: Set-based operations, aggregations, joins, filtering
 - **Use Python (Pandas)** for: Complex business logic, API calls, iterative processing
 - **Mix both**: Start with SQL for data shaping, then use Pandas for final touches
@@ -30,37 +41,32 @@ This project supports **both SQL and Python** for ETL transformations:
 
 ```mermaid
 flowchart LR
-    Bronze["Bronze<br/>(Raw)"]
-    Silver["Silver<br/>(Clean)"]
-    Gold["Gold<br/>(Analytics)"]
+    Source["Data Source<br/>(API/File)"]
+    Silver["Silver Layer<br/>(Extract & Transform)"]
+    Gold["Gold Layer<br/>(Analytics)"]
 
-    Bronze --> Silver
+    Source --> Silver
     Silver --> Gold
 
-    BronzeTools["SQL and/or Python"]
-    SilverTools["SQL and/or Python"]
-    GoldTools["SQL and/or Python"]
+    SilverTools["SQL and/or Python<br/>DataLayer"]
+    GoldTools["SQL and/or Python<br/>AnalyticsLayer"]
 
-    Bronze -.-> BronzeTools
     Silver -.-> SilverTools
     Gold -.-> GoldTools
 
-    classDef bronzeStyle color:#000000,fill:#f4a460,stroke:#8b4513,stroke-width:2px
     classDef silverStyle color:#000000,fill:#c0c0c0,stroke:#808080,stroke-width:2px
     classDef goldStyle color:#000000,fill:#ffd700,stroke:#b8860b,stroke-width:2px
     classDef toolStyle color:#000000,fill:#e6f3ff,stroke:#4d94ff,stroke-width:2px,stroke-dasharray: 5 5
 
-    class Bronze bronzeStyle
-    class Silver silverStyle
+    class Source,Silver silverStyle
     class Gold goldStyle
-    class BronzeTools,SilverTools,GoldTools toolStyle
+    class SilverTools,GoldTools toolStyle
 ```
 
-### Medallion Layers
+### Data Layers
 
-- **Bronze**: Raw data from APIs/sources (minimal processing)
-- **Silver**: Cleaned, validated, deduplicated data
-- **Gold**: Business-ready analytics and aggregations
+- **Silver (Data)**: Extract from source API/files + Clean/Transform (single step)
+- **Gold (Analytics)**: Business-ready analytics and aggregations
 
 ---
 
