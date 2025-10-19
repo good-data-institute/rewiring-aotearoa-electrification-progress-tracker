@@ -877,7 +877,7 @@ def main():
     eeca_analytics = EECAElectricityPercentageAnalytics()
     eeca_analytics.process(
         input_path=settings.processed_dir / "eeca" / "eeca_energy_consumption_cleaned.csv",
-        output_path=settings.analytics_dir / "eeca" / "eeca_electricity_percentage.csv"
+        output_path=settings.metrics_dir / "eeca" / "eeca_electricity_percentage.csv"
     )
 
     # GIC
@@ -890,7 +890,7 @@ def main():
     gic_analytics = GICGasConnectionsAnalytics()
     gic_analytics.process(
         input_path=settings.processed_dir / "gic" / "gic_gas_connections_cleaned.csv",
-        output_path=settings.analytics_dir / "gic" / "gic_gas_connections_analytics.csv"
+        output_path=settings.metrics_dir / "gic" / "gic_gas_connections_analytics.csv"
     )
 
     # EMI Generation
@@ -903,7 +903,7 @@ def main():
     emi_analytics = EMIGenerationAnalytics()
     emi_analytics.process(
         input_path=settings.processed_dir / "emi_generation" / "emi_generation_cleaned.csv",
-        output_path=settings.analytics_dir / "emi_generation" / "emi_generation_analytics.csv"
+        output_path=settings.metrics_dir / "emi_generation" / "emi_generation_analytics.csv"
     )
 
     print("All pipelines completed!")

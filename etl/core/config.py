@@ -17,8 +17,9 @@ class Settings:
         """Initialize settings from environment variables and create data directories."""
         # Data directories
         self.data_dir = Path(os.getenv("DATA_DIR", "./data"))
+        self.raw_dir = Path(os.getenv("RAW_DIR", "./data/raw"))
         self.processed_dir = Path(os.getenv("PROCESSED_DIR", "./data/processed"))
-        self.analytics_dir = Path(os.getenv("ANALYTICS_DIR", "./data/analytics"))
+        self.metrics_dir = Path(os.getenv("METRICS_DIR", "./data/metrics"))
 
         # API settings
         self.api_timeout = int(os.getenv("API_TIMEOUT", "30"))
@@ -37,7 +38,12 @@ class Settings:
 
     def _create_directories(self) -> None:
         """Create data directories if they don't exist."""
-        for directory in [self.data_dir, self.processed_dir, self.analytics_dir]:
+        for directory in [
+            self.data_dir,
+            self.raw_dir,
+            self.processed_dir,
+            self.metrics_dir,
+        ]:
             directory.mkdir(parents=True, exist_ok=True)
 
 

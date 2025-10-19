@@ -1,7 +1,7 @@
-"""Extract and Transform: EECA Energy Consumption data pipeline.
+"""Transform: EECA Energy Consumption data pipeline.
 
-This script handles the complete data processing:
-1. Extracts raw data from EECA Energy End Use Database (Excel file)
+This script handles data transformation:
+1. Reads raw Excel data from raw storage
 2. Cleans and transforms the data
 3. Saves processed data as CSV
 """
@@ -16,15 +16,15 @@ from etl.core.config import get_settings
 from etl.core.pipeline import ProcessedLayer
 
 
-class EECAEnergyConsumptionProcessor(ProcessedLayer):
-    """Data processor for EECA Energy Consumption: Extract from API + Transform."""
+class EECAEnergyConsumptionTransformer(ProcessedLayer):
+    """Data transformer for EECA Energy Consumption: Transform raw data to processed."""
 
     def __init__(
         self,
         year_from: int = None,
         year_to: int = None,
     ):
-        """Initialize processor with optional date range filters.
+        """Initialize transformer with optional date range filters.
 
         Args:
             year_from: Start year for filtering (optional, applied during processing)
@@ -36,37 +36,32 @@ class EECAEnergyConsumptionProcessor(ProcessedLayer):
         self.year_to = year_to
 
     def process(self, input_path: Path, output_path: Path) -> None:
-        """Extract from API and transform EECA energy consumption data.
+        """Transform raw Excel data to processed CSV format.
 
         Args:
-            input_path: Not used (data comes from API)
+            input_path: Path to raw Excel file
             output_path: Path to save processed CSV file
         """
         print(f"\n{'='*80}")
-        print("EECA ENERGY CONSUMPTION: Extract & Transform")
+        print("EECA ENERGY CONSUMPTION: Transform Raw to Processed")
         print(f"{'='*80}")
 
-        # Step 1: Extract from API
-        print("\n[1/3] Extracting data from EECA Energy End Use Database...")
-        print(f"      URL: {self.api.params.url}")
+        # Step 1: Load raw data
+        print("\n[1/3] Loading raw Excel data...")
+        print(f"      Input: {input_path}")
 
-        # Fetch Excel file
-        excel_data = self.api.fetch_data()
-        print("      ✓ Excel file downloaded")
+        with open(input_path, "rb") as f:
+            excel_data = f.read()
 
-        # Step 2: Load and transform
-        print("\n[2/3] Loading and transforming data...")
-
-        # Load Excel into pandas
         df = pd.read_excel(BytesIO(excel_data), sheet_name=self.api.params.sheet_name)
-        print(f"      Loaded {len(df)} rows, {len(df.columns)} columns")
+        print(f"      ✓ Loaded {len(df)} rows, {len(df.columns)} columns")
 
         # Display sample
-        print("\n      Sample data (first 3 rows):")
+        print("\n      Sample raw data (first 3 rows):")
         print(df.head(3).to_string(index=False))
 
-        # Data cleaning and transformation
-        print("\n      Applying transformations:")
+        # Step 2: Data cleaning and transformation
+        print("\n[2/3] Applying transformations:")
 
         # Standardize fuel categories
         fuel_map = {
@@ -122,34 +117,43 @@ class EECAEnergyConsumptionProcessor(ProcessedLayer):
 
         # Step 3: Save processed data
         print("\n[3/3] Saving processed data...")
+        print(f"      Output: {output_path}")
         self.write_csv(df, output_path)
 
-        print(f"\n✓ Processing complete: {len(df)} rows saved")
+        print(f"\n{'='*80}")
+        print(f"✓ Transformation complete: {len(df)} rows saved")
         print(f"  Years covered: {df['Year'].min()} - {df['Year'].max()}")
         print(f"  Categories: {', '.join(sorted(df['Category'].unique()))}")
+        print(f"{'='*80}\n")
 
 
 def main():
-    """Main function to run the extract and transform pipeline."""
+    """Main function to run the transform pipeline."""
     settings = get_settings()
 
-    # Define output path
+    # Define input (raw) and output (processed) paths
+    input_path = settings.raw_dir / "eeca" / "eeca_energy_consumption_raw.xlsx"
     output_path = (
         settings.processed_dir / "eeca" / "eeca_energy_consumption_cleaned.csv"
     )
 
-    # Create processor with optional date range
-    # Customize these parameters as needed for different date ranges
-    processor = EECAEnergyConsumptionProcessor(
+    # Check if raw data exists
+    if not input_path.exists():
+        print(f"\n✗ Raw data not found: {input_path}")
+        print("   Please run extract.py first to fetch raw data from API")
+        return
+
+    # Create transformer with optional date range
+    transformer = EECAEnergyConsumptionTransformer(
         year_from=2017,  # Optional: filter from this year
         year_to=2023,  # Optional: filter to this year
     )
 
-    # Run the extract and transform process
+    # Run the transformation process
     try:
-        processor.process(input_path=None, output_path=output_path)
+        transformer.process(input_path=input_path, output_path=output_path)
     except Exception as e:
-        print(f"\n✗ Extract & Transform failed: {e}")
+        print(f"\n✗ Transformation failed: {e}")
         raise
 
 

@@ -1,7 +1,7 @@
-"""Extract and Transform: GIC Gas Connections data pipeline.
+"""Transform: GIC Gas Connections data pipeline.
 
-This script handles the complete data processing:
-1. Extracts raw data from GIC Registry Statistics (Excel file)
+This script handles data transformation:
+1. Reads raw Excel data from raw storage
 2. Cleans and transforms the data with regional mapping
 3. Saves processed data as CSV
 """
@@ -16,8 +16,8 @@ from etl.core.config import get_settings
 from etl.core.pipeline import ProcessedLayer
 
 
-class GICGasConnectionsProcessor(ProcessedLayer):
-    """Data processor for GIC Gas Connections: Extract from API + Transform."""
+class GICGasConnectionsTransformer(ProcessedLayer):
+    """Data transformer for GIC Gas Connections: Transform raw data to processed."""
 
     def __init__(
         self,
@@ -26,7 +26,7 @@ class GICGasConnectionsProcessor(ProcessedLayer):
         month_from: int = None,
         month_to: int = None,
     ):
-        """Initialize processor with optional date range filters.
+        """Initialize transformer with optional date range filters.
 
         Args:
             year_from: Start year for filtering (optional)
@@ -42,48 +42,46 @@ class GICGasConnectionsProcessor(ProcessedLayer):
         self.month_to = month_to
 
     def process(self, input_path: Path, output_path: Path) -> None:
-        """Extract from API and transform GIC gas connections data.
+        """Transform raw Excel data to processed CSV format.
 
         Args:
-            input_path: Not used (data comes from API)
+            input_path: Path to raw Excel file
             output_path: Path to save processed CSV file
         """
         print(f"\n{'='*80}")
-        print("GIC GAS CONNECTIONS: Extract & Transform")
+        print("GIC GAS CONNECTIONS: Transform Raw to Processed")
         print(f"{'='*80}")
 
-        # Step 1: Extract from API
-        print("\n[1/4] Extracting data from GIC Registry Statistics...")
-        print(f"      URL: {self.api.params.url}")
+        # Step 1: Load raw data
+        print("\n[1/4] Loading raw Excel data...")
+        print(f"      Input: {input_path}")
 
-        # Fetch Excel file
-        excel_data = self.api.fetch_data()
-        print("      ✓ Excel file downloaded")
-
-        # Step 2: Load main data and concordance
-        print("\n[2/4] Loading data and regional concordance...")
+        with open(input_path, "rb") as f:
+            excel_data = f.read()
 
         # Load 'By Gas Gate' sheet
         df = pd.read_excel(BytesIO(excel_data), sheet_name=self.api.params.sheet_name)
         df = df.rename(columns={"Month": "Date"})
         # Filter out rows where Gas Gate Code is "None"
         df = df[df["Gas Gate Code"] != "None"]
-        print(f"      Loaded {len(df)} rows from '{self.api.params.sheet_name}' sheet")
+        print(
+            f"      ✓ Loaded {len(df)} rows from '{self.api.params.sheet_name}' sheet"
+        )
 
         # Load region concordance from 'Gate Region' sheet
         region_corr = pd.read_excel(
             BytesIO(excel_data), sheet_name=self.api.params.region_sheet_name
         ).rename(columns={"Gate Region": "Region"})
         print(
-            f"      Loaded {len(region_corr)} region mappings from '{self.api.params.region_sheet_name}' sheet"
+            f"      ✓ Loaded {len(region_corr)} region mappings from '{self.api.params.region_sheet_name}' sheet"
         )
 
         # Display sample
-        print("\n      Sample data (first 3 rows):")
+        print("\n      Sample raw data (first 3 rows):")
         print(df.head(3).to_string(index=False))
 
-        # Step 3: Data cleaning and transformation
-        print("\n[3/4] Applying transformations:")
+        # Step 2: Data cleaning and transformation
+        print("\n[2/4] Applying transformations:")
 
         # Convert dates and extract year/month
         df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
@@ -129,38 +127,51 @@ class GICGasConnectionsProcessor(ProcessedLayer):
         else:
             print("      - No missing values")
 
-        # Step 4: Save processed data
-        print("\n[4/4] Saving processed data...")
+        # Step 3: Save processed data
+        print("\n[3/4] Saving processed data...")
+        print(f"      Output: {output_path}")
         self.write_csv(df, output_path)
 
-        print(f"\n✓ Processing complete: {len(df)} rows saved")
+        # Step 4: Summary
+        print("\n[4/4] Summary:")
+        print(f"      ✓ Transformation complete: {len(df)} rows saved")
         print(
-            f"  Date range: {df['Date'].min().strftime('%Y-%m')} to {df['Date'].max().strftime('%Y-%m')}"
+            f"      Date range: {df['Date'].min().strftime('%Y-%m')} to {df['Date'].max().strftime('%Y-%m')}"
         )
-        print(f"  Regions: {', '.join(sorted(df['Region'].unique()))}")
+        print(f"      Regions: {', '.join(sorted(df['Region'].unique()))}")
         if "NEW" in df.columns:
-            print(f"  Total new connections: {df['NEW'].sum():,.0f}")
+            print(f"      Total new connections: {df['NEW'].sum():,.0f}")
+
+        print(f"\n{'='*80}")
+        print(f"✓ Transformation complete: {output_path}")
+        print(f"{'='*80}\n")
 
 
 def main():
-    """Main function to run the extract and transform pipeline."""
+    """Main function to run the transform pipeline."""
     settings = get_settings()
 
-    # Define output path
+    # Define input (raw) and output (processed) paths
+    input_path = settings.raw_dir / "gic" / "gic_gas_connections_raw.xlsx"
     output_path = settings.processed_dir / "gic" / "gic_gas_connections_cleaned.csv"
 
-    # Create processor with optional date range
-    # Customize these parameters as needed for different date ranges
-    processor = GICGasConnectionsProcessor(
+    # Check if raw data exists
+    if not input_path.exists():
+        print(f"\n✗ Raw data not found: {input_path}")
+        print("   Please run extract.py first to fetch raw data from API")
+        return
+
+    # Create transformer with optional date range
+    transformer = GICGasConnectionsTransformer(
         year_from=None,  # Optional: filter from this year
         year_to=None,  # Optional: filter to this year
     )
 
-    # Run the extract and transform process
+    # Run the transformation process
     try:
-        processor.process(input_path=None, output_path=output_path)
+        transformer.process(input_path=input_path, output_path=output_path)
     except Exception as e:
-        print(f"\n✗ Extract & Transform failed: {e}")
+        print(f"\n✗ Transformation failed: {e}")
         raise
 
 

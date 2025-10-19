@@ -96,7 +96,7 @@ def main():
         settings.processed_dir / "emi_generation" / "emi_generation_cleaned.csv"
     )
     output_path = (
-        settings.analytics_dir / "emi_generation" / "emi_generation_analytics.csv"
+        settings.metrics_dir / "emi_generation" / "emi_generation_analytics.csv"
     )
 
     # Create analytics processor

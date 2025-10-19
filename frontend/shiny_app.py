@@ -1,7 +1,7 @@
-"""Shiny for Python dashboard for EMI Retail electricity data.
+"""Shiny for Python dashboard for Electrification Progress data.
 
-A simple dashboard that connects to the FastAPI backend and displays
-electrification progress data in an interactive table.
+A dashboard that connects to the FastAPI backend and displays
+all metrics datasets in interactive tables.
 """
 
 import os
@@ -9,7 +9,6 @@ import os
 import pandas as pd
 import requests
 from dotenv import load_dotenv
-from pathlib import Path
 from shiny import App, reactive, render, ui
 
 # Load environment variables
@@ -30,67 +29,65 @@ def check_backend_health():
         return False
 
 
-def fetch_data(limit: int = 40, offset: int = 0, test=True):
-    """Fetch data from the backend API."""
-    if test:
-        # Read directly from analytics data
-        path = (
-            Path(os.getenv("ANALYTICS_DIR", "data/analytics"))
-            / "emi"
-            / "emi_retail_analytics.csv"
+def fetch_datasets():
+    """Fetch list of available datasets from backend."""
+    try:
+        response = requests.get(
+            f"{API_BASE_URL}/api/datasets?layer=metrics", timeout=10
         )
-        try:
-            df = pd.read_csv(path)
-            total_rows = len(df)
-            data = df.iloc[offset : offset + limit].to_dict(orient="records")
-            return {
-                "metadata": {
-                    "total_rows": total_rows,
-                    "returned_rows": len(data),
-                    "offset": offset,
-                },
-                "data": data,
-            }
-        except Exception as e:
-            return {"error": str(e)}
-    else:
-        try:
-            response = requests.get(
-                f"{API_BASE_URL}/api/emi-retail",
-                params={"limit": limit, "offset": offset},
-                timeout=10,
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.RequestException as e:
-            return {"error": str(e)}
+        response.raise_for_status()
+        return response.json().get("datasets", [])
+    except requests.RequestException:
+        return []
 
+
+def fetch_metrics_data(dataset: str, limit: int = 100):
+    """Fetch metrics data from the backend API."""
+    try:
+        response = requests.get(
+            f"{API_BASE_URL}/api/metrics/{dataset}",
+            params={"limit": limit},
+            timeout=30,
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        return {"error": str(e)}
+
+
+# Get available datasets at startup
+AVAILABLE_DATASETS = fetch_datasets()
 
 # UI Definition
 app_ui = ui.page_fluid(
     ui.panel_title("⚡ Rewiring Aotearoa Electrification Progress Tracker"),
-    ui.markdown("Dashboard for visualizing electricity market data from EMI Retail"),
+    ui.markdown("Dashboard for visualizing electrification progress metrics"),
     ui.hr(),
     ui.layout_sidebar(
         ui.sidebar(
             ui.h4("Controls"),
-            ui.input_slider(
-                "limit", "Rows to display:", min=10, max=50, value=40, step=1
+            ui.input_select(
+                "dataset",
+                "Select Dataset:",
+                choices={ds: ds.replace("_", " ").title() for ds in AVAILABLE_DATASETS}
+                if AVAILABLE_DATASETS
+                else {"none": "No datasets available"},
+                selected=AVAILABLE_DATASETS[0] if AVAILABLE_DATASETS else "none",
             ),
-            ui.input_numeric("offset", "Offset:", value=0, min=0, step=10),
+            ui.input_slider(
+                "limit", "Rows to display:", min=10, max=100, value=50, step=10
+            ),
             ui.input_action_button("refresh", "Refresh Data", class_="btn-primary"),
             ui.hr(),
             ui.output_text("backend_status"),
         ),
-        ui.h3("Electricity Market Data"),
+        ui.h3("Metrics Data"),
         ui.output_text("data_info"),
         ui.br(),
         ui.output_data_frame("data_table"),
-        ui.br(),
-        ui.download_button("download_data", "Download CSV"),
     ),
     ui.hr(),
-    ui.markdown("*Data source: Electricity Authority EMI Retail Portal*"),
+    ui.markdown("*Data sources: EMI, EECA, GIC*"),
 )
 
 
@@ -121,16 +118,21 @@ def server(input, output, session):
     def data_info():
         """Display data metadata."""
         data_refresh()  # React to refresh
-        data_response = fetch_data(limit=input.limit(), offset=input.offset())
+        dataset = input.dataset()
+
+        if dataset == "none":
+            return "No datasets available"
+
+        data_response = fetch_metrics_data(dataset, limit=input.limit())
 
         if "error" in data_response:
             return f"Error: {data_response['error']}"
 
         metadata = data_response.get("metadata", {})
         return (
+            f"Dataset: {metadata.get('dataset', 'N/A')} | "
             f"Total rows: {metadata.get('total_rows', 'N/A')} | "
-            f"Showing: {metadata.get('returned_rows', 'N/A')} | "
-            f"Offset: {metadata.get('offset', 'N/A')}"
+            f"Showing: {metadata.get('returned_rows', 'N/A')}"
         )
 
     @output
@@ -138,7 +140,14 @@ def server(input, output, session):
     def data_table():
         """Render main data table."""
         data_refresh()  # React to refresh
-        data_response = fetch_data(limit=input.limit(), offset=input.offset())
+        dataset = input.dataset()
+
+        if dataset == "none":
+            return pd.DataFrame(
+                {"Message": ["No datasets available. Please run ETL pipelines."]}
+            )
+
+        data_response = fetch_metrics_data(dataset, limit=input.limit())
 
         if "error" in data_response:
             return pd.DataFrame({"Error": [data_response["error"]]})
@@ -148,16 +157,6 @@ def server(input, output, session):
             return pd.DataFrame(data)
         else:
             return pd.DataFrame({"Message": ["No data available"]})
-
-    @session.download(filename="emi_retail_data.csv")
-    def download_data():
-        """Download data as CSV."""
-        data_response = fetch_data(limit=input.limit(), offset=input.offset())
-        data = data_response.get("data", [])
-        if data:
-            df = pd.DataFrame(data)
-            return df.to_csv(index=False)
-        return "No data available"
 
 
 # Create Shiny app

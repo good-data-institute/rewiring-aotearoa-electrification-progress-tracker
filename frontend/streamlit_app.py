@@ -1,15 +1,15 @@
-"""Streamlit dashboard for EMI Retail electricity data.
+"""Streamlit dashboard for Electrification Progress data.
 
-A simple dashboard that connects to the FastAPI backend and displays
-electrification progress data in an interactive table.
+A dashboard that connects to the FastAPI backend and displays
+all metrics datasets in interactive tables.
 """
 
+import os
+
+import pandas as pd
 import requests
 import streamlit as st
-import pandas as pd
 from dotenv import load_dotenv
-from pathlib import Path
-import os
 
 # Load environment variables
 load_dotenv()
@@ -28,15 +28,10 @@ st.set_page_config(
 
 # Title and description
 st.title("⚡ Rewiring Aotearoa Electrification Progress Tracker")
-st.markdown("Dashboard for visualizing electricity market data from EMI Retail")
+st.markdown("Dashboard for visualizing electrification progress metrics")
 
 # Sidebar for controls
 st.sidebar.header("Controls")
-limit = st.sidebar.slider(
-    "Rows to display", min_value=10, max_value=40, value=20, step=1
-)
-offset = st.sidebar.number_input("Offset", min_value=0, value=0, step=10)
-
 if st.sidebar.button("Refresh Data"):
     st.rerun()
 
@@ -50,43 +45,32 @@ def check_backend_health():
         return False
 
 
-def fetch_data(limit: int = 20, offset: int = 0, test=True):
-    """Fetch data from the backend API."""
-    if test:
-        # Read directly from analytics data
-        path = (
-            Path(os.getenv("ANALYTICS_DIR", "data/analytics"))
-            / "emi"
-            / "emi_retail_analytics.csv"
+def fetch_datasets():
+    """Fetch list of available datasets from backend."""
+    try:
+        response = requests.get(
+            f"{API_BASE_URL}/api/datasets?layer=metrics", timeout=10
         )
-        try:
-            df = pd.read_csv(path)
-            total_rows = len(df)
-            data = df.iloc[offset : offset + limit].to_dict(orient="records")
-            return {
-                "metadata": {
-                    "total_rows": total_rows,
-                    "returned_rows": len(data),
-                    "offset": offset,
-                },
-                "data": data,
-            }
-        except Exception as e:
-            st.error(f"Error reading test data: {e}")
-            return None
-    else:
-        try:
-            response = requests.get(
-                f"{API_BASE_URL}/api/emi-retail",
-                params={"limit": limit, "offset": offset},
-                timeout=10,
-            )
-            print("RESPONSE", response)
-            response.raise_for_status()
-            return response.json()
-        except requests.RequestException as e:
-            st.error(f"Error fetching data: {e}")
-            return None
+        response.raise_for_status()
+        return response.json().get("datasets", [])
+    except requests.RequestException as e:
+        st.error(f"Error fetching datasets: {e}")
+        return []
+
+
+def fetch_metrics_data(dataset: str, limit: int = 100):
+    """Fetch metrics data from the backend API."""
+    try:
+        response = requests.get(
+            f"{API_BASE_URL}/api/metrics/{dataset}",
+            params={"limit": limit},
+            timeout=30,
+        )
+        response.raise_for_status()
+        return response.json()
+    except requests.RequestException as e:
+        st.error(f"Error fetching {dataset} data: {e}")
+        return None
 
 
 # Check backend status
@@ -101,41 +85,45 @@ if not check_backend_health():
 # Backend is healthy
 st.success(f"✓ Connected to backend at {API_BASE_URL}")
 
-# Fetch and display main data
-st.header("Electricity Market Data")
-data_response = fetch_data(limit=limit, offset=offset, test=True)
+# Fetch available datasets
+datasets = fetch_datasets()
 
-if data_response:
-    metadata = data_response.get("metadata", {})
-    data = data_response.get("data", [])
+if not datasets:
+    st.warning("No metrics datasets found. Please run ETL pipelines first.")
+    st.stop()
 
-    # Display metadata
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Total Rows", metadata.get("total_rows", "N/A"))
-    with col2:
-        st.metric("Showing Rows", metadata.get("returned_rows", "N/A"))
-    with col3:
-        st.metric("Offset", metadata.get("offset", "N/A"))
+st.info(f"Found {len(datasets)} metrics datasets: {', '.join(datasets)}")
 
-    # Display data table
-    if data:
-        df = pd.DataFrame(data)
-        st.dataframe(df, use_container_width=True, height=600)
+# Display each dataset
+for dataset in datasets:
+    st.header(f"📊 {dataset.replace('_', ' ').title()}")
 
-        # Download button
-        csv = df.to_csv(index=False)
-        st.download_button(
-            label="📥 Download data as CSV",
-            data=csv,
-            file_name="emi_retail_data.csv",
-            mime="text/csv",
-        )
+    with st.spinner(f"Loading {dataset}..."):
+        data_response = fetch_metrics_data(dataset)
+
+    if data_response:
+        metadata = data_response.get("metadata", {})
+        data = data_response.get("data", [])
+
+        # Display metadata
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Dataset", metadata.get("dataset", "N/A"))
+        with col2:
+            st.metric("Total Rows", metadata.get("total_rows", "N/A"))
+        with col3:
+            st.metric("Showing Rows", metadata.get("returned_rows", "N/A"))
+
+        # Display data table
+        if data:
+            df = pd.DataFrame(data)
+            st.dataframe(df, use_container_width=True, height=400)
+        else:
+            st.warning(f"No data available for {dataset}")
     else:
-        st.warning("No data available")
-else:
-    st.error("Failed to fetch data from backend")
+        st.error(f"Failed to fetch {dataset} data from backend")
+
+    st.markdown("---")
 
 # Footer
-st.markdown("---")
-st.markdown("*Data source: Electricity Authority EMI Retail Portal*")
+st.markdown("*Data sources: EMI, EECA, GIC*")

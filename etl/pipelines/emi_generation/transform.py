@@ -1,72 +1,75 @@
-"""Extract and Transform: EMI Electricity Generation data pipeline.
+"""Transform: EMI Electricity Generation data pipeline.
 
-This script handles the complete data processing:
-1. Extracts raw data from EMI Azure Blob Storage (multiple CSV files)
+This script handles data transformation:
+1. Reads raw CSV files from raw storage (multiple files)
 2. Cleans and transforms the data with POC-to-Region concordance
-3. Saves processed data as CSV
+3. Saves processed data as single consolidated CSV
 """
 
 from io import BytesIO
 from pathlib import Path
+import json
 
 import pandas as pd
 
-from etl.apis.emi import EMIGenerationAPI
 from etl.core.config import get_settings
 from etl.core.pipeline import ProcessedLayer
 
 
-class EMIGenerationProcessor(ProcessedLayer):
-    """Data processor for EMI Generation: Extract from Azure Blob + Transform."""
+class EMIGenerationTransformer(ProcessedLayer):
+    """Data transformer for EMI Generation: Transform raw data to processed."""
 
-    def __init__(
-        self,
-        year_from: int = 2020,
-        year_to: int = 2025,
-    ):
-        """Initialize processor with date range parameters.
+    def process(self, input_dir: Path, output_path: Path) -> None:
+        """Transform raw CSV files to processed format.
 
         Args:
-            year_from: Start year for data extraction
-            year_to: End year for data extraction
-        """
-        super().__init__()
-        self.api = EMIGenerationAPI(year_from=year_from, year_to=year_to)
-
-    def process(self, input_path: Path, output_path: Path) -> None:
-        """Extract from Azure Blob Storage and transform generation data.
-
-        Args:
-            input_path: Not used (data comes from Azure Blob)
+            input_dir: Directory containing raw CSV files
             output_path: Path to save processed CSV file
         """
         print(f"\n{'='*80}")
-        print("EMI ELECTRICITY GENERATION: Extract & Transform")
+        print("EMI ELECTRICITY GENERATION: Transform Raw to Processed")
         print(f"{'='*80}")
 
-        # Step 1: Extract from Azure Blob Storage
-        print("\n[1/5] Extracting data from EMI Azure Blob Storage...")
-        print(
-            f"      Year range: {self.api.params.year_from}-{self.api.params.year_to}"
-        )
+        # Step 1: Load manifest and raw data files
+        print("\n[1/5] Loading raw data files...")
+        print(f"      Input directory: {input_dir}")
 
-        csv_files = self.api.fetch_generation_data()
+        manifest_path = input_dir / "_manifest.json"
+        if not manifest_path.exists():
+            raise FileNotFoundError(f"Manifest file not found: {manifest_path}")
+
+        with open(manifest_path, "r") as f:
+            manifest = json.load(f)
+
+        file_list = manifest.get("files", [])
+        print(f"      ✓ Found {len(file_list)} files in manifest")
 
         # Step 2: Load and concatenate CSV files
         print("\n[2/5] Loading and concatenating CSV files...")
         dfs = []
-        for blob_name, data_stream in csv_files:
-            # Read CSV as string to preserve schema
-            df_chunk = pd.read_csv(data_stream, dtype=str)
-            dfs.append(df_chunk)
-            print(f"      - Loaded {len(df_chunk)} rows from {Path(blob_name).name}")
+        for filename in file_list:
+            file_path = input_dir / filename
+            if file_path.exists():
+                # Read CSV as string to preserve schema
+                df_chunk = pd.read_csv(file_path, dtype=str)
+                dfs.append(df_chunk)
+                print(f"      - Loaded {len(df_chunk)} rows from {filename}")
+            else:
+                print(f"      ⚠ Warning: File not found: {filename}")
 
         df = pd.concat(dfs, ignore_index=True)
         print(f"      ✓ Combined {len(df)} total rows from {len(dfs)} files")
 
         # Step 3: Load concordance data
         print("\n[3/5] Loading POC to Region concordance...")
-        concordance_data = self.api.fetch_concordance()
+        concordance_path = input_dir / "poc_region_concordance.csv"
+
+        if not concordance_path.exists():
+            raise FileNotFoundError(f"Concordance file not found: {concordance_path}")
+
+        with open(concordance_path, "rb") as f:
+            concordance_data = f.read()
+
         concord = (
             pd.read_csv(BytesIO(concordance_data), skiprows=6)
             .query("`Current flag` == 1")
@@ -80,7 +83,7 @@ class EMIGenerationProcessor(ProcessedLayer):
         concord["Region"] = (
             concord["Region"].str.replace(r"\s*\(.*?\)", "", regex=True).str.strip()
         )
-        print(f"      Loaded {len(concord)} POC to Region mappings")
+        print(f"      ✓ Loaded {len(concord)} POC to Region mappings")
 
         # Step 4: Data cleaning and transformation
         print("\n[4/5] Applying transformations:")
@@ -146,37 +149,43 @@ class EMIGenerationProcessor(ProcessedLayer):
 
         # Step 5: Save processed data
         print("\n[5/5] Saving processed data...")
+        print(f"      Output: {output_path}")
         self.write_csv(df, output_path)
 
-        print(f"\n✓ Processing complete: {len(df)} rows saved")
+        print(f"\n{'='*80}")
+        print(f"✓ Transformation complete: {len(df)} rows saved")
         print(
             f"  Date range: {df['Trading_Date'].min().strftime('%Y-%m-%d')} to {df['Trading_Date'].max().strftime('%Y-%m-%d')}"
         )
         print(f"  Total generation: {df['kWh'].sum():,.0f} kWh")
         print(f"  Regions: {', '.join(sorted(df['Region'].unique()))}")
+        print(f"{'='*80}\n")
 
 
 def main():
-    """Main function to run the extract and transform pipeline."""
+    """Main function to run the transform pipeline."""
     settings = get_settings()
 
-    # Define output path
+    # Define input (raw) and output (processed) paths
+    input_dir = settings.raw_dir / "emi_generation"
     output_path = (
         settings.processed_dir / "emi_generation" / "emi_generation_cleaned.csv"
     )
 
-    # Create processor with year range
-    # Customize these parameters as needed for different year ranges
-    processor = EMIGenerationProcessor(
-        year_from=2020,
-        year_to=2025,
-    )
+    # Check if raw data exists
+    if not input_dir.exists():
+        print(f"\n✗ Raw data directory not found: {input_dir}")
+        print("   Please run extract.py first to fetch raw data from Azure Blob")
+        return
 
-    # Run the extract and transform process
+    # Create transformer
+    transformer = EMIGenerationTransformer()
+
+    # Run the transformation process
     try:
-        processor.process(input_path=None, output_path=output_path)
+        transformer.process(input_dir=input_dir, output_path=output_path)
     except Exception as e:
-        print(f"\n✗ Extract & Transform failed: {e}")
+        print(f"\n✗ Transformation failed: {e}")
         raise
 
 

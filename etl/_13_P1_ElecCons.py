@@ -87,7 +87,7 @@ def main():
 
     # Define input and output paths
     input_path = settings.processed_dir / "eeca" / "eeca_energy_consumption_cleaned.csv"
-    output_path = settings.analytics_dir / "eeca" / "eeca_electricity_percentage.csv"
+    output_path = settings.metrics_dir / "eeca" / "eeca_electricity_percentage.csv"
 
     # Create analytics processor
     processor = EECAElectricityPercentageAnalytics()

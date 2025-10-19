@@ -122,7 +122,7 @@ def main():
 
     # Define input and output paths
     input_path = settings.processed_dir / "emi" / "emi_retail_cleaned.csv"
-    output_path = settings.analytics_dir / "emi" / "emi_retail_analytics.csv"
+    output_path = settings.metrics_dir / "emi" / "emi_retail_analytics.csv"
 
     print(f"Input: {input_path}")
     print(f"Output: {output_path}")

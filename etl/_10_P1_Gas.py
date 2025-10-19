@@ -66,7 +66,7 @@ def main():
 
     # Define input and output paths
     input_path = settings.processed_dir / "gic" / "gic_gas_connections_cleaned.csv"
-    output_path = settings.analytics_dir / "gic" / "gic_gas_connections_analytics.csv"
+    output_path = settings.metrics_dir / "gic" / "gic_gas_connections_analytics.csv"
 
     # Create analytics processor
     processor = GICGasConnectionsAnalytics()

@@ -1,14 +1,17 @@
 # ⚡ Rewiring Aotearoa Electrification Progress Tracker
 
-A minimal data engineering project for tracking electrification progress in Aotearoa New Zealand using electricity market data by:
-- Ingesting and processing data from multiple energy sources (EECA, GIC, EMI)
-- Serving analytics via REST API
+A data engineering project for tracking electrification progress in Aotearoa New Zealand using electricity market data by:
+- Ingesting raw data from multiple energy sources (EMI, EECA, GIC)
+- Processing and transforming data through layered architecture
+- Serving analytics via REST API with DuckDB querying
 - Visualizing data in interactive dashboards
 
 Key features:
-- **Dual ETL Approach**: Use DuckDB SQL and/or Pandas Python for transformations
-- **Multiple Data Sources**: EMI, EECA Energy, GIC
-- **REST API**: FastAPI backend serving processed data
+- **Layered Data Architecture**: Raw → Processed → Metrics data flow
+- **Split ETL Pipelines**: Separate extract and transform steps
+- **DuckDB Backend**: Efficient querying with repository pattern
+- **Multiple Data Sources**: EMI Generation, EECA Energy, GIC Gas
+- **REST API**: FastAPI backend with filtering and query support
 - **Dual Dashboards**: Streamlit and Shiny for Python options
 - **Type Safety**: Pydantic validation throughout
 - **Code Quality**: Pre-commit hooks with Ruff
@@ -55,7 +58,34 @@ pre-commit install
 cp .env.example .env
 ```
 
-### 2. Run Everything
+### 2. Run ETL Pipelines
+
+**Extract raw data:**
+```bash
+# EECA Energy
+python -m etl.pipelines.eeca.extract
+
+# GIC Gas
+python -m etl.pipelines.gic.extract
+
+# EMI Generation
+python -m etl.pipelines.emi_generation.extract
+```
+
+**Transform to processed:**
+```bash
+python -m etl.pipelines.eeca.transform
+python -m etl.pipelines.gic.transform
+python -m etl.pipelines.emi_generation.transform
+```
+
+**Create metrics/analytics:**
+```bash
+python -m etl.pipelines.emi_demo.process_demo
+# Add other analytics as needed
+```
+
+### 3. Run Backend and Dashboards
 
 **Terminal 1 - Backend:**
 ```bash
@@ -68,7 +98,7 @@ streamlit run frontend/streamlit_app.py
 shiny run frontend/shiny_app.py --port 8502
 ```
 
-🎉 Done! The following URL should work now:
+🎉 Done! The following URLs should work now:
 
 - Backend API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
@@ -100,19 +130,24 @@ pytest                    # Run tests
 
 ## 📊 Key Concepts
 
-### Layered Architecture
-- **Processed**: Cleaned, validated data from APIs → `data/processed/`
-- **Metrics**: Business-ready analytics → `data/metrics/`
+### Three-Layer Data Architecture
+1. **Raw Layer** (`data/raw/`): Original data exactly as received from APIs
+2. **Processed Layer** (`data/processed/`): Cleaned, validated, standardized data
+3. **Metrics Layer** (`data/metrics/`): Business-ready analytics and aggregations
 
-### Dual ETL Approach
-Write transformations using **DuckDB SQL** or **Pandas Python**:
+### Split ETL Pipeline
+Each data source has separate scripts:
+- **`extract.py`**: Fetch raw data from API → save to `data/raw/`
+- **`transform.py`**: Read raw data → clean/transform → save to `data/processed/`
+- **`analytics.py`**: Read processed data → aggregate/analyze → save to `data/metrics/`
 
-See **[ETL_GUIDE.md](etl/ETL_GUIDE.md)** for comprehensive patterns and examples.
+### Backend Architecture
+- **DuckDB Repository Pattern**: Efficient SQL querying of CSV data
+- **RESTful API**: FastAPI endpoints for both processed and metrics layers
+- **Query Support**: Filter by date ranges, columns, with pagination
+- **Decoupled Design**: Frontend only communicates through API
 
 ### Data Sources
-1. **EMI Retail**: Electricity consumption data
+1. **EMI Generation**: Electricity generation by fuel type
 2. **EECA**: Energy end-use by fuel type
 3. **GIC**: Gas connection statistics
-4. **EMI Generation**: Electricity generation by fuel type
-
-See **[ETL_IMPLEMENTATION_SUMMARY.md](docs/ETL_IMPLEMENTATION_SUMMARY.md)** for implementation details.
