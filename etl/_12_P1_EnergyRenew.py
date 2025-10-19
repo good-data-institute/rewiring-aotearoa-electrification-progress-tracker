@@ -53,7 +53,7 @@ class EMIGenerationAnalytics(MetricsLayer):
         # Add metadata fields
         analytics_df["Metric Group"] = "Energy"
         analytics_df["Category"] = "Grid"
-        analytics_df["Sub-Category"] = "Renewable Share"
+        analytics_df["Sub-Category"] = "NA"
 
         # Final selection
         analytics_df = analytics_df[

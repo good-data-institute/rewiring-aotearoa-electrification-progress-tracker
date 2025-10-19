@@ -44,7 +44,7 @@ class GICGasConnectionsAnalytics(MetricsLayer):
         # Add metadata columns
         analytics_df["Metric Group"] = "Energy"
         analytics_df["Category"] = "Gas"
-        analytics_df["Sub-Category"] = "New Connections"
+        analytics_df["Sub-Category"] = "Total"
 
         print(f"      - Total new connections: {analytics_df['_10_P1_Gas'].sum():,.0f}")
         print(f"      - Average per month: {analytics_df['_10_P1_Gas'].mean():.1f}")

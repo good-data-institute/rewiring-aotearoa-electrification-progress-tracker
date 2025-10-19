@@ -965,12 +965,30 @@ python -m etl.pipelines.eeca.extract_transform
 - Output: `data/processed/eeca/eeca_energy_consumption_cleaned.csv`
 
 **Analytics:**
+
+Two metrics are calculated from EECA energy consumption data:
+
+1. **Electricity Consumption Percentage** (`_13_P1_ElecCons`)
 ```powershell
-python -m etl.pipelines.eeca.analytics
+python -m etl._13_P1_ElecCons
 ```
 - Input: Cleaned data
-- Output: `data/analytics/eeca/eeca_electricity_percentage.csv`
+- Output: `data/metrics/eeca/eeca_electricity_percentage.csv`
 - Metric: `_13_P1_ElecCons` (Electricity % of total energy)
+- Calculation: (Electricity Energy / Total Energy) × 100
+- Aggregation: By Year only
+
+2. **Energy Consumption by Fuel Type** (`_14_P1_EnergyxFuel`)
+```powershell
+python -m etl._14_P1_EnergyxFuel
+```
+- Input: Cleaned data
+- Output: `data/metrics/eeca/eeca_energy_by_fuel.csv`
+- Metric: `_14_P1_EnergyxFuel` (Energy consumption in MWh)
+- Calculation: energyValue × (1 / 0.036) to convert from Terajoules to MWh
+- Aggregation: By Year, Category (fuel type), and Sub-Category (sector)
+- Fuel Categories: Electricity, Petrol, Diesel, Coal, Wood, Other
+- Conversion Factor: 1 TJ = 277.778 MWh (using 1/0.036)
 
 ---
 
@@ -1052,8 +1070,84 @@ python -m etl.pipelines.emi_generation.extract_transform
 
 **Analytics:**
 ```powershell
-python -m etl.pipelines.emi_generation.analytics
+python -m etl._12_P1_EnergyRenew
 ```
 - Input: Cleaned data
-- Output: `data/analytics/emi_generation/emi_generation_analytics.csv`
+- Output: `data/metrics/emi_generation/emi_generation_analytics.csv`
 - Metric: `_12_P1_EnergyRenew` (Renewable generation share)
+
+---
+
+## 📊 Metrics Summary
+
+All metrics follow a standardized structure with the following columns:
+- **Year**: Year of the data
+- **Month**: Month of the data (where applicable)
+- **Region**: Geographic region (where applicable)
+- **Metric Group**: Always "Energy"
+- **Category**: Specific category of the metric
+- **Sub-Category**: Sub-classification of the metric
+- **Metric Value**: The calculated metric value
+
+### Available Metrics
+
+| Metric Code | Description | Source | Aggregation | Unit | Formula |
+|-------------|-------------|--------|-------------|------|---------|
+| `_10_P1_Gas` | New Gas Connections | GIC | Year, Month, Region | Count | Sum of NEW connections |
+| `_12_P1_EnergyRenew` | Renewable Generation Share | EMI | Year, Month, Region | Ratio | Renewable kWh / Total kWh |
+| `_13_P1_ElecCons` | Electricity Consumption % | EECA | Year | Percentage | (Electricity / Total Energy) × 100 |
+| `_14_P1_EnergyxFuel` | Energy by Fuel Type | EECA | Year, Category, Sub-Category | MWh | energyValue × (1/0.036) |
+
+### Metric Details
+
+#### `_10_P1_Gas` - New Gas Connections
+- **File**: `etl/_10_P1_Gas.py`
+- **Description**: Monthly count of new gas connections by region
+- **Dimensions**: Year, Month, Region
+- **Metadata**:
+  - Category: "Gas"
+  - Sub-Category: "Total"
+- **Use Case**: Track gas infrastructure expansion
+
+#### `_12_P1_EnergyRenew` - Renewable Generation Share
+- **File**: `etl/_12_P1_EnergyRenew.py`
+- **Description**: Percentage of electricity generation from renewable sources
+- **Dimensions**: Year, Month, Region
+- **Metadata**:
+  - Category: "Grid"
+  - Sub-Category: "NA"
+- **Renewable Sources**: Hydro, Wind, Solar, Wood, Geo
+- **Use Case**: Monitor progress toward renewable energy targets
+
+#### `_13_P1_ElecCons` - Electricity Consumption Percentage
+- **File**: `etl/_13_P1_ElecCons.py`
+- **Description**: Electricity's share of total energy consumption
+- **Dimensions**: Year
+- **Metadata**:
+  - Category: "Category"
+  - Sub-Category: "" (empty)
+- **Use Case**: Track electrification progress across all sectors
+
+#### `_14_P1_EnergyxFuel` - Energy Consumption by Fuel Type
+- **File**: `etl/_14_P1_EnergyxFuel.py`
+- **Description**: Total energy consumption by fuel type and sector
+- **Dimensions**: Year, Category (fuel type), Sub-Category (sector)
+- **Metadata**:
+  - Category: Electricity, Petrol, Diesel, Coal, Wood, Other
+  - Sub-Category: Sector name (e.g., Residential, Commercial, Industrial)
+- **Conversion**: Terajoules to MWh using factor (1/0.036)
+- **Use Case**: Analyze energy mix and identify high-consumption sectors
+
+### Running All Metrics
+
+To generate all metrics sequentially:
+
+```powershell
+# Generate all metrics
+python -m etl._10_P1_Gas
+python -m etl._12_P1_EnergyRenew
+python -m etl._13_P1_ElecCons
+python -m etl._14_P1_EnergyxFuel
+```
+
+---

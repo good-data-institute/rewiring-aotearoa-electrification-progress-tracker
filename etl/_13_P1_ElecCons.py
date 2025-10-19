@@ -63,8 +63,8 @@ class EECAElectricityPercentageAnalytics(MetricsLayer):
 
         # Add metadata
         analytics_df["Metric Group"] = "Energy"
-        analytics_df["Category"] = "Consumption"
-        analytics_df["Sub-Category"] = "Electricity Share"
+        analytics_df["Category"] = "Category"
+        analytics_df["Sub-Category"] = ""
 
         print(
             f"      - Electricity share ranges from {analytics_df['_13_P1_ElecCons'].min():.2f}% "
