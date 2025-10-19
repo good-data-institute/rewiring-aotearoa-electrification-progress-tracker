@@ -1,6 +1,6 @@
-"""Analytics: EMI Retail gold layer pipeline.
+"""Analytics: EMI Retail analytics pipeline.
 
-This script creates business-ready analytics from silver layer data:
+This script creates business-ready analytics from processed data:
 - Aggregations and summary statistics
 - Business logic and calculated metrics
 - Data optimized for dashboard consumption
@@ -15,21 +15,21 @@ from etl.core.pipeline import AnalyticsLayer
 
 
 class DemoProcessor(AnalyticsLayer):
-    """Analytics layer processor for EMI Retail (Gold layer)."""
+    """Analytics processor for EMI Retail."""
 
     def process(self, input_path: Path, output_path: Path) -> None:
-        """Process silver data into gold layer analytics.
+        """Create analytics from processed data.
 
         Args:
-            input_path: Path to silver CSV file
-            output_path: Path to save gold CSV file
+            input_path: Path to processed CSV file
+            output_path: Path to save analytics CSV file
         """
         print(f"\n{'='*80}")
-        print("EMI RETAIL: Analytics Layer (Gold)")
+        print("EMI RETAIL: Create Analytics")
         print(f"{'='*80}")
 
-        # Step 1: Load silver data
-        print("\n[1/3] Loading silver data...")
+        # Step 1: Load processed data
+        print("\n[1/3] Loading processed data...")
         print(f"      Input: {input_path}")
         df = self.read_csv(input_path)
         print(f"      ✓ Loaded {len(df)} rows, {len(df.columns)} columns")
@@ -75,26 +75,26 @@ class DemoProcessor(AnalyticsLayer):
             # ORDER BY month DESC, region
             # """
 
-            gold_df = self.execute_query(aggregation_query)
-            print(f"      ✓ SQL aggregation created {len(gold_df)} rows")
+            analytics_df = self.execute_query(aggregation_query)
+            print(f"      ✓ SQL aggregation created {len(analytics_df)} rows")
 
         except Exception as e:
             print(f"      ⚠ SQL aggregation skipped ({e})")
             print("      → Using pandas processing instead")
-            gold_df = df.copy()
+            analytics_df = df.copy()
 
         # Option 2: Additional Pandas transformations
         print("      - Applying business logic with Pandas...")
 
         # Add metadata columns
-        gold_df["processed_date"] = pd.Timestamp.now().strftime("%Y-%m-%d")
-        gold_df["data_source"] = "emi_retail"
+        analytics_df["processed_date"] = pd.Timestamp.now().strftime("%Y-%m-%d")
+        analytics_df["data_source"] = "emi_retail"
         print("      ✓ Added metadata columns")
 
         # Add any custom business metrics here
         # Example:
-        # gold_df['cost_category'] = pd.cut(
-        #     gold_df['total_cost'],
+        # analytics_df['cost_category'] = pd.cut(
+        #     analytics_df['total_cost'],
         #     bins=[0, 100, 500, float('inf')],
         #     labels=['Low', 'Medium', 'High']
         # )
@@ -103,16 +103,16 @@ class DemoProcessor(AnalyticsLayer):
         if temp_path.exists():
             temp_path.unlink()
 
-        # Step 3: Save to gold layer
-        print("\n[3/3] Saving to gold layer...")
-        self.write_csv(gold_df, output_path)
+        # Step 3: Save analytics
+        print("\n[3/3] Saving analytics...")
+        self.write_csv(analytics_df, output_path)
 
         # Summary statistics
         print(f"\n{'='*80}")
-        print("✓ COMPLETED: Gold layer analytics ready")
-        print(f"  Rows: {len(gold_df)}")
-        print(f"  Columns: {len(gold_df.columns)}")
-        print(f"  Column names: {list(gold_df.columns)[:10]}...")
+        print("✓ COMPLETED: Analytics ready")
+        print(f"  Rows: {len(analytics_df)}")
+        print(f"  Columns: {len(analytics_df.columns)}")
+        print(f"  Column names: {list(analytics_df.columns)[:10]}...")
         print(f"  Output: {output_path}")
         print(f"{'='*80}\n")
 
@@ -122,15 +122,15 @@ def main():
     settings = get_settings()
 
     # Define input and output paths
-    input_path = settings.silver_dir / "emi" / "emi_retail_cleaned.csv"
-    output_path = settings.gold_dir / "emi" / "emi_retail_analytics.csv"
+    input_path = settings.processed_dir / "emi" / "emi_retail_cleaned.csv"
+    output_path = settings.analytics_dir / "emi" / "emi_retail_analytics.csv"
 
-    print(f"Input (Silver): {input_path}")
-    print(f"Output (Gold): {output_path}")
+    print(f"Input: {input_path}")
+    print(f"Output: {output_path}")
 
     # Check if input exists
     if not input_path.exists():
-        print(f"\n✗ Error: Silver data not found at {input_path}")
+        print(f"\n✗ Error: Processed data not found at {input_path}")
         print("  Please run extract_transform.py first")
         return
 

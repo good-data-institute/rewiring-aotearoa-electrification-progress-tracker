@@ -1,8 +1,8 @@
 """Data processing layers for ETL pipelines.
 
 This module provides base classes for a 2-layer data architecture:
-- DataLayer (Silver): Extract from source + Transform/Clean
-- AnalyticsLayer (Gold): Business-ready analytics and aggregations
+- DataLayer: Extract from source + Transform/Clean
+- AnalyticsLayer: Business-ready analytics and aggregations
 """
 
 from abc import ABC, abstractmethod
@@ -77,56 +77,50 @@ class BaseLayer(ABC):
 
 
 class DataLayer(BaseLayer):
-    """Data layer (Silver): Extract from source and transform/clean data.
+    """Data layer: Extract from source and transform/clean data.
 
     This layer combines data extraction and transformation:
     - Fetches data from external APIs or sources
     - Cleans and validates data
     - Removes duplicates
     - Standardizes formats
-    - Writes to silver directory
+    - Saves processed data
     """
 
     def process(self, input_path: Path, output_path: Path) -> None:
-        """Extract and transform data to silver layer.
+        """Extract and transform data.
 
         Override this method in your specific processor to:
         1. Fetch data from API or source
         2. Clean and validate
-        3. Write to silver layer
+        3. Write output
 
         Args:
             input_path: Not used for extraction, kept for interface compatibility
-            output_path: Path to save in silver layer
+            output_path: Path to save processed data
         """
         raise NotImplementedError("Subclasses must implement process() method")
 
 
 class AnalyticsLayer(BaseLayer):
-    """Analytics layer (Gold): Business-ready aggregated data.
+    """Analytics layer: Business-ready aggregated data.
 
     This layer creates analytics-ready data:
     - Aggregations and metrics
     - Business logic
     - Optimized for dashboard queries
-    - Writes to gold directory
     """
 
     def process(self, input_path: Path, output_path: Path) -> None:
-        """Aggregate silver data for gold layer analytics.
+        """Create analytics from processed data.
 
         Override this method in your specific processor to:
-        1. Read from silver layer
+        1. Read from processed data
         2. Apply business logic and aggregations
-        3. Write to gold layer
+        3. Write analytics output
 
         Args:
-            input_path: Path to silver data
-            output_path: Path to save in gold layer
+            input_path: Path to input data
+            output_path: Path to save analytics
         """
         raise NotImplementedError("Subclasses must implement process() method")
-
-
-# Legacy aliases for backward compatibility
-SilverLayer = DataLayer
-GoldLayer = AnalyticsLayer

@@ -53,10 +53,10 @@ def check_backend_health():
 def fetch_data(limit: int = 20, offset: int = 0, test=True):
     """Fetch data from the backend API."""
     if test:
-        # Read directly from settings.gold_dir / "emi_retail" / "emi_retail_analytics.csv"
+        # Read directly from analytics data
         path = (
-            Path(os.getenv("GOLD_DIR", "data/gold"))
-            / "emi_retail"
+            Path(os.getenv("ANALYTICS_DIR", "data/analytics"))
+            / "emi"
             / "emi_retail_analytics.csv"
         )
         try:

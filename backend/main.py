@@ -47,19 +47,19 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    gold_data_path = settings.gold_dir / "emi" / "emi_retail_analytics.csv"
-    data_available = gold_data_path.exists()
+    analytics_data_path = settings.analytics_dir / "emi" / "emi_retail_analytics.csv"
+    data_available = analytics_data_path.exists()
 
     return {
         "status": "healthy",
         "data_available": data_available,
-        "gold_layer_path": str(gold_data_path),
+        "analytics_path": str(analytics_data_path),
     }
 
 
 @app.get("/api/emi-retail")
 async def get_emi_retail_data(limit: int = 40, offset: int = 0):
-    """Get EMI retail electricity data from gold layer.
+    """Get EMI retail electricity data from analytics.
 
     Args:
         limit: Maximum number of rows to return (default 40)
@@ -68,19 +68,19 @@ async def get_emi_retail_data(limit: int = 40, offset: int = 0):
     Returns:
         JSON with data and metadata
     """
-    gold_data_path = settings.gold_dir / "emi" / "emi_retail_analytics.csv"
+    analytics_data_path = settings.analytics_dir / "emi" / "emi_retail_analytics.csv"
 
     # Check if data exists
-    if not gold_data_path.exists():
+    if not analytics_data_path.exists():
         raise HTTPException(
             status_code=404,
-            detail=f"Gold layer data not found. Please run ETL pipeline first. "
-            f"Expected path: {gold_data_path}",
+            detail=f"Analytics data not found. Please run ETL pipeline first. "
+            f"Expected path: {analytics_data_path}",
         )
 
     try:
         # Read data
-        df = pd.read_csv(gold_data_path)
+        df = pd.read_csv(analytics_data_path)
 
         # Apply pagination
         total_rows = len(df)
@@ -111,18 +111,18 @@ async def get_emi_retail_summary():
     Returns:
         JSON with summary statistics
     """
-    gold_data_path = settings.gold_dir / "emi" / "emi_retail_analytics.csv"
+    analytics_data_path = settings.analytics_dir / "emi" / "emi_retail_analytics.csv"
 
     # Check if data exists
-    if not gold_data_path.exists():
+    if not analytics_data_path.exists():
         raise HTTPException(
             status_code=404,
-            detail="Gold layer data not found. Please run ETL pipeline first.",
+            detail="Analytics data not found. Please run ETL pipeline first.",
         )
 
     try:
         # Read data
-        df = pd.read_csv(gold_data_path)
+        df = pd.read_csv(analytics_data_path)
 
         # Generate summary statistics
         summary = {

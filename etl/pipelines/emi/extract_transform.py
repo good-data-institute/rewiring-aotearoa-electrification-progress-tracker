@@ -1,11 +1,9 @@
 """Extract and Transform: EMI Retail data pipeline.
 
-This script handles the complete data layer (silver) processing:
+This script handles the complete data processing:
 1. Extracts raw data from EMI Retail API
 2. Cleans and transforms the data
-3. Saves to silver layer
-
-This combines what was previously done in separate bronze and silver layers.
+3. Saves processed data
 """
 
 from pathlib import Path
@@ -16,7 +14,7 @@ from etl.core.pipeline import DataLayer
 
 
 class DemoIngester(DataLayer):
-    """Data layer processor for EMI Retail: Extract from API + Transform."""
+    """Data processor for EMI Retail: Extract from API + Transform."""
 
     def __init__(
         self,
@@ -48,14 +46,14 @@ class DemoIngester(DataLayer):
         )
 
     def process(self, input_path: Path, output_path: Path) -> None:
-        """Extract from API and transform to silver layer.
+        """Extract from API and transform data.
 
         Args:
             input_path: Not used (data comes from API)
-            output_path: Path to save silver CSV file
+            output_path: Path to save processed CSV file
         """
         print(f"\n{'='*80}")
-        print("EMI RETAIL: Extract & Transform to Silver Layer")
+        print("EMI RETAIL: Extract & Transform")
         print(f"{'='*80}")
 
         # Step 1: Extract from API
@@ -83,7 +81,7 @@ class DemoIngester(DataLayer):
         initial_rows = len(df)
         df = df.drop_duplicates()
         if initial_rows > len(df):
-            print("      - Removed {initial_rows - len(df)} duplicate rows")
+            print(f"      - Removed {initial_rows - len(df)} duplicate rows")
         else:
             print("      - No duplicates found")
 
@@ -101,8 +99,8 @@ class DemoIngester(DataLayer):
         else:
             print("      - No missing values")
 
-        # Step 3: Save to silver layer
-        print("\n[3/3] Saving to silver layer...")
+        # Step 3: Save processed data
+        print("\n[3/3] Saving processed data...")
         self.write_csv(df, output_path)
 
         # Clean up temp file
@@ -111,7 +109,7 @@ class DemoIngester(DataLayer):
 
         # Summary
         print(f"\n{'='*80}")
-        print("✓ COMPLETED: Silver layer data ready")
+        print("✓ COMPLETED: Processed data ready")
         print(f"  Rows: {len(df)}")
         print(f"  Columns: {len(df.columns)}")
         print(f"  Output: {output_path}")
@@ -122,8 +120,8 @@ def main():
     """Main function to run the extract and transform pipeline."""
     settings = get_settings()
 
-    # Define output path in silver layer
-    output_path = settings.silver_dir / "emi" / "emi_retail_cleaned.csv"
+    # Define output path
+    output_path = settings.processed_dir / "emi" / "emi_retail_cleaned.csv"
 
     # Create processor with default parameters
     # Customize these parameters as needed for different date ranges or filters

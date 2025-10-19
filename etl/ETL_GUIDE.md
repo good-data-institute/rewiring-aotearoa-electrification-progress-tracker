@@ -1,16 +1,6 @@
 # ETL Development Guide
 
 A comprehensive guide for building ETL pipelines using **DuckDB SQL** and **Pandas Python** in a 2-layer architecture.
-
-> **⚠️ Architecture Note:** This project uses a **2-layer architecture**:
-> - **Silver Layer (Data)**: Extract from source + Transform/Clean using `DataLayer` class
-> - **Gold Layer (Analytics)**: Business analytics using `AnalyticsLayer` class
->
-> Legacy class names `SilverLayer` and `GoldLayer` are still supported for backward compatibility.
->
-> **Code examples in this guide may reference the old 3-layer (Bronze/Silver/Gold) architecture.**
-> **For current 2-layer examples, see `etl/pipelines/emi/` directory.**
-
 ## 📋 Table of Contents
 
 - [Philosophy](#-philosophy)
