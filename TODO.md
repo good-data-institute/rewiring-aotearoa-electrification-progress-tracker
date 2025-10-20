@@ -1,5 +1,7 @@
 - Update ingestion APIs with all valid parameters and options + split logically by e.g. by data source, dashboard page
-- Update dashboard APIs to read metrics
-- Add S3 read/write
+- Add S3 read/write functionality
+- Run ETL pipelines, store processed and metrics data for the last 5-10 years
+- Update dashboard APIs to read and query for metrics (if not available, run ETL)
+- Develop frontend
 - Create infra and move env variables into render.yaml (also needs to work for local though)
 - Add cataloguing/lineage (maybe move ETL to dbt/sqlmesh)

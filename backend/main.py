@@ -4,13 +4,47 @@ This API provides endpoints for accessing processed electrification data
 from both processed and metrics layers for visualization in dashboards.
 """
 
+import logging
 from typing import Optional
 
+import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.repository import DataRepository
 from etl.core.config import get_settings
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def convert_df_to_json_serializable(df: pd.DataFrame) -> list:
+    """Convert DataFrame to JSON-serializable list of records.
+
+    Handles:
+    - NaN/NA values -> empty string
+    - Timestamp/datetime objects -> ISO format strings
+
+    Args:
+        df: DataFrame to convert
+
+    Returns:
+        List of dictionaries ready for JSON serialization
+    """
+    # Make a copy to avoid modifying original
+    df_copy = df.copy()
+
+    # Convert datetime/timestamp columns to strings
+    for col in df_copy.columns:
+        if pd.api.types.is_datetime64_any_dtype(df_copy[col]):
+            df_copy[col] = df_copy[col].dt.strftime("%Y-%m-%d %H:%M:%S")
+
+    # Replace NaN with empty string and convert to records
+    records = df_copy.replace({pd.NA: ""}).fillna(value="").to_dict(orient="records")
+
+    return records
+
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -72,7 +106,10 @@ async def list_datasets(layer: str = Query("metrics", enum=["processed", "metric
             "count": len(datasets),
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error listing datasets: {str(e)}")
+        logger.error(f"Error listing datasets for layer {layer}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Error listing datasets: {str(e)}"
+        ) from e
 
 
 @app.get("/api/processed/{dataset}")
@@ -109,8 +146,8 @@ async def get_processed_data(
             dataset=dataset, layer="processed", filters=filters
         )
 
-        # Convert to records format
-        records = df.to_dict(orient="records")
+        # Convert to records format, handling timestamps and NaN values
+        records = convert_df_to_json_serializable(df)
 
         return {
             "data": records,
@@ -126,11 +163,13 @@ async def get_processed_data(
         }
 
     except FileNotFoundError as e:
+        logger.error(f"Processed dataset not found: {dataset}", exc_info=True)
         raise HTTPException(
             status_code=404,
             detail=f"Dataset not found. Please run ETL pipeline first. Error: {str(e)}",
         ) from e
     except Exception as e:
+        logger.error(f"Error querying processed data for {dataset}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Error querying data: {str(e)}"
         ) from e
@@ -170,8 +209,8 @@ async def get_metrics_data(
             dataset=dataset, layer="metrics", filters=filters
         )
 
-        # Convert to records format
-        records = df.to_dict(orient="records")
+        # Convert to records format, handling timestamps and NaN values
+        records = convert_df_to_json_serializable(df)
 
         return {
             "data": records,
@@ -187,11 +226,13 @@ async def get_metrics_data(
         }
 
     except FileNotFoundError as e:
+        logger.error(f"Dataset not found: {dataset}", exc_info=True)
         raise HTTPException(
             status_code=404,
             detail=f"Dataset not found. Please run ETL pipeline first. Error: {str(e)}",
         ) from e
     except Exception as e:
+        logger.error(f"Error querying metrics data for {dataset}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Error querying data: {str(e)}"
         ) from e
