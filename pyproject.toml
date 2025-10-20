@@ -1,0 +1,29 @@
+[project]
+name = "rewiring-aotearoa-electrification-progress-tracker"
+version = "0.1.0"
+description = "Data engineering project for tracking electrification progress in Aotearoa New Zealand"
+authors = [
+    {name = "Good Data Institute"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "azure-storage-blob>=12.27.0",
+    "duckdb>=1.4.1",
+    "fastapi>=0.119.0",
+    "openpyxl>=3.1.5",
+    "pandas>=2.3.3",
+    "pydantic>=2.12.0",
+    "pydantic-settings>=2.11.0",
+    "python-dotenv>=1.1.1",
+    "requests>=2.32.5",
+    "shiny>=1.5.0",
+    "streamlit>=1.50.0",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.3.0",
+    "pytest>=8.4.2",
+    "ruff>=0.14.0",
+]
