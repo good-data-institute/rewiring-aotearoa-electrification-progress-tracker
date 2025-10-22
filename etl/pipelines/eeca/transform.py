@@ -97,23 +97,15 @@ class EECAEnergyConsumptionTransformer(ProcessedLayer):
         )
         print(f"      - Selected {len(df.columns)} columns")
 
-        # Remove duplicates
+        # Remove rows where energyValue is missing
         initial_rows = len(df)
-        df = df.drop_duplicates()
+        df = df.dropna(subset=["energyValue"])
         if initial_rows > len(df):
-            print(f"      - Removed {initial_rows - len(df)} duplicate rows")
+            print(
+                f"      - Removed {initial_rows - len(df)} rows with missing energyValue"
+            )
         else:
-            print("      - No duplicates found")
-
-        # Report missing values
-        missing_counts = df.isnull().sum()
-        if missing_counts.sum() > 0:
-            print(f"      - Found {missing_counts.sum()} missing values")
-            print("\n      Missing values by column:")
-            for col, count in missing_counts[missing_counts > 0].items():
-                print(f"        {col}: {count}")
-        else:
-            print("      - No missing values")
+            print("      - No missing energyValue values found")
 
         # Step 3: Save processed data
         print("\n[3/3] Saving processed data...")

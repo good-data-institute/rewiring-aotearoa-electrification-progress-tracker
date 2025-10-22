@@ -63,7 +63,7 @@ class EECAElectricityPercentageAnalytics(MetricsLayer):
 
         # Add metadata
         analytics_df["Metric Group"] = "Energy"
-        analytics_df["Category"] = "Category"
+        analytics_df["Category"] = "Grid"
         analytics_df["Sub-Category"] = ""
 
         print(
