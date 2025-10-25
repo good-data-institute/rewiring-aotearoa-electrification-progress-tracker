@@ -37,33 +37,35 @@ class EECAElectricityPercentageAnalytics(MetricsLayer):
 
         # Total energy by year
         total_energy = (
-            df.groupby("Year", as_index=False)["energyValue"]
+            df.groupby(["Year", "Month"], as_index=False)["energyValue"]
             .sum()
             .rename(columns={"energyValue": "Total_Energy"})
         )
-        print(f"      - Calculated total energy for {len(total_energy)} years")
+        print(
+            f"      - Calculated total energy for {total_energy['Year'].nunique()} years"
+        )
 
         # Electricity energy by year
         electricity_energy = (
             df.query("Category == 'Electricity'")
-            .groupby("Year", as_index=False)["energyValue"]
+            .groupby(["Year", "Month"], as_index=False)["energyValue"]
             .sum()
             .rename(columns={"energyValue": "Electricity_Energy"})
         )
         print(
-            f"      - Calculated electricity energy for {len(electricity_energy)} years"
+            f"      - Calculated electricity energy for {total_energy['Year'].nunique()} years"
         )
 
         # Merge and calculate the share
         analytics_df = total_energy.merge(
-            electricity_energy, on="Year", how="left"
+            electricity_energy, on=["Year", "Month"], how="left"
         ).assign(
             _13_P1_ElecCons=lambda x: 100 * x["Electricity_Energy"] / x["Total_Energy"]
-        )[["Year", "_13_P1_ElecCons"]]
+        )[["Year", "Month", "_13_P1_ElecCons"]]
 
         # Add metadata
         analytics_df["Metric Group"] = "Energy"
-        analytics_df["Category"] = "Category"
+        analytics_df["Category"] = "Grid"
         analytics_df["Sub-Category"] = ""
 
         print(

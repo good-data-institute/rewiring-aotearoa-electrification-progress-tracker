@@ -97,23 +97,60 @@ class EECAEnergyConsumptionTransformer(ProcessedLayer):
         )
         print(f"      - Selected {len(df.columns)} columns")
 
-        # Remove duplicates
+        # Remove rows where energyValue is missing
         initial_rows = len(df)
-        df = df.drop_duplicates()
+        df = df.dropna(subset=["energyValue"])
         if initial_rows > len(df):
-            print(f"      - Removed {initial_rows - len(df)} duplicate rows")
+            print(
+                f"      - Removed {initial_rows - len(df)} rows with missing energyValue"
+            )
         else:
-            print("      - No duplicates found")
+            print("      - No missing energyValue values found")
 
-        # Report missing values
-        missing_counts = df.isnull().sum()
-        if missing_counts.sum() > 0:
-            print(f"      - Found {missing_counts.sum()} missing values")
-            print("\n      Missing values by column:")
-            for col, count in missing_counts[missing_counts > 0].items():
-                print(f"        {col}: {count}")
-        else:
-            print("      - No missing values")
+        # Split the Yearly numbers by month - using an approximate season split
+        # Define months and seasonal weights (example: more energy in winter)
+        df_months = pd.DataFrame(
+            {
+                "Month": range(1, 13),
+                # Rough pattern for NZ: winter (Jun–Aug) highest, summer (Dec–Feb) lowest
+                "season_weight": [
+                    0.7,
+                    0.8,
+                    0.9,
+                    1.0,
+                    1.1,
+                    1.2,
+                    1.3,
+                    1.2,
+                    1.1,
+                    1.0,
+                    0.9,
+                    0.8,
+                ],
+            }
+        )
+        # Normalise weights so they sum to 12 (so totals are preserved)
+        df_months["season_weight"] = df_months["season_weight"] * (
+            1 / df_months["season_weight"].sum()
+        )
+
+        # Cross join years × months
+        energy_count_before = df.energyValue.sum()
+        df = (
+            df.assign(key=1)
+            .merge(df_months.assign(key=1), on="key")
+            .drop("key", axis=1)
+        )
+
+        # Apply seasonal weights
+        df["energyValue"] = df["energyValue"] * df["season_weight"]
+        df.drop(columns=["season_weight"], inplace=True)
+        print(
+            "      - Added Month column by spitting yearly data using seasonal approximation"
+        )
+        print(
+            f"      - Total Energy values match: {df.energyValue.sum() == energy_count_before}"
+        )
 
         # Step 3: Save processed data
         print("\n[3/3] Saving processed data...")

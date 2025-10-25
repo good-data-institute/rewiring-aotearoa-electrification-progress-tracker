@@ -37,12 +37,12 @@ class EECAEnergyByFuelAnalytics(MetricsLayer):
         print("\n[2/3] Aggregating energy consumption by fuel type and sector...")
 
         # Group and summarise
-        grouped = df.groupby(["Year", "Category", "Sub-Category"], as_index=False)[
-            "energyValue"
-        ].sum()
+        grouped = df.groupby(
+            ["Year", "Month", "Category", "Sub-Category"], as_index=False
+        )["energyValue"].sum()
         print(
             f"      - Aggregated to {len(grouped)} rows "
-            f"({df['Year'].nunique()} years × {df['Category'].nunique()} fuel types × {df['Sub-Category'].nunique()} sectors)"
+            f"({df['Year'].nunique()} years × {df['Month'].nunique()} months × {df['Category'].nunique()} fuel types × {df['Sub-Category'].nunique()} sectors)"
         )
 
         # Convert to MWh instead of Terajoules
@@ -57,6 +57,7 @@ class EECAEnergyByFuelAnalytics(MetricsLayer):
         grouped = grouped[
             [
                 "Year",
+                "Month",
                 "Category",
                 "Sub-Category",
                 "Metric Group",
