@@ -37,12 +37,10 @@ def get_marker_color_and_shade(value, metric_type: str = "renewable"):
         return "orange", 7
 
 
-def region_marker_renewable(item: dict) -> rx.Component:
+def region_marker_renewable(item: rx.Var) -> rx.Component:
     """Create a region marker for renewable generation."""
-    region = item["region"]
-    value = item["renewable_pct"]
-    print("VALUE HERE")
-    print(value)
+    region = item["region"].to(str)
+    value = item["renewable_pct"].to(int)
     position = NZ_REGIONS_LAYOUT.get(region, {"top": "50%", "left": "50%"})
 
     # Use conditional rendering for color based on value
@@ -90,21 +88,17 @@ def region_marker_renewable(item: dict) -> rx.Component:
     )
 
 
-def region_marker_gas(item: dict) -> rx.Component:
+def region_marker_gas(item: rx.Var) -> rx.Component:
     """Create a region marker for gas connections."""
-    region = item["region"]
-    value = item["connections"]
+    region = item["region"].to(str)
+    value = item["connections"].to(int)
     position = NZ_REGIONS_LAYOUT.get(region, {"top": "50%", "left": "50%"})
 
     # Use conditional rendering for color based on value
     color_scheme = rx.cond(
-        item["connections"] > 100,
+        value > 100,
         "red",
-        rx.cond(
-            item["connections"] > 50,
-            "orange",
-            rx.cond(item["connections"] > 10, "yellow", "grass"),
-        ),
+        rx.cond(value > 50, "orange", rx.cond(value > 10, "yellow", "grass")),
     )
 
     # Size based on value - smaller is better for gas
@@ -346,15 +340,15 @@ def regional_comparison_table() -> rx.Component:
                     rx.foreach(
                         ElectrificationDashboardState.renewable_generation_by_region_data,
                         lambda item: rx.table.row(
-                            rx.table.cell(item["region"]),
+                            rx.table.cell(item["region"].to(str)),
                             rx.table.cell(
                                 rx.badge(
-                                    f"{item['renewable_pct']:.1f}%",
+                                    f"{item['renewable_pct'].to(int):.1f}%",
                                     color_scheme=rx.cond(
-                                        item["renewable_pct"] >= 95,
+                                        item["renewable_pct"].to(int) >= 95,
                                         "grass",
                                         rx.cond(
-                                            item["renewable_pct"] >= 80,
+                                            item["renewable_pct"].to(int) >= 80,
                                             "green",
                                             "orange",
                                         ),
@@ -364,10 +358,10 @@ def regional_comparison_table() -> rx.Component:
                             rx.table.cell("N/A"),  # Would need to match with gas data
                             rx.table.cell(
                                 rx.cond(
-                                    item["renewable_pct"] >= 95,
+                                    item["renewable_pct"].to(int) >= 95,
                                     rx.badge("Excellent", color_scheme="grass"),
                                     rx.cond(
-                                        item["renewable_pct"] >= 80,
+                                        item["renewable_pct"].to(int) >= 80,
                                         rx.badge("Good", color_scheme="green"),
                                         rx.badge(
                                             "Needs Improvement", color_scheme="orange"
