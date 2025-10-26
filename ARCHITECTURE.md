@@ -77,7 +77,7 @@ flowchart TB
     class Streamlit,Shiny,Browser frontendStyle
 ```
 
-## Key Technologies at Each Stage
+## Key Technologies
 
 **Raw Layer (Extraction):**
 - requests (HTTP client)
@@ -120,7 +120,7 @@ flowchart LR
     PyProject["pyproject.toml"] --> UV["UV"]
     UV --> VEnv["Virtual Environment"]
 
-    classDef configStyle fill:#e6f3ff,stroke:#4d94ff,stroke-width:2px
+    classDef configStyle color:#000000,fill:#e6f3ff,stroke:#4d94ff,stroke-width:2px
     class ENV,DotEnv,Components,Git,PreCommit,Ruff,PyProject,UV,VEnv configStyle
 ```
 
@@ -149,58 +149,15 @@ flowchart TB
     Backend --> Frontend
     Frontend --> Display
 
-    classDef rawStyle fill:#ffcccc,stroke:#cc0000,stroke-width:2px
-    classDef processedStyle fill:#cccccc,stroke:#666666,stroke-width:2px
-    classDef metricsStyle fill:#ffffcc,stroke:#cccc00,stroke-width:2px
-    classDef serverStyle fill:#e6ccff,stroke:#9933ff,stroke-width:2px
+    classDef rawStyle color:#000000,fill:#ffcccc,stroke:#cc0000,stroke-width:2px
+    classDef processedStyle color:#000000,fill:#cccccc,stroke:#666666,stroke-width:2px
+    classDef metricsStyle color:#000000,fill:#ffffcc,stroke:#cccc00,stroke-width:2px
+    classDef serverStylecolor:#000000, fill:#e6ccff,stroke:#9933ff,stroke-width:2px
 
     class Start,Extract rawStyle
     class Transform processedStyle
     class Analytics metricsStyle
     class Backend,Frontend,Display serverStyle
-```
-
-## Technology Stack by Layer
-
-**Processed (Extract & Transform):**
-- HTTP Client: `requests`
-- Validation: `Pydantic`
-- Data Processing: `Pandas`, `DuckDB`
-- Storage: CSV files
-
-**Metrics (Analytics):**
-- Data Processing: `Pandas`, `DuckDB`
-- Storage: CSV files
-
-**Backend:**
-- API Framework: `FastAPI`
-- Server: `Uvicorn` (ASGI)
-- Data Reading: `Pandas`
-
-**Frontend:**
-- Dashboards: `Streamlit`, `Shiny for Python`
-- HTTP Client: `requests`
-
-**Configuration & Quality:**
-- Settings: `Pydantic Settings`, `python-dotenv`
-- Code Quality: `Ruff`, `Pre-commit`
-- Package Manager: `uv`
-
-## Configuration Flow
-
-```mermaid
-flowchart LR
-    ENV[".env"] --> DotEnv["python-dotenv"]
-    DotEnv --> Components["All Components"]
-
-    Git["Git Commit"] --> PreCommit["Pre-commit Hooks"]
-    PreCommit --> Ruff["Ruff (lint/format)"]
-
-    PyProject["pyproject.toml"] --> UV["UV"]
-    UV --> VEnv["Virtual Environment"]
-
-    classDef configStyle fill:#e6f3ff,stroke:#4d94ff,stroke-width:2px
-    class ENV,DotEnv,Components,Git,PreCommit,Ruff,PyProject,UV,VEnv configStyle
 ```
 
 ## Extensibility
