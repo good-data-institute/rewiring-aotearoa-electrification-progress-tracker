@@ -22,14 +22,18 @@ def menu_item(text: str, url: str) -> rx.Component:
     """
     # Whether the item is active.
     active = (rx.State.router.page.path == url.lower()) | (
-        (rx.State.router.page.path == "/") & text == "Overview"
+        (rx.State.router.page.path == "/") & text == "Electrification Dashboard"
     )
 
     return rx.link(
         rx.hstack(
             rx.match(
                 text,
-                ("Overview", menu_item_icon("home")),
+                ("Electrification Dashboard", menu_item_icon("home")),
+                ("Electrification Progress", menu_item_icon("trending-up")),
+                ("Energy by Fuel", menu_item_icon("flame")),
+                ("Gas Connections", menu_item_icon("plug")),
+                ("Renewable Generation", menu_item_icon("leaf")),
                 ("Table", menu_item_icon("table-2")),
                 ("About", menu_item_icon("book-open")),
                 ("Profile", menu_item_icon("user")),
@@ -108,6 +112,10 @@ def menu_button() -> rx.Component:
 
     ordered_page_routes = [
         "/",
+        "/electrification",
+        "/energy-fuel",
+        "/gas-connections",
+        "/renewable-generation",
         "/table",
         "/about",
         "/profile",

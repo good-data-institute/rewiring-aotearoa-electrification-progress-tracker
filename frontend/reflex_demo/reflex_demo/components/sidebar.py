@@ -72,14 +72,18 @@ def sidebar_item(text: str, url: str) -> rx.Component:
     """
     # Whether the item is active.
     active = (rx.State.router.page.path == url.lower()) | (
-        (rx.State.router.page.path == "/") & text == "Overview"
+        (rx.State.router.page.path == "/") & text == "Electrification Dashboard"
     )
 
     return rx.link(
         rx.hstack(
             rx.match(
                 text,
-                ("Overview", sidebar_item_icon("home")),
+                ("Electrification Dashboard", sidebar_item_icon("home")),
+                ("Electrification Progress", sidebar_item_icon("trending-up")),
+                ("Energy by Fuel", sidebar_item_icon("flame")),
+                ("Gas Connections", sidebar_item_icon("plug")),
+                ("Renewable Generation", sidebar_item_icon("leaf")),
                 ("Table", sidebar_item_icon("table-2")),
                 ("About", sidebar_item_icon("book-open")),
                 ("Profile", sidebar_item_icon("user")),
@@ -134,6 +138,10 @@ def sidebar() -> rx.Component:
 
     ordered_page_routes = [
         "/",
+        "/electrification",
+        "/energy-fuel",
+        "/gas-connections",
+        "/renewable-generation",
         "/table",
         "/about",
         "/profile",
