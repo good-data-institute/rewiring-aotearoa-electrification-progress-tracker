@@ -5,176 +5,11 @@ from ..backend.table_state import ElectrificationDashboardState
 from ..templates import template
 
 
-# NZ Region coordinates for visual layout (approximate relative positions)
-NZ_REGIONS_LAYOUT = {
-    "Northland": {"top": "5%", "left": "45%"},
-    "Auckland": {"top": "15%", "left": "45%"},
-    "Waikato": {"top": "25%", "left": "45%"},
-    "Bay of Plenty": {"top": "25%", "left": "60%"},
-    "Gisborne": {"top": "30%", "left": "70%"},
-    "Hawkes Bay": {"top": "40%", "left": "65%"},
-    "Taranaki": {"top": "40%", "left": "35%"},
-    "Manawatu": {"top": "50%", "left": "45%"},
-    "Wanganui": {"top": "48%", "left": "40%"},
-    "Wellington": {"top": "60%", "left": "50%"},
-    "Tasman": {"top": "55%", "left": "55%"},
-    "Marlborough": {"top": "58%", "left": "62%"},
-    "West Coast": {"top": "65%", "left": "50%"},
-    "Canterbury": {"top": "72%", "left": "55%"},
-    "Otago": {"top": "82%", "left": "55%"},
-    "Southland": {"top": "92%", "left": "52%"},
-}
-
-
-def get_marker_color_and_shade(value, metric_type: str = "renewable"):
-    """Determine color and shade based on value and metric type."""
-    # This needs to be called outside of reactive context
-    if metric_type == "renewable":
-        # For renewable: higher is better
-        return "grass", 8
-    else:
-        # For gas: lower is better
-        return "orange", 7
-
-
-def region_marker_renewable(item: rx.Var) -> rx.Component:
-    """Create a region marker for renewable generation."""
-    region = item["region"].to(str)
-    value = item["renewable_pct"].to(int)
-    position = NZ_REGIONS_LAYOUT.get(region, {"top": "50%", "left": "50%"})
-
-    # Use conditional rendering for color based on value
-    color_scheme = rx.cond(
-        value >= 95,
-        "grass",
-        rx.cond(value >= 80, "green", rx.cond(value >= 60, "yellow", "orange")),
-    )
-
-    # Base size calculation (roughly 30-60px range)
-    size = "45px"  # Fixed size for simplicity
-
-    return rx.box(
-        rx.tooltip(
-            rx.box(
-                rx.text(
-                    region[:3].upper(),
-                    size="1",
-                    weight="bold",
-                    color="white",
-                ),
-                display="flex",
-                align_items="center",
-                justify_content="center",
-                width="100%",
-                height="100%",
-            ),
-            content=f"{region}: {value}%",
-        ),
-        position="absolute",
-        top=position.get("top", "50%"),
-        left=position.get("left", "50%"),
-        width=size,
-        height=size,
-        border_radius="50%",
-        background=rx.color(color_scheme, 8),
-        border="2px solid white",
-        cursor="pointer",
-        transition="all 0.2s",
-        _hover={
-            "transform": "scale(1.2)",
-            "z_index": "10",
-        },
-        transform="translate(-50%, -50%)",
-    )
-
-
-def region_marker_gas(item: rx.Var) -> rx.Component:
-    """Create a region marker for gas connections."""
-    region = item["region"].to(str)
-    value = item["connections"].to(int)
-    position = NZ_REGIONS_LAYOUT.get(region, {"top": "50%", "left": "50%"})
-
-    # Use conditional rendering for color based on value
-    color_scheme = rx.cond(
-        value > 100,
-        "red",
-        rx.cond(value > 50, "orange", rx.cond(value > 10, "yellow", "grass")),
-    )
-
-    # Size based on value - smaller is better for gas
-    size = "35px"  # Fixed size for simplicity
-
-    return rx.box(
-        rx.tooltip(
-            rx.box(
-                rx.text(
-                    region[:3].upper(),
-                    size="1",
-                    weight="bold",
-                    color="white",
-                ),
-                display="flex",
-                align_items="center",
-                justify_content="center",
-                width="100%",
-                height="100%",
-            ),
-            content=f"{region}: {value} connections",
-        ),
-        position="absolute",
-        top=position.get("top", "50%"),
-        left=position.get("left", "50%"),
-        width=size,
-        height=size,
-        border_radius="50%",
-        background=rx.color(color_scheme, 7),
-        border="2px solid white",
-        cursor="pointer",
-        transition="all 0.2s",
-        _hover={
-            "transform": "scale(1.2)",
-            "z_index": "10",
-        },
-        transform="translate(-50%, -50%)",
-    )
-
-
-def region_marker(
-    region: str, value: float, metric_type: str = "renewable", position: dict = None
-) -> rx.Component:
-    """Create a region marker on the map - DEPRECATED, use specific marker functions."""
-
-
 def renewable_map() -> rx.Component:
     """Create a map visualization for renewable generation."""
     return rx.box(
-        # Map container
-        rx.box(
-            # Background outline of NZ (simplified)
-            rx.box(
-                rx.image(
-                    src="/nz_outline.svg",
-                    width="100%",
-                    height="100%",
-                    opacity="0.1",
-                ),
-                position="absolute",
-                top="0",
-                left="0",
-                width="100%",
-                height="100%",
-            ),
-            # Region markers
-            rx.foreach(
-                ElectrificationDashboardState.renewable_generation_by_region_data,
-                region_marker_renewable,
-            ),
-            position="relative",
-            width="100%",
-            height="600px",
-            background=rx.color("gray", 2),
-            border_radius="12px",
-            border=f"1px solid {rx.color('gray', 4)}",
+        rx.plotly(
+            data=ElectrificationDashboardState.renewable_map_figure,
         ),
         # Legend
         rx.box(
@@ -185,7 +20,7 @@ def renewable_map() -> rx.Component:
                         width="20px",
                         height="20px",
                         border_radius="50%",
-                        background=rx.color("grass", 9),
+                        background="rgb(34, 139, 34)",
                     ),
                     rx.text("95-100% Renewable", size="2"),
                     spacing="2",
@@ -195,7 +30,7 @@ def renewable_map() -> rx.Component:
                         width="20px",
                         height="20px",
                         border_radius="50%",
-                        background=rx.color("grass", 7),
+                        background="rgb(144, 238, 144)",
                     ),
                     rx.text("80-95% Renewable", size="2"),
                     spacing="2",
@@ -205,7 +40,7 @@ def renewable_map() -> rx.Component:
                         width="20px",
                         height="20px",
                         border_radius="50%",
-                        background=rx.color("yellow", 7),
+                        background="rgb(255, 255, 0)",
                     ),
                     rx.text("60-80% Renewable", size="2"),
                     spacing="2",
@@ -215,7 +50,7 @@ def renewable_map() -> rx.Component:
                         width="20px",
                         height="20px",
                         border_radius="50%",
-                        background=rx.color("orange", 7),
+                        background="rgb(255, 165, 0)",
                     ),
                     rx.text("Below 60% Renewable", size="2"),
                     spacing="2",
@@ -236,28 +71,8 @@ def renewable_map() -> rx.Component:
 def gas_connections_map() -> rx.Component:
     """Create a map visualization for gas connections."""
     return rx.box(
-        # Map container
-        rx.box(
-            # Background outline of NZ
-            rx.box(
-                position="absolute",
-                top="0",
-                left="0",
-                width="100%",
-                height="100%",
-                opacity="0.1",
-            ),
-            # Region markers
-            rx.foreach(
-                ElectrificationDashboardState.gas_connections_by_region_data,
-                region_marker_gas,
-            ),
-            position="relative",
-            width="100%",
-            height="600px",
-            background=rx.color("gray", 2),
-            border_radius="12px",
-            border=f"1px solid {rx.color('gray', 4)}",
+        rx.plotly(
+            data=ElectrificationDashboardState.gas_connections_map_figure,
         ),
         # Legend
         rx.box(
@@ -268,7 +83,7 @@ def gas_connections_map() -> rx.Component:
                         width="20px",
                         height="20px",
                         border_radius="50%",
-                        background=rx.color("red", 7),
+                        background="rgb(220, 20, 60)",
                     ),
                     rx.text(">100 New Connections", size="2"),
                     spacing="2",
@@ -278,7 +93,7 @@ def gas_connections_map() -> rx.Component:
                         width="20px",
                         height="20px",
                         border_radius="50%",
-                        background=rx.color("orange", 7),
+                        background="rgb(255, 165, 0)",
                     ),
                     rx.text("50-100 Connections", size="2"),
                     spacing="2",
@@ -288,7 +103,7 @@ def gas_connections_map() -> rx.Component:
                         width="20px",
                         height="20px",
                         border_radius="50%",
-                        background=rx.color("yellow", 7),
+                        background="rgb(255, 255, 0)",
                     ),
                     rx.text("10-50 Connections", size="2"),
                     spacing="2",
@@ -298,7 +113,7 @@ def gas_connections_map() -> rx.Component:
                         width="20px",
                         height="20px",
                         border_radius="50%",
-                        background=rx.color("grass", 7),
+                        background="rgb(34, 139, 34)",
                     ),
                     rx.text("<10 Connections (Good!)", size="2"),
                     spacing="2",

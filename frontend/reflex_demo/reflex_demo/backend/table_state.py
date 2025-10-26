@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List
 
 import reflex as rx
+import plotly.graph_objects as go
 
 
 # Data models for electrification data
@@ -181,6 +182,41 @@ class ElectrificationDashboardState(rx.State):
 
     # Loading state
     is_loading: bool = False
+
+    # NZ Region coordinates
+    NZ_REGIONS_COORDS: dict = {
+        "Northland": {"lat": -35.7, "lon": 174.3},
+        "Auckland": {"lat": -36.85, "lon": 174.76},
+        "Waikato": {"lat": -37.78, "lon": 175.28},
+        "Bay of Plenty": {"lat": -37.69, "lon": 176.17},
+        "Gisborne": {"lat": -38.66, "lon": 178.02},
+        "Hawkes Bay": {"lat": -39.64, "lon": 176.92},
+        "Taranaki": {"lat": -39.35, "lon": 174.08},
+        "Manawatu": {"lat": -40.35, "lon": 175.61},
+        "Wanganui": {"lat": -39.93, "lon": 175.05},
+        "Wellington": {"lat": -41.28, "lon": 174.78},
+        "Tasman": {"lat": -41.27, "lon": 172.97},
+        "Marlborough": {"lat": -41.51, "lon": 173.96},
+        "West Coast": {"lat": -42.45, "lon": 171.21},
+        "Canterbury": {"lat": -43.53, "lon": 172.63},
+        "Otago": {"lat": -45.03, "lon": 169.4},
+        "Southland": {"lat": -46.41, "lon": 168.35},
+        "Bay of Islands": {"lat": -35.25, "lon": 174.08},
+        "Central Canterbury": {"lat": -43.53, "lon": 171.5},
+        "Central Otago": {"lat": -45.03, "lon": 169.32},
+        "Dunedin": {"lat": -45.87, "lon": 170.50},
+        "Eastern Bay of Plenty": {"lat": -38.01, "lon": 177.42},
+        "Kapiti and Horowhenua": {"lat": -40.54, "lon": 175.22},
+        "King Country": {"lat": -38.4, "lon": 175.05},
+        "Rotorua": {"lat": -38.14, "lon": 176.25},
+        "South Canterbury": {"lat": -44.39, "lon": 171.25},
+        "Southern Hawke's Bay": {"lat": -40.14, "lon": 176.35},
+        "Tairawhiti and Wairoa": {"lat": -38.66, "lon": 177.82},
+        "Taupo": {"lat": -38.69, "lon": 176.07},
+        "Thames Valley": {"lat": -37.14, "lon": 175.54},
+        "Waipa": {"lat": -38.01, "lon": 175.33},
+        "Waitaki": {"lat": -44.93, "lon": 170.98},
+    }
 
     @rx.event
     def set_start_year(self, year: str):
@@ -568,3 +604,158 @@ class ElectrificationDashboardState(rx.State):
             for region in sorted(aggregated.keys())
             if counts[region] > 0 and region != "Unknown"
         ]
+
+    @rx.var(cache=True)
+    def renewable_map_figure(self) -> go.Figure:
+        """Create a Plotly figure for renewable generation map."""
+        data = self.renewable_generation_by_region_data
+        if not data:
+            return go.Figure()
+
+        # Prepare data with coordinates
+        lats = []
+        lons = []
+        texts = []
+        colors = []
+        sizes = []
+
+        for item in data:
+            region = item["region"]
+            renewable_pct = item["renewable_pct"]
+
+            if region in self.NZ_REGIONS_COORDS:
+                coords = self.NZ_REGIONS_COORDS[region]
+                lats.append(coords["lat"])
+                lons.append(coords["lon"])
+                texts.append(f"{region}<br>{renewable_pct:.1f}% Renewable")
+                colors.append(renewable_pct)
+                # Size based on percentage (30-60 range)
+                sizes.append(30 + (renewable_pct / 100) * 30)
+
+        # Create scatter geo plot
+        fig = go.Figure(
+            data=go.Scattergeo(
+                lon=lons,
+                lat=lats,
+                text=texts,
+                mode="markers",
+                marker=dict(
+                    size=sizes,
+                    color=colors,
+                    colorscale=[
+                        [0, "rgb(255, 165, 0)"],  # Orange for low
+                        [0.6, "rgb(255, 255, 0)"],  # Yellow for medium
+                        [0.8, "rgb(144, 238, 144)"],  # Light green for good
+                        [1, "rgb(34, 139, 34)"],  # Dark green for excellent
+                    ],
+                    cmin=0,
+                    cmax=100,
+                    colorbar=dict(title="Renewable %", thickness=15, len=0.7),
+                    line=dict(width=2, color="white"),
+                ),
+                hovertemplate="<b>%{text}</b><extra></extra>",
+            )
+        )
+
+        # Update layout to focus on New Zealand
+        fig.update_geos(
+            center=dict(lon=173, lat=-41),
+            projection_scale=15,
+            showcountries=True,
+            showland=True,
+            landcolor="rgb(243, 243, 243)",
+            coastlinecolor="rgb(204, 204, 204)",
+            showlakes=True,
+            lakecolor="rgb(200, 230, 255)",
+        )
+
+        fig.update_layout(
+            height=600,
+            margin={"r": 0, "t": 30, "l": 0, "b": 0},
+            title="Renewable Energy Generation by Region",
+            geo=dict(
+                projection_type="mercator",
+                showframe=False,
+            ),
+        )
+
+        return fig
+
+    @rx.var(cache=True)
+    def gas_connections_map_figure(self) -> go.Figure:
+        """Create a Plotly figure for gas connections map."""
+        data = self.gas_connections_by_region_data
+        if not data:
+            return go.Figure()
+
+        # Prepare data with coordinates
+        lats = []
+        lons = []
+        texts = []
+        colors = []
+        sizes = []
+
+        # Find max connections for scaling
+        max_connections = max(item["connections"] for item in data) if data else 1
+
+        for item in data:
+            region = item["region"]
+            connections = item["connections"]
+
+            if region in self.NZ_REGIONS_COORDS:
+                coords = self.NZ_REGIONS_COORDS[region]
+                lats.append(coords["lat"])
+                lons.append(coords["lon"])
+                texts.append(f"{region}<br>{int(connections)} connections")
+                colors.append(connections)
+                # Size based on connections (inverse - smaller is better)
+                sizes.append(20 + (connections / max_connections) * 40)
+
+        # Create scatter geo plot
+        fig = go.Figure(
+            data=go.Scattergeo(
+                lon=lons,
+                lat=lats,
+                text=texts,
+                mode="markers",
+                marker=dict(
+                    size=sizes,
+                    color=colors,
+                    colorscale=[
+                        [0, "rgb(34, 139, 34)"],  # Green for low (good)
+                        [0.1, "rgb(255, 255, 0)"],  # Yellow for medium
+                        [0.5, "rgb(255, 165, 0)"],  # Orange for high
+                        [1, "rgb(220, 20, 60)"],  # Red for very high
+                    ],
+                    cmin=0,
+                    cmax=max_connections,
+                    colorbar=dict(title="Connections", thickness=15, len=0.7),
+                    line=dict(width=2, color="white"),
+                ),
+                hovertemplate="<b>%{text}</b><extra></extra>",
+            )
+        )
+
+        # Update layout to focus on New Zealand
+        fig.update_geos(
+            center=dict(lon=173, lat=-41),
+            projection_scale=15,
+            showcountries=True,
+            showland=True,
+            landcolor="rgb(243, 243, 243)",
+            coastlinecolor="rgb(204, 204, 204)",
+            showlakes=True,
+            lakecolor="rgb(200, 230, 255)",
+        )
+
+        fig.update_layout(
+            height=600,
+            margin={"r": 0, "t": 30, "l": 0, "b": 0},
+            title="Gas Connections by Region (Latest Year)",
+            geo=dict(
+                projection_type="mercator",
+                showframe=False,
+            ),
+        )
+
+        return fig

@@ -2,7 +2,7 @@
 
 ## Prerequisites
 - Python 3.8+
-- Reflex installed (`pip install reflex`)
+- Reflex
 
 ## Running the Dashboard
 
@@ -13,7 +13,7 @@ cd frontend/reflex_demo
 
 ### 2. Install dependencies (first time only)
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
 ### 3. Initialize Reflex (first time only)
