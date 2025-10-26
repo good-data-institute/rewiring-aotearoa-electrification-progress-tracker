@@ -34,6 +34,7 @@ def menu_item(text: str, url: str) -> rx.Component:
                 ("Energy by Fuel", menu_item_icon("flame")),
                 ("Gas Connections", menu_item_icon("plug")),
                 ("Renewable Generation", menu_item_icon("leaf")),
+                ("Regional Map", menu_item_icon("map")),
                 ("Table", menu_item_icon("table-2")),
                 ("About", menu_item_icon("book-open")),
                 ("Profile", menu_item_icon("user")),
@@ -116,6 +117,7 @@ def menu_button() -> rx.Component:
         "/energy-fuel",
         "/gas-connections",
         "/renewable-generation",
+        "/regional-map",
         "/table",
         "/about",
         "/profile",
@@ -190,8 +192,8 @@ def navbar() -> rx.Component:
         rx.hstack(
             # The logo.
             rx.color_mode_cond(
-                rx.image(src="/reflex_black.svg", height="1em"),
-                rx.image(src="/reflex_white.svg", height="1em"),
+                rx.image(src="/ra_black.png", height="1em"),
+                rx.image(src="/ra_white.svg", height="1em"),
             ),
             rx.spacer(),
             menu_button(),

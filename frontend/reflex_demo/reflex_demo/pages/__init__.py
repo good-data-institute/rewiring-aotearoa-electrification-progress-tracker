@@ -7,6 +7,7 @@ from .electrification import electrification
 from .energy_fuel import energy_fuel
 from .gas_connections import gas_connections
 from .renewable_generation import renewable_generation
+from .regional_map import regional_map
 
 __all__ = [
     "about",
@@ -18,4 +19,5 @@ __all__ = [
     "energy_fuel",
     "gas_connections",
     "renewable_generation",
+    "regional_map",
 ]

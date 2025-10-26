@@ -15,8 +15,8 @@ def sidebar_header() -> rx.Component:
     return rx.hstack(
         # The logo.
         rx.color_mode_cond(
-            rx.image(src="/reflex_black.svg", height="1.5em"),
-            rx.image(src="/reflex_white.svg", height="1.5em"),
+            rx.image(src="/ra_black.png", height="3em"),
+            rx.image(src="/ra_white.svg", height="3em"),
         ),
         rx.spacer(),
         align="center",
@@ -84,6 +84,7 @@ def sidebar_item(text: str, url: str) -> rx.Component:
                 ("Energy by Fuel", sidebar_item_icon("flame")),
                 ("Gas Connections", sidebar_item_icon("plug")),
                 ("Renewable Generation", sidebar_item_icon("leaf")),
+                ("Regional Map", sidebar_item_icon("map")),
                 ("Table", sidebar_item_icon("table-2")),
                 ("About", sidebar_item_icon("book-open")),
                 ("Profile", sidebar_item_icon("user")),
@@ -142,6 +143,7 @@ def sidebar() -> rx.Component:
         "/energy-fuel",
         "/gas-connections",
         "/renewable-generation",
+        "/regional-map",
         "/table",
         "/about",
         "/profile",
