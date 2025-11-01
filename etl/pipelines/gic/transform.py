@@ -163,7 +163,7 @@ def main():
 
     # Create transformer with optional date range
     transformer = GICGasConnectionsTransformer(
-        year_from=None,  # Optional: filter from this year
+        year_from=2015,  # Optional: filter from this year
         year_to=None,  # Optional: filter to this year
     )
 
