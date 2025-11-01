@@ -74,16 +74,54 @@ class EMIGenerationTransformer(ProcessedLayer):
             pd.read_csv(BytesIO(concordance_data), skiprows=6)
             .query("`Current flag` == 1")
             .rename(
-                columns={"POC code": "POC_Code", "Network reporting region": "Region"}
-            )[["POC_Code", "Region"]]
+                columns={"POC code": "POC_Code", "Network reporting region": "Location"}
+            )[["POC_Code", "Location"]]
             .drop_duplicates()
         )
 
         # Clean region names - remove power company names in parentheses
-        concord["Region"] = (
-            concord["Region"].str.replace(r"\s*\(.*?\)", "", regex=True).str.strip()
+        concord["Location"] = (
+            concord["Location"].str.replace(r"\s*\(.*?\)", "", regex=True).str.strip()
         )
-        print(f"      ✓ Loaded {len(concord)} POC to Region mappings")
+        print(f"      ✓ Loaded {len(concord)} POC to Location mappings")
+
+        # Location to Region mapping
+        region_map = {
+            "Taupo": "Waikato",
+            "Marlborough": "Marlborough",
+            "Thames Valley": "Waikato",
+            "Ashburton": "Canterbury",
+            "King Country": "Waikato",
+            "Waitaki": "Canterbury",  # Could also be Otago, depending on boundary
+            "Manawatu": "Manawatu-Whanganui",
+            "Dunedin": "Otago",
+            "Central Canterbury": "Canterbury",
+            "Central Otago": "Otago",
+            "Counties": "Auckland",
+            "Unknown": "Unknown",
+            "Waikato": "Waikato",
+            "Taranaki": "Taranaki",
+            "Otago": "Otago",
+            "Eastern Bay of Plenty": "Bay of Plenty",
+            "Bay of Islands": "Northland",
+            "Southland": "Southland",
+            "Kapiti and Horowhenua": "Wellington",  # Could also be Manawatu-Whanganui
+            "South Canterbury": "Canterbury",
+            "Rotorua": "Bay of Plenty",
+            "Tasman": "Tasman",
+            "Tairawhiti and Wairoa": "Gisborne",  # Overlaps with northern Hawke’s Bay
+            "Southern Hawke's Bay": "Hawke's Bay",
+            "Hawke's Bay": "Hawke's Bay",
+            "Wellington": "Wellington",
+            "Waipa": "Waikato",
+            "Tauranga": "Bay of Plenty",
+            "Wanganui": "Manawatu-Whanganui",
+            "Whangarei and Kaipara": "Northland",
+        }
+
+        # Assign Locations to Regions
+        concord["Region"] = concord["Location"].map(region_map).fillna("Unknown")
+        print("      ✓ Assigned Locations to Regions")
 
         # Step 4: Data cleaning and transformation
         print("\n[4/5] Applying transformations:")
@@ -91,8 +129,9 @@ class EMIGenerationTransformer(ProcessedLayer):
         # Join regions
         df = df.merge(concord, on="POC_Code", how="left")
         df["Region"] = df["Region"].fillna("Unknown")
+        df["Location"] = df["Location"].fillna("Unknown")
         print(
-            f"      - Joined with regional concordance, {df['Region'].nunique()} regions found"
+            f"      - Joined with Location concordance, {df['Region'].nunique()} regions and {df['Location'].nunique()} found"
         )
 
         # Convert trading date and extract year/month

@@ -5,6 +5,7 @@ monthly renewable generation share by region.
 """
 
 from pathlib import Path
+import pandas as pd
 
 from etl.core.config import get_settings
 from etl.core.pipeline import MetricsLayer
@@ -44,19 +45,37 @@ class EMIGenerationAnalytics(MetricsLayer):
         grouped["Total_All_Fuels"] = grouped.groupby(["Year", "Month", "Region"])[
             "kWh"
         ].transform("sum")
-        grouped["_12_P1_EnergyRenew"] = grouped["kWh"] / grouped["Total_All_Fuels"]
+        grouped["EnergyRenew"] = grouped["kWh"] / grouped["Total_All_Fuels"]
 
         # Filter to renewable type only
-        analytics_df = grouped[grouped["Type"] == 1].copy()
-        print(f"      - Filtered to renewable only: {len(analytics_df)} rows")
+        grouped = grouped[grouped["Type"] == 1].copy()
+        print(f"      - Filtered to renewable only: {len(grouped)} rows")
+
+        # Create a sortable date column
+        grouped["date"] = pd.to_datetime(
+            dict(year=grouped["Year"], month=grouped["Month"], day=1)
+        )
+
+        # Sort to ensure correct order for rolling calculations
+        interim_df = grouped.sort_values(["date"]).reset_index(drop=True)
+
+        # Calculate 12-month rolling mean
+        # The 'rolling(12)' means each value is the mean of the current and previous 11 months
+        interim_df["_12_P1_EnergyRenew"] = (
+            interim_df["EnergyRenew"].rolling(window=12, min_periods=12).mean()
+        )
+        interim_df2 = interim_df.dropna(subset=["_12_P1_EnergyRenew"])
+        print(
+            f"      - Calculated rolling mean, dropped {len(interim_df) - len(interim_df2)} rows"
+        )
 
         # Add metadata fields
-        analytics_df["Metric Group"] = "Energy"
-        analytics_df["Category"] = "Grid"
-        analytics_df["Sub-Category"] = "NA"
+        interim_df2 = interim_df2.copy().assign(
+            **{"Metric Group": "Energy", "Category": "Grid", "Sub-Category": ""}
+        )
 
         # Final selection
-        analytics_df = analytics_df[
+        out_df = interim_df2[
             [
                 "Year",
                 "Month",
@@ -69,22 +88,20 @@ class EMIGenerationAnalytics(MetricsLayer):
         ]
 
         print(
-            f"      - Renewable share ranges from {analytics_df['_12_P1_EnergyRenew'].min():.2%} "
-            f"to {analytics_df['_12_P1_EnergyRenew'].max():.2%}"
+            f"      - Renewable share ranges from {out_df['_12_P1_EnergyRenew'].min():.2%} "
+            f"to {out_df['_12_P1_EnergyRenew'].max():.2%}"
         )
         print(
-            f"      - Average renewable share: {analytics_df['_12_P1_EnergyRenew'].mean():.2%}"
+            f"      - Average renewable share: {out_df['_12_P1_EnergyRenew'].mean():.2%}"
         )
 
         # Step 3: Save analytics
         print("\n[3/3] Saving analytics...")
-        self.write_csv(analytics_df, output_path)
+        self.write_csv(out_df, output_path)
 
-        print(f"\n✓ Analytics complete: {len(analytics_df)} rows saved")
-        print(
-            f"  Years covered: {analytics_df['Year'].min()} - {analytics_df['Year'].max()}"
-        )
-        print(f"  Regions: {', '.join(sorted(analytics_df['Region'].unique()))}")
+        print(f"\n✓ Analytics complete: {len(out_df)} rows saved")
+        print(f"  Years covered: {out_df['Year'].min()} - {out_df['Year'].max()}")
+        print(f"  Regions: {', '.join(sorted(out_df['Region'].unique()))}")
 
 
 def main():
