@@ -9,7 +9,7 @@ This script handles raw data extraction:
 from pathlib import Path
 import json
 
-from etl.apis.emi import EMIGenerationAPI
+from etl.apis.emi_generation import EMIGenerationAPI
 from etl.core.config import get_settings
 
 
