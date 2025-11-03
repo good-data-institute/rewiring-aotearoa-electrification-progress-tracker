@@ -1,9 +1,12 @@
 import csv
 from pathlib import Path
 from typing import List
+import io
 
 import reflex as rx
 import plotly.graph_objects as go
+import boto3
+import pandas as pd
 
 
 # Data models for electrification data
@@ -246,24 +249,30 @@ class ElectrificationDashboardState(rx.State):
         else:
             self.selected_regions.append(region)
 
+    def _load_csv_from_s3(self, bucket: str, key: str) -> pd.DataFrame:
+        """Helper function to load CSV from S3."""
+        try:
+            s3_client = boto3.client(
+                "s3", region_name="ap-southeast-2"
+            )  # Change region if needed
+            obj = s3_client.get_object(Bucket=bucket, Key=key)
+            return pd.read_csv(io.BytesIO(obj["Body"].read()))
+        except Exception as e:
+            print(f"Error loading {key} from S3: {e}")
+            return pd.DataFrame()
+
     def load_data(self):
-        """Load all CSV files."""
+        """Load all CSV files from S3."""
         self.is_loading = True
 
-        # Get the project root (go up from frontend/reflex_demo to project root)
-        project_root = Path(__file__).parent.parent.parent.parent.parent
+        bucket_name = "test-gdi-28924"
 
         # Load EECA Electricity Percentage
-        eeca_elec_path = (
-            project_root
-            / "data"
-            / "metrics"
-            / "eeca"
-            / "eeca_electricity_percentage.csv"
-        )
-        if eeca_elec_path.exists():
-            with open(eeca_elec_path, mode="r", encoding="utf-8") as file:
-                reader = csv.DictReader(file)
+        try:
+            df = self._load_csv_from_s3(
+                bucket_name, "metrics/eeca/eeca_electricity_percentage.csv"
+            )
+            if not df.empty:
                 self.electricity_percentage_data = [
                     ElectricityPercentageData(
                         year=int(row["Year"]),
@@ -273,16 +282,17 @@ class ElectrificationDashboardState(rx.State):
                         category=row["Category"],
                         sub_category=row["Sub-Category"],
                     )
-                    for row in reader
+                    for _, row in df.iterrows()
                 ]
+        except Exception as e:
+            print(f"Error loading electricity percentage data: {e}")
 
         # Load EECA Energy by Fuel
-        eeca_fuel_path = (
-            project_root / "data" / "metrics" / "eeca" / "eeca_energy_by_fuel.csv"
-        )
-        if eeca_fuel_path.exists():
-            with open(eeca_fuel_path, mode="r", encoding="utf-8") as file:
-                reader = csv.DictReader(file)
+        try:
+            df = self._load_csv_from_s3(
+                bucket_name, "metrics/eeca/eeca_energy_by_fuel.csv"
+            )
+            if not df.empty:
                 self.energy_by_fuel_data = [
                     EnergyByFuelData(
                         year=int(row["Year"]),
@@ -292,20 +302,17 @@ class ElectrificationDashboardState(rx.State):
                         metric_group=row["Metric Group"],
                         energy_value=float(row["_14_P1_EnergyxFuel"]),
                     )
-                    for row in reader
+                    for _, row in df.iterrows()
                 ]
+        except Exception as e:
+            print(f"Error loading energy by fuel data: {e}")
 
         # Load GIC Gas Connections
-        gic_path = (
-            project_root
-            / "data"
-            / "metrics"
-            / "gic"
-            / "gic_gas_connections_analytics.csv"
-        )
-        if gic_path.exists():
-            with open(gic_path, mode="r", encoding="utf-8") as file:
-                reader = csv.DictReader(file)
+        try:
+            df = self._load_csv_from_s3(
+                bucket_name, "metrics/gic/gic_gas_connections_analytics.csv"
+            )
+            if not df.empty:
                 self.gas_connections_data = [
                     GasConnectionsData(
                         year=int(row["Year"]),
@@ -316,20 +323,17 @@ class ElectrificationDashboardState(rx.State):
                         category=row["Category"],
                         sub_category=row["Sub-Category"],
                     )
-                    for row in reader
+                    for _, row in df.iterrows()
                 ]
+        except Exception as e:
+            print(f"Error loading gas connections data: {e}")
 
         # Load EMI Renewable Generation
-        emi_path = (
-            project_root
-            / "data"
-            / "metrics"
-            / "emi_generation"
-            / "emi_generation_analytics.csv"
-        )
-        if emi_path.exists():
-            with open(emi_path, mode="r", encoding="utf-8") as file:
-                reader = csv.DictReader(file)
+        try:
+            df = self._load_csv_from_s3(
+                bucket_name, "metrics/emi_generation/emi_generation_analytics.csv"
+            )
+            if not df.empty:
                 self.renewable_generation_data = [
                     RenewableGenerationData(
                         year=int(row["Year"]),
@@ -339,11 +343,14 @@ class ElectrificationDashboardState(rx.State):
                         category=row["Category"],
                         sub_category=row["Sub-Category"],
                         renewable_percentage=float(row["_12_P1_EnergyRenew"])
-                        if row["_12_P1_EnergyRenew"]
+                        if pd.notna(row["_12_P1_EnergyRenew"])
+                        and row["_12_P1_EnergyRenew"]
                         else 0.0,
                     )
-                    for row in reader
+                    for _, row in df.iterrows()
                 ]
+        except Exception as e:
+            print(f"Error loading renewable generation data: {e}")
 
         # Extract unique regions
         regions_set = set()
