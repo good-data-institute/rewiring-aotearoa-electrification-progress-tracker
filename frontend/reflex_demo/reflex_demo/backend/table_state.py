@@ -252,9 +252,15 @@ class ElectrificationDashboardState(rx.State):
     def _load_csv_from_s3(self, bucket: str, key: str) -> pd.DataFrame:
         """Helper function to load CSV from S3."""
         try:
+            # Use anonymous access (no credentials needed) for public bucket
+            from botocore import UNSIGNED
+            from botocore.config import Config
+
             s3_client = boto3.client(
-                "s3", region_name="ap-southeast-2"
-            )  # Change region if needed
+                "s3",
+                region_name="ap-southeast-2",
+                config=Config(signature_version=UNSIGNED),
+            )
             obj = s3_client.get_object(Bucket=bucket, Key=key)
             return pd.read_csv(io.BytesIO(obj["Body"].read()))
         except Exception as e:
@@ -270,7 +276,7 @@ class ElectrificationDashboardState(rx.State):
         # Load EECA Electricity Percentage
         try:
             df = self._load_csv_from_s3(
-                bucket_name, "metrics/eeca/eeca_electricity_percentage.csv"
+                bucket_name, "data/metrics/eeca/eeca_electricity_percentage.csv"
             )
             if not df.empty:
                 self.electricity_percentage_data = [
@@ -290,7 +296,7 @@ class ElectrificationDashboardState(rx.State):
         # Load EECA Energy by Fuel
         try:
             df = self._load_csv_from_s3(
-                bucket_name, "metrics/eeca/eeca_energy_by_fuel.csv"
+                bucket_name, "data/metrics/eeca/eeca_energy_by_fuel.csv"
             )
             if not df.empty:
                 self.energy_by_fuel_data = [
@@ -310,7 +316,7 @@ class ElectrificationDashboardState(rx.State):
         # Load GIC Gas Connections
         try:
             df = self._load_csv_from_s3(
-                bucket_name, "metrics/gic/gic_gas_connections_analytics.csv"
+                bucket_name, "data/metrics/gic/gic_gas_connections_analytics.csv"
             )
             if not df.empty:
                 self.gas_connections_data = [
@@ -331,7 +337,7 @@ class ElectrificationDashboardState(rx.State):
         # Load EMI Renewable Generation
         try:
             df = self._load_csv_from_s3(
-                bucket_name, "metrics/emi_generation/emi_generation_analytics.csv"
+                bucket_name, "data/metrics/emi_generation/emi_generation_analytics.csv"
             )
             if not df.empty:
                 self.renewable_generation_data = [
