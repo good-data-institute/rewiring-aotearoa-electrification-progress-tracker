@@ -26,11 +26,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Initialize Reflex
+# Initialize Reflex and build everything during Docker build (has more memory)
 RUN reflex init
+RUN reflex export --no-zip --loglevel debug
 
 # Expose port
 EXPOSE 8000
 
-# Start command
+# Set environment to skip compilation on startup
+ENV __REFLEX_SKIP_COMPILE=true
+
+# Start the app (will use pre-built frontend)
 CMD ["reflex", "run", "--env", "prod", "--backend-host", "0.0.0.0", "--backend-port", "8000"]
