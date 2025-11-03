@@ -1,8 +1,12 @@
 [phases.setup]
-nixPkgs = ["python312", "unzip"]
+nixPkgs = ["python312", "nodejs_20", "unzip"]
 
 [phases.install]
-cmds = ["pip install -r requirements.txt", "reflex init"]
+cmds = [
+  "pip install -r requirements.txt",
+  "npm install -g bun",
+  "reflex init"
+]
 
 [start]
 cmd = "reflex run --env prod --backend-host 0.0.0.0 --backend-port $PORT"
