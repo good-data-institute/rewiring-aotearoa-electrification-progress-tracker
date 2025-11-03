@@ -28,13 +28,13 @@ COPY . .
 
 # Initialize Reflex and build everything during Docker build (has more memory)
 RUN reflex init
-RUN reflex export --no-zip --loglevel debug
+
+# Compile the app once during build (with plenty of memory)
+RUN reflex export --loglevel debug
 
 # Expose port
 EXPOSE 8000
 
-# Set environment to skip compilation on startup
-ENV __REFLEX_SKIP_COMPILE=true
-
-# Start the app (will use pre-built frontend)
-CMD ["reflex", "run", "--env", "prod", "--backend-host", "0.0.0.0", "--backend-port", "8000"]
+# Start only the backend server using the compiled assets
+# This avoids recompilation at startup
+CMD ["python", "-m", "reflex.reflex", "run", "--env", "prod", "--backend-host", "0.0.0.0", "--backend-port", "8000", "--loglevel", "info"]
