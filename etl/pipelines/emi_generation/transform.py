@@ -14,6 +14,7 @@ import pandas as pd
 
 from etl.core.config import get_settings
 from etl.core.pipeline import ProcessedLayer
+from etl.core.mappings import EMI_REGION_MAP
 
 
 class EMIGenerationTransformer(ProcessedLayer):
@@ -85,43 +86,11 @@ class EMIGenerationTransformer(ProcessedLayer):
         )
         print(f"      ✓ Loaded {len(concord)} POC to Location mappings")
 
-        # Location to Region mapping
-        region_map = {
-            "Taupo": "Waikato",
-            "Marlborough": "Marlborough",
-            "Thames Valley": "Waikato",
-            "Ashburton": "Canterbury",
-            "King Country": "Waikato",
-            "Waitaki": "Canterbury",  # Could also be Otago, depending on boundary
-            "Manawatu": "Manawatu-Whanganui",
-            "Dunedin": "Otago",
-            "Central Canterbury": "Canterbury",
-            "Central Otago": "Otago",
-            "Counties": "Auckland",
-            "Unknown": "Unknown",
-            "Waikato": "Waikato",
-            "Taranaki": "Taranaki",
-            "Otago": "Otago",
-            "Eastern Bay of Plenty": "Bay of Plenty",
-            "Bay of Islands": "Northland",
-            "Southland": "Southland",
-            "Kapiti and Horowhenua": "Wellington",  # Could also be Manawatu-Whanganui
-            "South Canterbury": "Canterbury",
-            "Rotorua": "Bay of Plenty",
-            "Tasman": "Tasman",
-            "Tairawhiti and Wairoa": "Gisborne",  # Overlaps with northern Hawke’s Bay
-            "Southern Hawke's Bay": "Hawke's Bay",
-            "Hawke's Bay": "Hawke's Bay",
-            "Wellington": "Wellington",
-            "Waipa": "Waikato",
-            "Tauranga": "Bay of Plenty",
-            "Wanganui": "Manawatu-Whanganui",
-            "Whangarei and Kaipara": "Northland",
-        }
-
         # Assign Locations to Regions
-        concord["Region"] = concord["Location"].map(region_map).fillna("Unknown")
+        before_join = df
+        concord["Region"] = concord["Location"].map(EMI_REGION_MAP).fillna("Unknown")
         print("      ✓ Assigned Locations to Regions")
+        print(f"      ✓ Rows before join: {len(before_join)}, rows after: {len(df)}")
 
         # Step 4: Data cleaning and transformation
         print("\n[4/5] Applying transformations:")
