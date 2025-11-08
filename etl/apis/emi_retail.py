@@ -46,6 +46,12 @@ class EMIRetailParams(BaseModel):
         default="NZ", description="Region type for data aggregation", alias="RegionType"
     )
 
+    MarketSegment: Literal["Res", "SME", "Com", "Ind"] = Field(
+        default="Res",
+        description="Market segment (Residential, SME, Commercial, Industrial)",
+        alias="MarketSegment",
+    )
+
     Capacity: Literal["All_Drilldown", "Generation", "Transmission", "Distribution"] = (
         Field(
             default="All_Drilldown",
