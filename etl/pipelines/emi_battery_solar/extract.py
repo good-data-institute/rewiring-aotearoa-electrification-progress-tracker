@@ -7,7 +7,7 @@ This script handles raw data extraction:
 
 from pathlib import Path
 import json
-from io import StringIO
+from io import BytesIO
 
 import pandas as pd
 from etl.core.config import get_settings
@@ -58,7 +58,7 @@ class EMIBatterySolarExtractor:
 
             # Fetch and parse CSV (skipping header rows as before)
             response_content = api.fetch_data()
-            df = pd.read_csv(StringIO(response_content.decode("utf-8")), skiprows=12)
+            df = pd.read_csv(BytesIO(response_content), skiprows=12)
 
             # Save to file
             df.to_csv(output_path, index=False)
