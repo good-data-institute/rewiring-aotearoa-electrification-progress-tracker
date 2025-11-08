@@ -7,44 +7,23 @@ This script handles raw data extraction:
 
 from pathlib import Path
 import json
+from io import StringIO
 
 import pandas as pd
 from etl.core.config import get_settings
+from etl.apis.emi_retail import EMIRetailAPI
 
 
 class EMIBatterySolarExtractor:
     """Data extractor for EMI Battery and Solar: Extract from website dashboard to raw storage."""
 
     def __init__(self):
-        self.urls = [
-            (
-                "https://www.emi.ea.govt.nz/Retail/Download/DataReport/CSV/GUEHMT"
-                "?DateFrom=20130901&DateTo=20250930"
-                "&RegionType=NWK_REPORTING_REGION_DIST"
-                "&MarketSegment=Res&FuelType=All_Drilldown&_rsdr=ALL&_si=v|4",
-                "Residential",
-            ),
-            (
-                "https://www.emi.ea.govt.nz/Retail/Download/DataReport/CSV/GUEHMT"
-                "?DateFrom=20130901&DateTo=20250930"
-                "&RegionType=NWK_REPORTING_REGION_DIST"
-                "&MarketSegment=SME&FuelType=All_Drilldown&_rsdr=ALL&_si=v|4",
-                "SME",
-            ),
-            (
-                "https://www.emi.ea.govt.nz/Retail/Download/DataReport/CSV/GUEHMT"
-                "?DateFrom=20130901&DateTo=20250930"
-                "&RegionType=NWK_REPORTING_REGION_DIST"
-                "&MarketSegment=Com&FuelType=All_Drilldown&_rsdr=ALL&_si=v|4",
-                "Commercial",
-            ),
-            (
-                "https://www.emi.ea.govt.nz/Retail/Download/DataReport/CSV/GUEHMT"
-                "?DateFrom=20130901&DateTo=20250930"
-                "&RegionType=NWK_REPORTING_REGION_DIST"
-                "&MarketSegment=Ind&FuelType=All_Drilldown&_rsdr=ALL&_si=v|4",
-                "Industrial",
-            ),
+        # Define market segments to extract
+        self.market_segments = [
+            ("Res", "Residential"),
+            ("SME", "SME"),
+            ("Com", "Commercial"),
+            ("Ind", "Industrial"),
         ]
 
     def extract(self, output_dir: Path) -> None:
@@ -56,18 +35,39 @@ class EMIBatterySolarExtractor:
         output_dir.mkdir(parents=True, exist_ok=True)
         file_manifest = []
 
-        for i, (url, label) in enumerate(self.urls, start=1):
-            print(f"\n[{i}/{len(self.urls)}] Downloading {label} data...")
-            df = pd.read_csv(url, skiprows=12)
-            filename = f"{label.lower()}_electrification_raw.csv"
+        for i, (segment_code, segment_label) in enumerate(
+            self.market_segments, start=1
+        ):
+            print(
+                f"\n[{i}/{len(self.market_segments)}] Downloading {segment_label} data..."
+            )
+
+            # Create API client with specific parameters
+            api = EMIRetailAPI(
+                report_id="GUEHMT",
+                DateFrom="20130901",
+                DateTo="20250930",
+                RegionType="NWK_REPORTING_REGION_DIST",
+                MarketSegment=segment_code,
+                FuelType="All_Drilldown",
+            )
+
+            # Fetch data using the API client
+            filename = f"{segment_label.lower()}_electrification_raw.csv"
             output_path = output_dir / filename
+
+            # Fetch and parse CSV (skipping header rows as before)
+            response_content = api.fetch_data()
+            df = pd.read_csv(StringIO(response_content.decode("utf-8")), skiprows=12)
+
+            # Save to file
             df.to_csv(output_path, index=False)
             file_manifest.append(filename)
             print(f"      ✓ Saved: {filename} ({len(df)} rows)")
 
         # Save manifest
         manifest_path = output_dir / "_manifest.json"
-        with open(manifest_path, "w") as f:
+        with open(manifest_path, "w", encoding="utf-8") as f:
             json.dump({"files": file_manifest}, f, indent=2)
         print(f"\n✓ Manifest saved with {len(file_manifest)} files")
 
