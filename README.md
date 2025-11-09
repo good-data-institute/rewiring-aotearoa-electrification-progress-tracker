@@ -149,5 +149,6 @@ Each data source has separate scripts:
 
 ### Data Sources
 1. **EMI Generation**: Electricity generation by fuel type
+2. **EMI Solar and Battery**: Count and capacity of installed solar and battery infrastucture
 2. **EECA**: Energy end-use by fuel type
 3. **GIC**: Gas connection statistics
