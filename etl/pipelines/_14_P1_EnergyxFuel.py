@@ -61,7 +61,7 @@ class EECAEnergyByFuelAnalytics(MetricsLayer):
         out_df = grouped1._append(grouped2)
 
         # Add metadata
-        out_df["Metric Group"] = "Energy"
+        out_df = out_df.assign(**{"Metric Group": "Energy", "Month": "Total"})
 
         # Convert to MWh instead of Terajoules
         out_df["_14_P1_EnergyxFuel"] = out_df["energyValue"] * (1 / 0.036)
