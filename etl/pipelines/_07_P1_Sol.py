@@ -30,8 +30,8 @@ class Processor_07Sol(MetricsLayer):
         print(f"      ✓ Loaded {len(df)} rows")
 
         # Step 2: Calculate analytics
-        print("\n[2/3] Calculating solar capacity installed...")
-        solar_df = (
+        print("\n[2/5] Calculating solar capacity installed BY Sub-Category")
+        solar_df1 = (
             df.loc[df["Fuel type"].isin(["Solar", "Solar (with battery)"])]
             .groupby(["Year", "Month", "Region", "Sub-Category"], as_index=False)[
                 "Total capacity installed (MW)"
@@ -39,18 +39,42 @@ class Processor_07Sol(MetricsLayer):
             .sum()
             .rename(columns={"Total capacity installed (MW)": "_07_P1_Sol"})
         )
-        print(f"      ✓ Aggregated {len(solar_df)} grouped rows")
+        print(f"      ✓ Aggregated {len(solar_df1)} grouped rows")
 
         # Add metadata columns
-        solar_df = solar_df.assign(**{"Metric Group": "Energy", "Category": "Solar"})
+        solar_df1 = solar_df1.assign(**{"Metric Group": "Energy", "Category": "Solar"})
+
+        # Step 3: Calculate analytics
+        print("\n[3/5] Calculating solar capacity installed ACROSS Sub-Category")
+        solar_df2 = (
+            df.loc[df["Fuel type"].isin(["Solar", "Solar (with battery)"])]
+            .groupby(["Year", "Month", "Region"], as_index=False)[
+                "Total capacity installed (MW)"
+            ]
+            .sum()
+            .rename(columns={"Total capacity installed (MW)": "_07_P1_Sol"})
+        )
+        print(f"      ✓ Aggregated {len(solar_df2)} grouped rows")
+
+        # Add metadata columns
+        solar_df2 = solar_df2.assign(
+            **{"Metric Group": "Energy", "Category": "Solar", "Sub-Category": "Total"}
+        )
+
+        # Step 4: Join datasets
+        print("\n[4/5] Combining BY and ACROSS dataset")
+        out_df = solar_df1._append(solar_df2)
+        print(f"      ✓ Calculated {len(out_df)} battery penetration records")
+        print("      ✓ Provide percentages and counts")
 
         # Step 3: Save analytics
         print("\n[3/3] Saving metric...")
-        self.write_csv(solar_df, output_path)
+        self.write_csv(out_df, output_path)
 
-        print(f"\n✓ Analytics complete: {len(solar_df)} rows saved")
-        print(f"  Years covered: {solar_df['Year'].min()} - {solar_df['Year'].max()}")
-        print(f"  Regions: {', '.join(sorted(solar_df['Region'].unique()))}")
+        print(f"\n✓ Analytics complete: {len(out_df)} rows saved")
+        print(f"  Years covered: {out_df['Year'].min()} - {out_df['Year'].max()}")
+        print(f"  Regions: {', '.join(sorted(out_df['Region'].unique()))}")
+        print(f"  Sub-Categories: {', '.join(sorted(out_df['Sub-Category'].unique()))}")
 
 
 def main():
