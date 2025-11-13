@@ -97,6 +97,12 @@ class EECAEnergyConsumptionTransformer(ProcessedLayer):
         )
         print(f"      - Selected {len(df.columns)} columns")
 
+        # Reassign fishing to Commercial in Sub-Categories
+        df["Sub-Category"] = df["Sub-Category"].replace(
+            {"Agriculture, Forestry and Fishing": "Commercial"}
+        )
+        print("      - Reassigned fishing group to commercial Sub-Category")
+
         # Remove rows where energyValue is missing
         initial_rows = len(df)
         df = df.dropna(subset=["energyValue"])
