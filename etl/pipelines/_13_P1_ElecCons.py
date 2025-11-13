@@ -63,10 +63,10 @@ class EECAElectricityPercentageAnalytics(MetricsLayer):
             _13_P1_ElecCons=lambda x: 100 * x["Electricity_Energy"] / x["Total_Energy"]
         )[["Year", "Month", "_13_P1_ElecCons"]]
 
-        # Add metadata
-        analytics_df["Metric Group"] = "Energy"
-        analytics_df["Category"] = "Grid"
-        analytics_df["Sub-Category"] = ""
+        # Add metadata fields
+        analytics_df = analytics_df.copy().assign(
+            **{"Metric Group": "Energy", "Category": "Grid", "Sub-Category": "Total"}
+        )
 
         print(
             f"      - Electricity share ranges from {analytics_df['_13_P1_ElecCons'].min():.2f}% "
