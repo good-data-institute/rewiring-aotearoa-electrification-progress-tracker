@@ -68,7 +68,7 @@ class Processor_07Sol(MetricsLayer):
         print("      ✓ Provide percentages and counts")
 
         # Step 3: Save analytics
-        print("\n[3/3] Saving metric...")
+        print("\n[5/5] Saving metric...")
         self.write_csv(out_df, output_path)
 
         print(f"\n✓ Analytics complete: {len(out_df)} rows saved")
