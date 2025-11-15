@@ -71,7 +71,7 @@ class EMIGenerationAnalytics(MetricsLayer):
 
         # Add metadata fields
         interim_df2 = interim_df2.copy().assign(
-            **{"Metric Group": "Energy", "Category": "Grid", "Sub-Category": ""}
+            **{"Metric Group": "Energy", "Category": "Grid", "Sub-Category": "Total"}
         )
 
         # Final selection

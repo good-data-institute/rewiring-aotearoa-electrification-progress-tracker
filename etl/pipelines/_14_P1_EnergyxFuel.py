@@ -34,45 +34,51 @@ class EECAEnergyByFuelAnalytics(MetricsLayer):
         print(f"      Loaded {len(df)} rows from {input_path.name}")
 
         # Step 2: Calculate analytics
-        print("\n[2/3] Aggregating energy consumption by fuel type and sector...")
+        print("\n[2/5] Aggregating energy consumption by fuel type and sector")
 
         # Group and summarise
-        grouped = df.groupby(
-            ["Year", "Month", "Category", "Sub-Category"], as_index=False
-        )["energyValue"].sum()
+        grouped1 = df.groupby(["Year", "Category", "Sub-Category"], as_index=False)[
+            "energyValue"
+        ].sum()
         print(
-            f"      - Aggregated to {len(grouped)} rows "
-            f"({df['Year'].nunique()} years × {df['Month'].nunique()} months × {df['Category'].nunique()} fuel types × {df['Sub-Category'].nunique()} sectors)"
+            f"      - Aggregated to {len(grouped1)} rows "
+            f"({df['Year'].nunique()} years × {df['Category'].nunique()} fuel types × {df['Sub-Category'].nunique()} sectors)"
+        )
+
+        # Step 3: Calculate analytics
+        print("\n[3/5] Aggregating energy consumption by fuel type")
+
+        # Group and summarise
+        grouped2 = df.groupby(["Year", "Category"], as_index=False)["energyValue"].sum()
+        grouped2 = grouped2.assign(**{"Sub-Category": "Total"})
+        print(
+            f"      - Aggregated to {len(grouped2)} rows "
+            f"({df['Year'].nunique()} years × {df['Category'].nunique()} fuel types)"
+        )
+
+        # Step 4: Join datasets
+        print("\n[4/5] Add a Total Category to Sector")
+        out_df = grouped1._append(grouped2)
+
+        # Add metadata
+        out_df = out_df.assign(
+            **{"Metric Group": "Energy", "Month": "Total", "Region": "Total"}
         )
 
         # Convert to MWh instead of Terajoules
-        grouped["_14_P1_EnergyxFuel"] = grouped["energyValue"] * (1 / 0.036)
+        out_df["_14_P1_EnergyxFuel"] = out_df["energyValue"] * (1 / 0.036)
+        out_df = out_df.drop(columns=["energyValue"])
         print("      - Converted from terajoules to MWh using factor (1 / 0.036)")
-        print(f"      - Total energy: {grouped['_14_P1_EnergyxFuel'].sum():,.0f} MWh")
+        print(f"      - Total energy: {out_df['_14_P1_EnergyxFuel'].sum():,.0f} MWh")
 
-        # Add metadata
-        grouped["Metric Group"] = "Energy"
+        # Step 5: Save analytics
+        print("\n[5/5] Saving analytics...")
+        self.write_csv(out_df, output_path)
 
-        # Select columns
-        grouped = grouped[
-            [
-                "Year",
-                "Month",
-                "Category",
-                "Sub-Category",
-                "Metric Group",
-                "_14_P1_EnergyxFuel",
-            ]
-        ]
-
-        # Step 3: Save analytics
-        print("\n[3/3] Saving analytics...")
-        self.write_csv(grouped, output_path)
-
-        print(f"\n✓ Analytics complete: {len(grouped)} rows saved")
-        print(f"  Years covered: {grouped['Year'].min()} - {grouped['Year'].max()}")
-        print(f"  Fuel types: {', '.join(sorted(grouped['Category'].unique()))}")
-        print(f"  Sectors: {grouped['Sub-Category'].nunique()}")
+        print(f"\n✓ Analytics complete: {len(out_df)} rows saved")
+        print(f"  Years covered: {out_df['Year'].min()} - {out_df['Year'].max()}")
+        print(f"  Fuel types: {', '.join(sorted(out_df['Category'].unique()))}")
+        print(f"  Sectors: {out_df['Sub-Category'].unique()}")
 
 
 def main():
