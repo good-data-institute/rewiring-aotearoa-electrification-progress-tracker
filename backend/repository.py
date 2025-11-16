@@ -70,7 +70,7 @@ class DataRepository:
         """Query data from processed layer.
 
         Args:
-            dataset: Dataset name (e.g., "emi_retail", "eeca", "gic", "emi_generation")
+            dataset: Dataset name (e.g., "demo_emi_retail", "eeca", "gic", "emi_generation")
             filters: Dictionary of filters to apply
             limit: Maximum number of rows to return
             offset: Number of rows to skip
@@ -83,9 +83,9 @@ class DataRepository:
         """
         # Determine file path based on dataset
         file_mapping = {
-            "emi_retail": self.settings.processed_dir
-            / "emi_retail"
-            / "emi_retail_cleaned.csv",
+            "demo_emi_retail": self.settings.processed_dir
+            / "demo_emi_retail"
+            / "demo_emi_retail_cleaned.csv",
             "eeca": self.settings.processed_dir
             / "eeca"
             / "eeca_energy_consumption_cleaned.csv",
@@ -130,7 +130,7 @@ class DataRepository:
         """Query data from metrics layer.
 
         Args:
-            dataset: Dataset name (e.g., "emi_retail", "eeca", "gic", "emi_generation")
+            dataset: Dataset name (e.g., "demo_emi_retail", "eeca", "gic", "emi_generation")
             filters: Dictionary of filters to apply
             limit: Maximum number of rows to return
             offset: Number of rows to skip
@@ -143,9 +143,9 @@ class DataRepository:
         """
         # Determine file path based on dataset
         file_mapping = {
-            "emi_retail": self.settings.metrics_dir
-            / "emi_retail"
-            / "emi_retail_analytics.csv",
+            "demo_emi_retail": self.settings.metrics_dir
+            / "demo_emi_retail"
+            / "demo_emi_retail_analytics.csv",
             "eeca": self.settings.metrics_dir / "eeca" / "eeca_analytics.csv",
             "gic": self.settings.metrics_dir / "gic" / "gic_analytics.csv",
             "emi_generation": self.settings.metrics_dir

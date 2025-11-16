@@ -88,7 +88,7 @@ class DemoProcessor(MetricsLayer):
 
         # Add metadata columns
         analytics_df["processed_date"] = pd.Timestamp.now().strftime("%Y-%m-%d")
-        analytics_df["data_source"] = "emi_retail"
+        analytics_df["data_source"] = "demo_emi_retail"
         print("      ✓ Added metadata columns")
 
         # Add any custom business metrics here
@@ -121,8 +121,8 @@ def main():
     settings = get_settings()
 
     # Define input and output paths
-    input_path = settings.processed_dir / "emi" / "emi_retail_cleaned.csv"
-    output_path = settings.metrics_dir / "emi" / "emi_retail_analytics.csv"
+    input_path = settings.processed_dir / "demo_emi_retail" / "emi_retail_cleaned.csv"
+    output_path = settings.metrics_dir / "demo_emi_retail" / "emi_retail_analytics.csv"
 
     print(f"Input: {input_path}")
     print(f"Output: {output_path}")
