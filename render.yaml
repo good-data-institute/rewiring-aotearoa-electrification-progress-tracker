@@ -1,41 +1,9 @@
-previewsEnabled: false
-
-databases:
-  - name: lightdash-database
-    ipAllowList: []
-    plan: free
-
 services:
   - type: web
-    plan: free
+    name: electrification-dashboard
     runtime: docker
-    name: electrification-metrics
-    dockerContext: .
+    plan: free
     dockerfilePath: ./Dockerfile
     envVars:
-      - key: PGHOST
-        fromDatabase:
-          name: lightdash-database
-          property: host
-      - key: PGPORT
-        fromDatabase:
-          name: lightdash-database
-          property: port
-      - key: PGDATABASE
-        fromDatabase:
-          name: lightdash-database
-          property: database
-      - key: PGUSER
-        fromDatabase:
-          name: lightdash-database
-          property: user
-      - key: PGPASSWORD
-        fromDatabase:
-          name: lightdash-database
-          property: password
-      - key: TRUST_PROXY
-        value: true
-      - key: SECURE_COOKIES
-        value: true
-      - key: LIGHTDASH_SECRET
-        generateValue: true
+      - key: PORT
+        value: 8501
