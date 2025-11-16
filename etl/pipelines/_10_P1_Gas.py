@@ -51,7 +51,7 @@ class GICGasConnectionsAnalytics(MetricsLayer):
 
         # Step 3: Save analytics
         print("\n[3/3] Saving analytics...")
-        self.write_parquet(analytics_df, output_path)
+        self.write_csv(analytics_df, output_path)
 
         print(f"\n✓ Analytics complete: {len(analytics_df)} rows saved")
         print(
@@ -66,7 +66,7 @@ def main():
 
     # Define input and output paths
     input_path = settings.processed_dir / "gic" / "gic_gas_connections_cleaned.csv"
-    output_path = settings.metrics_dir / "gic" / "gic_gas_connections_analytics.parquet"
+    output_path = settings.metrics_dir / "gic" / "gic_gas_connections_analytics.csv"
 
     # Create analytics processor
     processor = GICGasConnectionsAnalytics()

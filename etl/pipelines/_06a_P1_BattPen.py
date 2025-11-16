@@ -114,7 +114,7 @@ class Processor_06aBattPen(MetricsLayer):
 
         # Step 5: Save analytics
         print("\n[5/5] Saving metric...")
-        self.write_parquet(out_df, output_path)
+        self.write_csv(out_df, output_path)
 
         print(f"\n✓ Analytics complete: {len(out_df)} rows saved")
         print(f"  Years covered: {out_df['Year'].min()} - {out_df['Year'].max()}")
@@ -130,7 +130,7 @@ def main():
     input_path = (
         settings.processed_dir / "emi_battery_solar" / "emi_battery_solar_cleaned.csv"
     )
-    output_path = settings.metrics_dir / "emi_battery_solar" / "_06a_P1_BattPen.parquet"
+    output_path = settings.metrics_dir / "emi_battery_solar" / "_06a_P1_BattPen.csv"
 
     # Create analytics processor
     processor = Processor_06aBattPen()

@@ -97,7 +97,7 @@ class EMIGenerationAnalytics(MetricsLayer):
 
         # Step 3: Save analytics
         print("\n[3/3] Saving analytics...")
-        self.write_parquet(out_df, output_path)
+        self.write_csv(out_df, output_path)
 
         print(f"\n✓ Analytics complete: {len(out_df)} rows saved")
         print(f"  Years covered: {out_df['Year'].min()} - {out_df['Year'].max()}")
@@ -113,7 +113,7 @@ def main():
         settings.processed_dir / "emi_generation" / "emi_generation_cleaned.csv"
     )
     output_path = (
-        settings.metrics_dir / "emi_generation" / "emi_generation_analytics.parquet"
+        settings.metrics_dir / "emi_generation" / "emi_generation_analytics.csv"
     )
 
     # Create analytics processor
