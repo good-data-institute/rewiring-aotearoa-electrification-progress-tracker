@@ -5,6 +5,7 @@ holistic analysis across all metrics datasets.
 """
 
 import os
+import warnings
 
 import pandas as pd
 import plotly.express as px
@@ -21,6 +22,10 @@ from dashboard_utils import (
     get_latest_kpi_value,
     normalize_to_0_100,
 )
+
+# Suppress warnings
+warnings.filterwarnings("ignore")
+st.set_option("deprecation.showPyplotGlobalUse", False)
 
 # Load environment variables
 load_dotenv()
@@ -97,6 +102,11 @@ selected_sectors = st.sidebar.multiselect(
 )
 
 # Annual aggregates checkbox
+st.sidebar.markdown("**📅 Data Granularity**")
+st.sidebar.caption(
+    "Some datasets include annual summaries (Month='Total') alongside monthly data. "
+    "Uncheck to show only monthly records for time series analysis."
+)
 include_annual = st.sidebar.checkbox(
     "Include Annual Aggregates",
     value=False,
