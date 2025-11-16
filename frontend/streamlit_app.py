@@ -25,7 +25,6 @@ from dashboard_utils import (
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
-st.set_option("deprecation.showPyplotGlobalUse", False)
 
 # Load environment variables
 load_dotenv()
