@@ -1,0 +1,174 @@
+tables:
+  # GIC Gas Connections
+  - name: gas_connections
+    description: "Monthly new gas connections by region (GIC)"
+    type: table
+    columns:
+      - name: Year
+        type: integer
+      - name: Month
+        type: integer
+      - name: Region
+        type: string
+      - name: Metric Group
+        type: string
+      - name: Category
+        type: string
+      - name: Sub-Category
+        type: string
+      - name: _10_P1_Gas
+        type: double
+        description: "New gas connections count"
+    sql: |
+      SELECT * FROM read_parquet('https://test-gdi-28924.s3.amazonaws.com/data/metrics/gic/gic_gas_connections_analytics.parquet')
+
+  # EMI Renewable Generation
+  - name: renewable_generation
+    description: "Renewable generation share by region (EMI)"
+    type: table
+    columns:
+      - name: Year
+        type: integer
+      - name: Month
+        type: integer
+      - name: Region
+        type: string
+      - name: Metric Group
+        type: string
+      - name: Category
+        type: string
+      - name: Sub-Category
+        type: string
+      - name: _12_P1_EnergyRenew
+        type: double
+        description: "Renewable generation share (ratio)"
+    sql: |
+      SELECT * FROM read_parquet('https://test-gdi-28924.s3.amazonaws.com/data/metrics/emi_generation/emi_generation_analytics.parquet')
+
+  # EECA Electricity Percentage
+  - name: electricity_percentage
+    description: "Electricity as percentage of total energy (EECA)"
+    type: table
+    columns:
+      - name: Year
+        type: integer
+      - name: Metric Group
+        type: string
+      - name: Category
+        type: string
+      - name: Sub-Category
+        type: string
+      - name: _13_P1_ElecCons
+        type: double
+        description: "Electricity percentage"
+    sql: |
+      SELECT * FROM read_parquet('https://test-gdi-28924.s3.amazonaws.com/data/metrics/eeca/eeca_electricity_percentage.parquet')
+
+  # EECA Energy by Fuel
+  - name: energy_by_fuel
+    description: "Energy by fuel type and sector (EECA)"
+    type: table
+    columns:
+      - name: Year
+        type: integer
+      - name: Metric Group
+        type: string
+      - name: Category
+        type: string
+        description: "Fuel type"
+      - name: Sub-Category
+        type: string
+        description: "Sector"
+      - name: _14_P1_EnergyxFuel
+        type: double
+        description: "Energy in MWh"
+    sql: |
+      SELECT * FROM read_parquet('https://test-gdi-28924.s3.amazonaws.com/data/metrics/eeca/eeca_energy_by_fuel.parquet')
+
+  # Battery Penetration - Commercial
+  - name: battery_penetration_commercial
+    description: "Battery penetration - Commercial sector"
+    type: table
+    columns:
+      - name: Year
+        type: integer
+      - name: Month
+        type: integer
+      - name: Region
+        type: string
+      - name: Metric Group
+        type: string
+      - name: Category
+        type: string
+      - name: Sub-Category
+        type: string
+      - name: _06a_P1_BattPen
+        type: double
+    sql: |
+      SELECT * FROM read_parquet('https://test-gdi-28924.s3.amazonaws.com/data/metrics/emi_battery_solar/_06a_P1_BattPen.parquet')
+
+  # Battery Penetration - Residential
+  - name: battery_penetration_residential
+    description: "Battery penetration - Residential sector"
+    type: table
+    columns:
+      - name: Year
+        type: integer
+      - name: Month
+        type: integer
+      - name: Region
+        type: string
+      - name: Metric Group
+        type: string
+      - name: Category
+        type: string
+      - name: Sub-Category
+        type: string
+      - name: _06b_P1_BattPen
+        type: double
+    sql: |
+      SELECT * FROM read_parquet('https://test-gdi-28924.s3.amazonaws.com/data/metrics/emi_battery_solar/_06b_P1_BattPen.parquet')
+
+  # Solar Capacity
+  - name: solar_capacity
+    description: "Solar capacity by region"
+    type: table
+    columns:
+      - name: Year
+        type: integer
+      - name: Month
+        type: integer
+      - name: Region
+        type: string
+      - name: Metric Group
+        type: string
+      - name: Category
+        type: string
+      - name: Sub-Category
+        type: string
+      - name: _07_P1_Sol
+        type: double
+    sql: |
+      SELECT * FROM read_parquet('https://test-gdi-28924.s3.amazonaws.com/data/metrics/emi_battery_solar/_07_P1_Sol.parquet')
+
+  # Battery Capacity
+  - name: battery_capacity
+    description: "Battery capacity by region"
+    type: table
+    columns:
+      - name: Year
+        type: integer
+      - name: Month
+        type: integer
+      - name: Region
+        type: string
+      - name: Metric Group
+        type: string
+      - name: Category
+        type: string
+      - name: Sub-Category
+        type: string
+      - name: _08_P1_Batt
+        type: double
+    sql: |
+      SELECT * FROM read_parquet('https://test-gdi-28924.s3.amazonaws.com/data/metrics/emi_battery_solar/_08_P1_Batt.parquet')
