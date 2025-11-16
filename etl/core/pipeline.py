@@ -54,17 +54,6 @@ class BaseLayer(ABC):
         df.to_csv(path, index=False)
         print(f"Data written to: {path}")
 
-    def write_parquet(self, df: pd.DataFrame, path: Path) -> None:
-        """Write DataFrame to Parquet file.
-
-        Args:
-            df: DataFrame to write
-            path: Path to output Parquet file
-        """
-        path.parent.mkdir(parents=True, exist_ok=True)
-        df.to_parquet(path, index=False, engine="pyarrow")
-        print(f"Data written to: {path}")
-
     def execute_query(self, query: str) -> pd.DataFrame:
         """Execute a DuckDB query and return results as DataFrame.
 

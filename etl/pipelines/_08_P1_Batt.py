@@ -84,7 +84,7 @@ def main():
     input_path = (
         settings.processed_dir / "emi_battery_solar" / "emi_battery_solar_cleaned.csv"
     )
-    output_path = settings.metrics_dir / "emi_battery_solar" / "_08_P1_Batt.parquet"
+    output_path = settings.metrics_dir / "emi_battery_solar" / "_08_P1_Batt.csv"
 
     # Create analytics processor
     processor = Processor_08Batt()
