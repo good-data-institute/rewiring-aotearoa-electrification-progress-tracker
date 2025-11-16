@@ -80,7 +80,7 @@ class EECAElectricityPercentageAnalytics(MetricsLayer):
 
         # Step 3: Save analytics
         print("\n[3/3] Saving analytics...")
-        self.write_csv(analytics_df, output_path)
+        self.write_parquet(analytics_df, output_path)
 
         print(f"\n✓ Analytics complete: {len(analytics_df)} rows saved")
         print(
@@ -94,7 +94,7 @@ def main():
 
     # Define input and output paths
     input_path = settings.processed_dir / "eeca" / "eeca_energy_consumption_cleaned.csv"
-    output_path = settings.metrics_dir / "eeca" / "eeca_electricity_percentage.csv"
+    output_path = settings.metrics_dir / "eeca" / "eeca_electricity_percentage.parquet"
 
     # Create analytics processor
     processor = EECAElectricityPercentageAnalytics()

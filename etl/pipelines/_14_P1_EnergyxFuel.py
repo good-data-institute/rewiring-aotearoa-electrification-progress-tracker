@@ -73,7 +73,7 @@ class EECAEnergyByFuelAnalytics(MetricsLayer):
 
         # Step 5: Save analytics
         print("\n[5/5] Saving analytics...")
-        self.write_csv(out_df, output_path)
+        self.write_parquet(out_df, output_path)
 
         print(f"\n✓ Analytics complete: {len(out_df)} rows saved")
         print(f"  Years covered: {out_df['Year'].min()} - {out_df['Year'].max()}")
@@ -87,7 +87,7 @@ def main():
 
     # Define input and output paths
     input_path = settings.processed_dir / "eeca" / "eeca_energy_consumption_cleaned.csv"
-    output_path = settings.metrics_dir / "eeca" / "eeca_energy_by_fuel.csv"
+    output_path = settings.metrics_dir / "eeca" / "eeca_energy_by_fuel.parquet"
 
     # Create analytics processor
     processor = EECAEnergyByFuelAnalytics()
