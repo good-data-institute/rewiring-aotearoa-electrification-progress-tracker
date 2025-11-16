@@ -157,12 +157,13 @@ for dataset_name, df in datasets.items():
 st.success(f"✓ Loaded {len([d for d in datasets.values() if not d.empty])} datasets")
 
 # ===== TABS FOR DIFFERENT VIEWS =====
-tab1, tab2, tab3, tab4 = st.tabs(
+tab1, tab2, tab3, tab4, tab5 = st.tabs(
     [
         "📊 Overview Dashboard",
         "🗺️ Regional Analysis",
         "🏭 Sector Deep-Dive",
         "📈 Time Series & Correlation",
+        "💾 Data Export",
     ]
 )
 
@@ -879,10 +880,10 @@ with tab4:
             "Need at least 2 metrics with overlapping years for correlation analysis"
         )
 
-    st.markdown("---")
-
-    # Data Export
-    st.subheader("Export Filtered Data")
+# ===== TAB 5: DATA EXPORT =====
+with tab5:
+    st.header("Data Export")
+    st.markdown("Download filtered datasets for further analysis")
 
     export_dataset = st.selectbox(
         "Select Dataset to Export", options=list(datasets.keys())
@@ -892,12 +893,31 @@ with tab4:
     if not df_export.empty:
         st.write(f"Dataset: **{export_dataset}** - {len(df_export)} rows")
 
+        # Preview the data
+        st.subheader("Data Preview")
+        st.dataframe(df_export.head(10), width="stretch")
+
+        # Download button
         csv = df_export.to_csv(index=False)
         st.download_button(
-            label="Download as CSV",
+            label="📥 Download as CSV",
             data=csv,
             file_name=f"{export_dataset}_{year_range[0]}_{year_range[1]}.csv",
             mime="text/csv",
         )
+
+        # Show basic statistics
+        st.subheader("Dataset Statistics")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Total Rows", len(df_export))
+        with col2:
+            st.metric("Total Columns", len(df_export.columns))
+        with col3:
+            if "Year" in df_export.columns:
+                years = df_export["Year"].unique()
+                st.metric("Year Range", f"{min(years)}-{max(years)}")
+            else:
+                st.metric("Year Range", "N/A")
     else:
         st.warning("No data available for selected dataset")
