@@ -19,12 +19,15 @@ class DataRepository:
         """Initialize repository with settings."""
         self.settings = get_settings()
         self._connection = None
+        self.s3_base = "https://test-gdi-28924.s3.amazonaws.com/data"
 
     @property
     def connection(self):
         """Get or create DuckDB connection."""
         if self._connection is None:
             self._connection = duckdb.connect(":memory:")
+            self._connection.execute("INSTALL httpfs;")
+            self._connection.execute("LOAD httpfs;")
         return self._connection
 
     def _build_where_clause(self, filters: Optional[Dict[str, Any]]) -> str:
@@ -70,7 +73,7 @@ class DataRepository:
         """Query data from processed layer.
 
         Args:
-            dataset: Dataset name (e.g., "emi_retail", "eeca", "gic", "emi_generation")
+            dataset: Dataset name (e.g., "demo_emi_retail", "eeca", "gic", "emi_generation")
             filters: Dictionary of filters to apply
             limit: Maximum number of rows to return
             offset: Number of rows to skip
@@ -83,9 +86,9 @@ class DataRepository:
         """
         # Determine file path based on dataset
         file_mapping = {
-            "emi_retail": self.settings.processed_dir
-            / "emi_retail"
-            / "emi_retail_cleaned.csv",
+            "demo_emi_retail": self.settings.processed_dir
+            / "demo_emi_retail"
+            / "demo_emi_retail_cleaned.csv",
             "eeca": self.settings.processed_dir
             / "eeca"
             / "eeca_energy_consumption_cleaned.csv",
@@ -127,10 +130,10 @@ class DataRepository:
         limit: Optional[int] = None,
         offset: Optional[int] = None,
     ) -> pd.DataFrame:
-        """Query data from metrics layer.
+        """Query data from metrics layer on S3.
 
         Args:
-            dataset: Dataset name (e.g., "emi_retail", "eeca", "gic", "emi_generation")
+            dataset: Dataset name (e.g., "eeca_electricity_percentage", "gic_analytics", "emi_generation_analytics")
             filters: Dictionary of filters to apply
             limit: Maximum number of rows to return
             offset: Number of rows to skip
@@ -139,26 +142,22 @@ class DataRepository:
             DataFrame with query results
 
         Raises:
-            FileNotFoundError: If dataset file doesn't exist
+            ValueError: If dataset is unknown
         """
-        # Determine file path based on dataset
+        # Map dataset names to S3 CSV URLs
         file_mapping = {
-            "emi_retail": self.settings.metrics_dir
-            / "emi_retail"
-            / "emi_retail_analytics.csv",
-            "eeca": self.settings.metrics_dir / "eeca" / "eeca_analytics.csv",
-            "gic": self.settings.metrics_dir / "gic" / "gic_analytics.csv",
-            "emi_generation": self.settings.metrics_dir
-            / "emi_generation"
-            / "emi_generation_analytics.csv",
+            "eeca_electricity_percentage": f"{self.s3_base}/metrics/eeca/eeca_electricity_percentage.csv",
+            "eeca_energy_by_fuel": f"{self.s3_base}/metrics/eeca/eeca_energy_by_fuel.csv",
+            "gic_analytics": f"{self.s3_base}/metrics/gic/gic_gas_connections_analytics.csv",
+            "emi_generation_analytics": f"{self.s3_base}/metrics/emi_generation/emi_generation_analytics.csv",
+            "battery_penetration_commercial": f"{self.s3_base}/metrics/emi_battery_solar/_06a_P1_BattPen.csv",
+            "battery_penetration_residential": f"{self.s3_base}/metrics/emi_battery_solar/_06b_P1_BattPen.csv",
+            "solar_penetration": f"{self.s3_base}/metrics/emi_battery_solar/_07_P1_Sol.csv",
         }
 
-        file_path = file_mapping.get(dataset)
-        if not file_path:
+        s3_url = file_mapping.get(dataset)
+        if not s3_url:
             raise ValueError(f"Unknown dataset: {dataset}")
-
-        if not file_path.exists():
-            raise FileNotFoundError(f"Metrics data not found: {file_path}")
 
         # Build query
         where_clause = self._build_where_clause(filters)
@@ -167,7 +166,7 @@ class DataRepository:
 
         query = f"""
         SELECT *
-        FROM read_csv_auto('{file_path}')
+        FROM read_csv_auto('{s3_url}')
         {where_clause}
         {limit_clause}
         {offset_clause}
@@ -185,19 +184,22 @@ class DataRepository:
         Returns:
             List of dataset names
         """
-        layer_dir = (
-            self.settings.processed_dir
-            if layer == "processed"
-            else self.settings.metrics_dir
-        )
-
-        datasets = []
-        if layer_dir.exists():
-            for item in layer_dir.iterdir():
-                if item.is_dir():
-                    datasets.append(item.name)
-
-        return sorted(datasets)
+        if layer == "metrics":
+            # Return hardcoded list of available S3 datasets
+            return [
+                "eeca_electricity_percentage",
+                "eeca_energy_by_fuel",
+                "gic_analytics",
+                "emi_generation_analytics",
+                "battery_penetration_commercial",
+                "battery_penetration_residential",
+                "solar_penetration",
+            ]
+        elif layer == "processed":
+            # Processed layer not available on S3 yet
+            return []
+        else:
+            return []
 
     def get_schema(self, dataset: str, layer: str = "metrics") -> Dict[str, str]:
         """Get schema (column names and types) for a dataset.

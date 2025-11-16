@@ -11,7 +11,7 @@ from io import BytesIO
 
 import pandas as pd
 from etl.core.config import get_settings
-from etl.apis.emi_retail import EMIRetailAPI
+from etl.apis.demo_emi_retail import EMIRetailAPI
 
 
 class EMIBatterySolarExtractor:

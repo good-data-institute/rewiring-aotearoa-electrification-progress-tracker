@@ -76,8 +76,10 @@ def main():
     settings = get_settings()
 
     # Define input (raw) and output (processed) paths
-    input_path = settings.raw_dir / "emi_retail" / "emi_retail_20250801_20250831.csv"
-    output_path = settings.processed_dir / "emi_retail" / "emi_retail_cleaned.csv"
+    input_path = (
+        settings.raw_dir / "demo_emi_retail" / "emi_retail_20250801_20250831.csv"
+    )
+    output_path = settings.processed_dir / "demo_emi_retail" / "emi_retail_cleaned.csv"
 
     # Check if raw data exists
     if not input_path.exists():

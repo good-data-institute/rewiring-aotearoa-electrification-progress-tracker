@@ -7,7 +7,7 @@ This script handles raw data extraction:
 
 from pathlib import Path
 
-from etl.apis.emi_retail import EMIRetailAPI
+from etl.apis.demo_emi_retail import EMIRetailAPI
 from etl.core.config import get_settings
 
 
@@ -73,7 +73,9 @@ def main():
     settings = get_settings()
 
     # Define output path in raw directory
-    output_path = settings.raw_dir / "emi_retail" / "emi_retail_20250801_20250831.csv"
+    output_path = (
+        settings.raw_dir / "demo_emi_retail" / "emi_retail_20250801_20250831.csv"
+    )
 
     # Create extractor with default parameters
     extractor = EMIRetailExtractor(

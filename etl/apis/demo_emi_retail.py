@@ -88,7 +88,7 @@ class EMIRetailAPI(HTTPAPIClient):
 
     Example usage:
         >>> api = EMIRetailAPI(DateFrom="20200101", DateTo="20240831")
-        >>> api.fetch_data(output_path=Path("data/raw/emi_retail.csv"))
+        >>> api.fetch_data(output_path=Path("data/raw/demo_emi_retail.csv"))
     """
 
     base_url = "https://www.emi.ea.govt.nz/Retail/Download/DataReport/CSV/{report_id}"
@@ -116,5 +116,5 @@ class EMIRetailAPI(HTTPAPIClient):
         if self.params:
             date_from = self.params.DateFrom
             date_to = self.params.DateTo
-            return f"emi_retail_{date_from}_{date_to}.csv"
-        return "emi_retail.csv"
+            return f"demo_emi_retail_{date_from}_{date_to}.csv"
+        return "demo_emi_retail.csv"

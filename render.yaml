@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: electrification-dashboard
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    branch: main
+    autoDeployTrigger: commit
+    # Render provides PORT automatically - no need to set it
+    # The dashboard will be accessible at the Render URL

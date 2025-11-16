@@ -193,7 +193,7 @@ flowchart TB
 
 ```bash
 # Get metrics with date filter
-curl "http://localhost:8000/api/metrics/emi_retail?filter_json={\"Year\":{\"gte\":2020,\"lte\":2025}}"
+curl "http://localhost:8000/api/metrics/demo_emi_retail?filter_json={\"Year\":{\"gte\":2020,\"lte\":2025}}"
 
 # Get processed data with pagination
 curl "http://localhost:8000/api/processed/eeca?limit=50&offset=100"
