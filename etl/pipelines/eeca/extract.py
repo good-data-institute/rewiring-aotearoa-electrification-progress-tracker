@@ -24,9 +24,9 @@ class EECAEnergyConsumptionExtractor:
         Args:
             output_path: Path to save raw Excel file
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("EECA ENERGY CONSUMPTION: Extract Raw Data")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         print("\n[1/1] Extracting data from EECA Energy End Use Database...")
         print(f"      URL: {self.api.params.url}")
@@ -44,9 +44,9 @@ class EECAEnergyConsumptionExtractor:
 
         print("      ✓ Raw Excel file saved")
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"✓ Extraction complete: {output_path}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
 
 def main():

@@ -48,9 +48,9 @@ class EMIRetailExtractor:
         Args:
             output_path: Path to save raw CSV file
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("EMI RETAIL: Extract Raw Data")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         print("\n[1/1] Extracting data from EMI Retail API...")
         print(f"      Parameters: {self.api.params.model_dump()}")
@@ -63,9 +63,9 @@ class EMIRetailExtractor:
         self.api.fetch_data(output_path=output_path)
         print("      ✓ Raw data saved")
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"✓ Extraction complete: {output_path}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
 
 def main():
