@@ -24,9 +24,9 @@ class DemoProcessor(MetricsLayer):
             input_path: Path to processed CSV file
             output_path: Path to save analytics CSV file
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("EMI RETAIL: Create Analytics")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Step 1: Load processed data
         print("\n[1/3] Loading processed data...")
@@ -107,13 +107,13 @@ class DemoProcessor(MetricsLayer):
         print("\n[3/3] Saving analytics...")
         self.write_csv(analytics_df, output_path)
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("✓ COMPLETED: Analytics ready")
         print(f"  Rows: {len(analytics_df)}")
         print(f"  Columns: {len(analytics_df.columns)}")
         print(f"  Column names: {list(analytics_df.columns)[:10]}...")
         print(f"  Output: {output_path}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
 
 def main():

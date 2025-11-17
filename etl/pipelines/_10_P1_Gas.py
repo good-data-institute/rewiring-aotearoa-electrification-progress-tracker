@@ -20,9 +20,9 @@ class GICGasConnectionsAnalytics(MetricsLayer):
             input_path: Path to processed GIC gas connections CSV
             output_path: Path to save analytics CSV
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("GIC GAS CONNECTIONS: Analytics")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Step 1: Load processed data
         print("\n[1/3] Loading processed data...")

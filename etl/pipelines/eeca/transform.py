@@ -42,9 +42,9 @@ class EECAEnergyConsumptionTransformer(ProcessedLayer):
             input_path: Path to raw Excel file
             output_path: Path to save processed CSV file
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("EECA ENERGY CONSUMPTION: Transform Raw to Processed")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Step 1: Load raw data
         print("\n[1/3] Loading raw Excel data...")
@@ -62,6 +62,11 @@ class EECAEnergyConsumptionTransformer(ProcessedLayer):
 
         # Step 2: Data cleaning and transformation
         print("\n[2/3] Applying transformations:")
+
+        # Create fossil fuel and boiler flags
+        df["FossilFuelFlag"] = (df["fuelGroup"] == "Fossil Fuels").astype(int)
+        df["BoilerFlag"] = (df["technology"] == "Boiler Systems").astype(int)
+        print("      - Created flags for fossil fuels and boilers")
 
         # Standardize fuel categories
         fuel_map = {
@@ -92,9 +97,16 @@ class EECAEnergyConsumptionTransformer(ProcessedLayer):
             )
 
         # Select and rename columns
-        df = df[["SectorGroup", "energyValue", "Category", "Year"]].rename(
-            columns={"SectorGroup": "Sub-Category"}
-        )
+        df = df[
+            [
+                "SectorGroup",
+                "energyValue",
+                "Category",
+                "Year",
+                "FossilFuelFlag",
+                "BoilerFlag",
+            ]
+        ].rename(columns={"SectorGroup": "Sub-Category"})
         print(f"      - Selected {len(df.columns)} columns")
 
         # Reassign fishing to Commercial in Sub-Categories
@@ -121,11 +133,11 @@ class EECAEnergyConsumptionTransformer(ProcessedLayer):
         print(f"      Output: {output_path}")
         self.write_csv(df, output_path)
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"✓ Transformation complete: {len(df)} rows saved")
         print(f"  Years covered: {df['Year'].min()} - {df['Year'].max()}")
         print(f"  Categories: {', '.join(sorted(df['Category'].unique()))}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
 
 def main():
