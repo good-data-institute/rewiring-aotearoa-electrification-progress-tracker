@@ -61,7 +61,7 @@ class WakaKotahiMVRTransformer(ProcessedLayer):
         con.execute("""
             CREATE TABLE processed AS
             SELECT
-                OBJECTID,
+                row_number() OVER () AS OBJECTID,
                 FIRST_NZ_REGISTRATION_YEAR AS Year,
                 FIRST_NZ_REGISTRATION_MONTH AS Month,
                 TLA AS Region,

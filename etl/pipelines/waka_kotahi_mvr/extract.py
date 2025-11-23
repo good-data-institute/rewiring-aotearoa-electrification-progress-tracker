@@ -68,6 +68,7 @@ class WakaKotahiMVRExtractor:
 
         for chunk in pd.read_csv(
             BytesIO(response.content),
+            compression="zip",
             chunksize=self.chunk_size,
             dtype=str,  # Keep all as string for raw layer
         ):

@@ -14,9 +14,7 @@ class WakaKotahiMVRParams(BaseModel):
 
     url: str = Field(
         default=(
-            "https://hub.arcgis.com/api/v3/datasets/"
-            "95182f7804bf4eeeac31b2747e841a70_0/downloads/data"
-            "?format=csv&spatialRefId=2193&where=1%3D1"
+            "https://wksprdgisopendata.blob.core.windows.net/motorvehicleregister/Fleet-data-all-vehicle-years.zip"
         ),
         description="URL to Waka Kotahi Motor Vehicle Register CSV download",
     )
