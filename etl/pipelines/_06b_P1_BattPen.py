@@ -101,7 +101,7 @@ class Processor_06bBattPen(MetricsLayer):
 
         # Add metadata columns
         merged2 = merged2.assign(
-            **{"Metric Group": "Energy", "Category": "Solar", "Sub-Category": "Total"}
+            **{"Metric Group": "Solar", "Category": "Total", "Sub-Category": "Total"}
         )
 
         # Step 4: Join datasets

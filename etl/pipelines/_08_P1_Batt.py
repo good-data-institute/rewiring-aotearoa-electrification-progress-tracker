@@ -57,7 +57,7 @@ class Processor_08Batt(MetricsLayer):
 
         # Add metadata columns
         batt_df2 = batt_df2.assign(
-            **{"Metric Group": "Energy", "Category": "Solar", "Sub-Category": "Total"}
+            **{"Metric Group": "Solar", "Category": "Total", "Sub-Category": "Total"}
         )
 
         # Step 4: Join datasets
