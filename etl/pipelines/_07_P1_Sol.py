@@ -58,7 +58,7 @@ class Processor_07Sol(MetricsLayer):
 
         # Add metadata columns
         solar_df2 = solar_df2.assign(
-            **{"Metric Group": "Energy", "Category": "Solar", "Sub-Category": "Total"}
+            **{"Metric Group": "Solar", "Category": "Total", "Sub-Category": "Total"}
         )
 
         # Step 4: Join datasets

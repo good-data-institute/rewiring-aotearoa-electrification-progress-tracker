@@ -43,7 +43,7 @@ class GICGasConnectionsAnalytics(MetricsLayer):
 
         # Add metadata columns
         analytics_df = analytics_df.copy().assign(
-            **{"Metric Group": "Energy", "Category": "Gas", "Sub-Category": "Total"}
+            **{"Metric Group": "Gas", "Category": "Total", "Sub-Category": "Total"}
         )
 
         print(f"      - Total new connections: {analytics_df['_10_P1_Gas'].sum():,.0f}")

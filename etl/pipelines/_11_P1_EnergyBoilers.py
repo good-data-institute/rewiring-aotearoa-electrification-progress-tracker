@@ -67,10 +67,10 @@ class EECAEnergyBoilersAnalytics(MetricsLayer):
         # Add metadata
         out_df = out_df.assign(
             **{
-                "Metric Group": "Energy",
+                "Metric Group": "Grid",
                 "Month": "Total",
                 "Region": "Total",
-                "Category": "Grid",
+                "Category": "Total",
             }
         )
 

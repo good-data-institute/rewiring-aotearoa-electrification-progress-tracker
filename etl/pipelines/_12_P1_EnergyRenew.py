@@ -45,7 +45,7 @@ class EMIGenerationAnalytics(MetricsLayer):
         grouped["Total_All_Fuels"] = grouped.groupby(["Year", "Month", "Region"])[
             "kWh"
         ].transform("sum")
-        grouped["EnergyRenew"] = grouped["kWh"] / grouped["Total_All_Fuels"]
+        grouped["EnergyRenew"] = 100 * (grouped["kWh"] / grouped["Total_All_Fuels"])
 
         # Filter to renewable type only
         grouped = grouped[grouped["Type"] == 1].copy()
@@ -71,7 +71,7 @@ class EMIGenerationAnalytics(MetricsLayer):
 
         # Add metadata fields
         interim_df2 = interim_df2.copy().assign(
-            **{"Metric Group": "Energy", "Category": "Grid", "Sub-Category": "Total"}
+            **{"Metric Group": "Grid", "Category": "Total", "Sub-Category": "Total"}
         )
 
         # Final selection
@@ -83,16 +83,17 @@ class EMIGenerationAnalytics(MetricsLayer):
                 "Metric Group",
                 "Category",
                 "Sub-Category",
+                "EnergyRenew",
                 "_12_P1_EnergyRenew",
             ]
         ]
 
         print(
-            f"      - Renewable share ranges from {out_df['_12_P1_EnergyRenew'].min():.2%} "
-            f"to {out_df['_12_P1_EnergyRenew'].max():.2%}"
+            f"      - Renewable share ranges from {out_df['_12_P1_EnergyRenew'].min():.2f} "
+            f"to {out_df['_12_P1_EnergyRenew'].max():.2f}"
         )
         print(
-            f"      - Average renewable share: {out_df['_12_P1_EnergyRenew'].mean():.2%}"
+            f"      - Average renewable share: {out_df['_12_P1_EnergyRenew'].mean():.2f}"
         )
 
         # Step 3: Save analytics

@@ -9,6 +9,7 @@ from pathlib import Path
 
 from etl.core.config import get_settings
 from etl.core.pipeline import MetricsLayer
+import math
 
 
 class EECAEnergyByFuelAnalytics(MetricsLayer):
@@ -28,37 +29,60 @@ class EECAEnergyByFuelAnalytics(MetricsLayer):
         print("EECA ENERGY BY FUEL TYPE: Analytics")
         print(f"{'=' * 80}")
 
-        # Step 1: Load processed data
-        print("\n[1/3] Loading processed data...")
+        # Step 1: Load processed data -----------------------------------------
+        print("\n[1/7] Loading processed data...")
         df = self.read_csv(input_path)
         print(f"      Loaded {len(df)} rows from {input_path.name}")
 
-        # Step 2: Calculate analytics
-        print("\n[2/5] Aggregating energy consumption by fuel type and sector")
+        # Step 2: Aggregate by Category and Sub-Category ----------------------
+        print("\n[2/7] Aggregating energy consumption by fuel type and sector")
 
         # Group and summarise
-        grouped1 = df.groupby(["Year", "Category", "Sub-Category"], as_index=False)[
-            "energyValue"
-        ].sum()
+        group_cat_sub = df.groupby(
+            ["Year", "Category", "Sub-Category"], as_index=False
+        )["energyValue"].sum()
         print(
-            f"      - Aggregated to {len(grouped1)} rows "
+            f"      - Aggregated to {len(group_cat_sub)} rows "
             f"({df['Year'].nunique()} years × {df['Category'].nunique()} fuel types × {df['Sub-Category'].nunique()} sectors)"
         )
 
-        # Step 3: Calculate analytics
-        print("\n[3/5] Aggregating energy consumption by fuel type")
+        # Step 3: Aggregate by Sub-Category -----------------------------------
+        print("\n[3/7] Aggregating energy consumption by sector")
 
         # Group and summarise
-        grouped2 = df.groupby(["Year", "Category"], as_index=False)["energyValue"].sum()
-        grouped2 = grouped2.assign(**{"Sub-Category": "Total"})
+        group_sub = df.groupby(["Year", "Sub-Category"], as_index=False)[
+            "energyValue"
+        ].sum()
+        group_sub = group_sub.assign(**{"Category": "Total"})
         print(
-            f"      - Aggregated to {len(grouped2)} rows "
+            f"      - Aggregated to {len(group_sub)} rows "
+            f"({df['Year'].nunique()} years × {df['Sub-Category'].nunique()} sectors)"
+        )
+
+        # Step 4: Aggregate by Category ---------------------------------------
+        print("\n[4/7] Aggregating energy consumption by fuel type")
+
+        # Group and summarise
+        group_cat = df.groupby(["Year", "Category"], as_index=False)[
+            "energyValue"
+        ].sum()
+        group_cat = group_cat.assign(**{"Sub-Category": "Total"})
+        print(
+            f"      - Aggregated to {len(group_cat)} rows "
             f"({df['Year'].nunique()} years × {df['Category'].nunique()} fuel types)"
         )
 
-        # Step 4: Join datasets
-        print("\n[4/5] Add a Total Category to Sector")
-        out_df = grouped1._append(grouped2)
+        # Step 5: Aggregate ---------------------------------------------------
+        print("\n[5/7] Aggregating energy consumption across fuel types and sectors")
+
+        # Group and summarise
+        group = df.groupby("Year", as_index=False)["energyValue"].sum()
+        group = group.assign(**{"Sub-Category": "Total", "Category": "Total"})
+        print(f"      - Aggregated to {len(group)} rows ({df['Year'].nunique()} years)")
+
+        # Step 6: Join datasets -----------------------------------------------
+        print("\n[6/7] Add a Total Category to Sector")
+        out_df = group_cat_sub._append(group_cat)._append(group_sub)._append(group)
 
         # Add metadata
         out_df = out_df.assign(
@@ -71,8 +95,26 @@ class EECAEnergyByFuelAnalytics(MetricsLayer):
         print("      - Converted from terajoules to MWh using factor (1 / 0.036)")
         print(f"      - Total energy: {out_df['_14_P1_EnergyxFuel'].sum():,.0f} MWh")
 
-        # Step 5: Save analytics
-        print("\n[5/5] Saving analytics...")
+        # Test aggregates
+        lhs = out_df[
+            (out_df["Year"] == 2017)
+            & (out_df["Category"] == "Total")
+            & (out_df["Sub-Category"] == "Total")
+        ]["_14_P1_EnergyxFuel"].iloc[0]
+
+        rhs = out_df[
+            (out_df["Year"] == 2017)
+            & (out_df["Category"] != "Total")
+            & (out_df["Sub-Category"] != "Total")
+        ]["_14_P1_EnergyxFuel"].sum()
+
+        assert math.isclose(
+            lhs, rhs, rel_tol=1e-12, abs_tol=1e-12
+        ), "Totals do not match"
+        print("      - Aggregation Check Passed (for 2017)")
+
+        # Step 7: Save analytics ----------------------------------------------
+        print("\n[7/7] Saving analytics...")
         self.write_csv(out_df, output_path)
 
         print(f"\n✓ Analytics complete: {len(out_df)} rows saved")
