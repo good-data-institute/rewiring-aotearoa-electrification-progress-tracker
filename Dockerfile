@@ -14,13 +14,13 @@ RUN pip install --no-cache-dir uv && \
 # Start backend in background, then run streamlit in foreground
 RUN echo '#!/bin/bash\n\
 echo "Starting backend server..."\n\
-uvicorn backend.main:app --host 0.0.0.0 --port 8000 &\n\
+uvicorn backend.main:app --host 0.0.0.0 --port 8001 &\n\
 echo "Waiting for backend to be ready..."\n\
 sleep 5\n\
 echo "Starting Streamlit dashboard on port ${PORT:-8501}..."\n\
-streamlit run frontend/streamlit_app.py --server.port=${PORT:-8501} --server.address=0.0.0.0 --server.headless=true\n' > /app/start.sh && \
+streamlit run frontend/Introduction.py --server.port=${PORT:-8501} --server.address=0.0.0.0 --server.headless=true\n' > /app/start.sh && \
     chmod +x /app/start.sh
 
-EXPOSE 8501 8000
+EXPOSE 8501 8001
 
 CMD ["/bin/bash", "/app/start.sh"]
