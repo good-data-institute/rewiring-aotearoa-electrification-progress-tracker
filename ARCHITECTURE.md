@@ -138,7 +138,7 @@ flowchart TB
 
     Backend["4. Start Backend<br/>python -m backend.main<br/>DuckDB repository queries data<br/>FastAPI serves on port 8000"]
 
-    Frontend["5. Start Frontend<br/>streamlit run frontend/streamlit_app.py<br/>OR<br/>shiny run frontend/shiny_app.py"]
+    Frontend["5. Start Frontend<br/>streamlit run frontend/Introduction.py<br/>OR<br/>shiny run frontend/shiny_app.py"]
 
     Display["6. View in Browser<br/>Dashboards fetch from API<br/>Display all metrics datasets"]
 

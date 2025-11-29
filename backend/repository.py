@@ -148,11 +148,18 @@ class DataRepository:
         file_mapping = {
             "eeca_electricity_percentage": f"{self.s3_base}/metrics/eeca/eeca_electricity_percentage.csv",
             "eeca_energy_by_fuel": f"{self.s3_base}/metrics/eeca/eeca_energy_by_fuel.csv",
+            "eeca_boiler_energy": f"{self.s3_base}/metrics/eeca/eeca_boilerenergy.csv",
             "gic_analytics": f"{self.s3_base}/metrics/gic/gic_gas_connections_analytics.csv",
             "emi_generation_analytics": f"{self.s3_base}/metrics/emi_generation/emi_generation_analytics.csv",
             "battery_penetration_commercial": f"{self.s3_base}/metrics/emi_battery_solar/_06a_P1_BattPen.csv",
             "battery_penetration_residential": f"{self.s3_base}/metrics/emi_battery_solar/_06b_P1_BattPen.csv",
             "solar_penetration": f"{self.s3_base}/metrics/emi_battery_solar/_07_P1_Sol.csv",
+            "battery_capacity": f"{self.s3_base}/metrics/emi_battery_solar/_08_P1_Batt.csv",
+            "waka_kotahi_ev": f"{self.s3_base}/metrics/waka_kotahi_mvr/01_P1_EV_analytics.csv",
+            "waka_kotahi_ff": f"{self.s3_base}/metrics/waka_kotahi_mvr/02_P1_FF_analytics.csv",
+            "waka_kotahi_new_ev": f"{self.s3_base}/metrics/waka_kotahi_mvr/03_P1_NewEV_analytics.csv",
+            "waka_kotahi_used_ev": f"{self.s3_base}/metrics/waka_kotahi_mvr/04_P1_UsedEV_analytics.csv",
+            "waka_kotahi_fleet_elec": f"{self.s3_base}/metrics/waka_kotahi_mvr/05_P1_FleetElec_analytics.csv",
         }
 
         s3_url = file_mapping.get(dataset)
@@ -189,11 +196,18 @@ class DataRepository:
             return [
                 "eeca_electricity_percentage",
                 "eeca_energy_by_fuel",
+                "eeca_boiler_energy",
                 "gic_analytics",
                 "emi_generation_analytics",
                 "battery_penetration_commercial",
                 "battery_penetration_residential",
                 "solar_penetration",
+                "battery_capacity",
+                "waka_kotahi_ev",
+                "waka_kotahi_ff",
+                "waka_kotahi_new_ev",
+                "waka_kotahi_used_ev",
+                "waka_kotahi_fleet_elec",
             ]
         elif layer == "processed":
             # Processed layer not available on S3 yet
