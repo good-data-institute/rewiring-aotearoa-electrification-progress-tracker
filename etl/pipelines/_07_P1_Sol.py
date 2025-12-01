@@ -42,7 +42,7 @@ class Processor_07Sol(MetricsLayer):
         print(f"      ✓ Aggregated {len(solar_df1)} grouped rows")
 
         # Add metadata columns
-        solar_df1 = solar_df1.assign(**{"Metric Group": "Energy", "Category": "Solar"})
+        solar_df1 = solar_df1.assign(**{"Metric Group": "Solar", "Category": "Total"})
 
         # Step 3: Calculate analytics
         print("\n[3/5] Calculating solar capacity installed ACROSS Sub-Category")
