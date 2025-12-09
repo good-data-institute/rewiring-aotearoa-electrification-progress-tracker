@@ -13,6 +13,7 @@ import pandas as pd
 
 from etl.core.config import get_settings
 from etl.core.pipeline import MetricsLayer
+from etl.core.mappings import EV_REGION_MAP
 
 
 class WakaKotahiFossilFuelCountAnalytics(MetricsLayer):
@@ -36,6 +37,24 @@ class WakaKotahiFossilFuelCountAnalytics(MetricsLayer):
 
         # Step 2: Calculate analytics
         print("\n[2/3] Aggregating fossil fuel vehicle counts...")
+
+        # Assign Districts to Regions
+        df_reg = df.rename(columns={"Region": "District"})
+        df_reg["Region"] = df_reg["District"].map(EV_REGION_MAP)
+
+        # identify unmapped districts
+        missing = df_reg[df_reg["Region"].isna()]["District"].unique()
+
+        if len(missing) > 0:
+            print("      ! Unmapped districts found:")
+            for d in missing:
+                print(f"        • {d}")
+        else:
+            print("      - All districts mapped cleanly.")
+        print(
+            f"      - Districts (n = {df_reg['District'].nunique()}) "
+            f"mapped to Regions (n = {df_reg['Region'].nunique()})"
+        )
 
         # Define fuel types to track
         fossil_fuel_types = ["HEV", "PHEV", "FCEV", "Petrol", "Diesel"]
@@ -80,7 +99,24 @@ class WakaKotahiFossilFuelCountAnalytics(MetricsLayer):
                 )
 
         # Combine all results
-        analytics_df = pd.concat(all_results, ignore_index=True)
+        comb_df = pd.concat(all_results, ignore_index=True)
+
+        # Add a total group
+        total_grouped = comb_df.groupby(["Year", "Month", "Region"], as_index=False)[
+            "_02_P1_FF"
+        ].sum()
+        total_grouped = total_grouped.assign(
+            **{
+                "Metric_Group": "Transport",
+                "Category": "Total",
+                "Sub_Category": "Total",
+                "Fuel_Type": "Total",
+            }
+        )
+
+        # Combine all results
+        analytics_df = comb_df._append(total_grouped)
+        print("      - Added 'Total' groups to Category, Sub_Category and Fuel_Type")
 
         # Reorder columns
         analytics_df = analytics_df[
@@ -106,6 +142,10 @@ class WakaKotahiFossilFuelCountAnalytics(MetricsLayer):
             f"  Years covered: {analytics_df['Year'].min()} - {analytics_df['Year'].max()}"
         )
         print(f"  Fuel types: {', '.join(sorted(analytics_df['Fuel_Type'].unique()))}")
+        print(f"  Category: {', '.join(sorted(analytics_df['Category'].unique()))}")
+        print(
+            f"  Sub_Category: {', '.join(sorted(analytics_df['Sub_Category'].unique()))}"
+        )
 
 
 def main():
