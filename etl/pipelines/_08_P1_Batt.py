@@ -1,7 +1,7 @@
 """Analytics: MW of batteries installed.
 
 This script creates analytics-ready aggregated data showing
-monthly MW of batteries installed by region and sub-category.
+monthly MW of batteries installed by region and Sub_Category.
 """
 
 from pathlib import Path
@@ -14,7 +14,7 @@ class Processor_08Batt(MetricsLayer):
     """Calculate MW of standalone battery capacity installed."""
 
     def process(self, input_path: Path, output_path: Path) -> None:
-        """Aggregate monthly MW of batteries installed by region and sub-category.
+        """Aggregate monthly MW of batteries installed by region and Sub_Category.
 
         Args:
             input_path: Path to processed CSV
@@ -28,11 +28,11 @@ class Processor_08Batt(MetricsLayer):
         df = self.read_csv(input_path)
         print(f"      ✓ Loaded {len(df)} rows")
 
-        # Step 3: Calculate analytics BY Sub-Category
-        print("\n[2/5] Calculating battery capacity installed BY Sub-Category")
+        # Step 3: Calculate analytics BY Sub_Category
+        print("\n[2/5] Calculating battery capacity installed BY Sub_Category")
         batt_df1 = (
             df.loc[df["Fuel type"] == "Battery (standalone)"]
-            .groupby(["Year", "Month", "Region", "Sub-Category"], as_index=False)[
+            .groupby(["Year", "Month", "Region", "Sub_Category"], as_index=False)[
                 "Total capacity installed (MW)"
             ]
             .sum()
@@ -41,10 +41,10 @@ class Processor_08Batt(MetricsLayer):
         print(f"      ✓ Aggregated {len(batt_df1)} grouped rows")
 
         # Add metadata columns
-        batt_df1 = batt_df1.assign(**{"Metric Group": "Energy", "Category": "Solar"})
+        batt_df1 = batt_df1.assign(**{"Metric_Group": "Energy", "Category": "Solar"})
 
-        # Step 3: Calculate analytics ACROSS Sub-Category
-        print("\n[3/5] Calculating battery capacity installed ACROSS Sub-Category")
+        # Step 3: Calculate analytics ACROSS Sub_Category
+        print("\n[3/5] Calculating battery capacity installed ACROSS Sub_Category")
         batt_df2 = (
             df.loc[df["Fuel type"] == "Battery (standalone)"]
             .groupby(["Year", "Month", "Region"], as_index=False)[
@@ -57,7 +57,7 @@ class Processor_08Batt(MetricsLayer):
 
         # Add metadata columns
         batt_df2 = batt_df2.assign(
-            **{"Metric Group": "Solar", "Category": "Total", "Sub-Category": "Total"}
+            **{"Metric_Group": "Solar", "Category": "Total", "Sub_Category": "Total"}
         )
 
         # Step 4: Join datasets
@@ -73,7 +73,7 @@ class Processor_08Batt(MetricsLayer):
         print(f"\n✓ Analytics complete: {len(out_df)} rows saved")
         print(f"  Years covered: {out_df['Year'].min()} - {out_df['Year'].max()}")
         print(f"  Regions: {', '.join(sorted(out_df['Region'].unique()))}")
-        print(f"  Sub-Categories: {', '.join(sorted(out_df['Sub-Category'].unique()))}")
+        print(f"  Sub-Categories: {', '.join(sorted(out_df['Sub_Category'].unique()))}")
 
 
 def main():

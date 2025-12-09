@@ -25,9 +25,9 @@ class WakaKotahiNewEVCountAnalytics(MetricsLayer):
             input_path: Path to processed MVR Parquet file
             output_path: Path to save analytics CSV
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("WAKA KOTAHI MVR: New EV Purchase Count Analytics (_03_P1_NewEV)")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Step 1: Load processed data
         print("\n[1/3] Loading processed data...")

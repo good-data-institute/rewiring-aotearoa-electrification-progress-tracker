@@ -101,12 +101,12 @@ def apply_monthly_pca(df: pd.DataFrame, metric_cols: List[str]) -> pd.DataFrame:
         out.append(g)
 
         # Extract loadings (pc1 is index 0)
-        loadings = pca.components_[0]
+        # loadings = pca.components_[0]
 
         # Assemble a clean table of loadings
-        loading_df = pd.DataFrame({"Metric": metric_cols, "Loading_PC1": loadings})
+        # loading_df = pd.DataFrame({"Metric": metric_cols, "Loading_PC1": loadings})
 
-        print(loading_df.to_string(index=False))
+        # print(loading_df.to_string(index=False))
 
     return pd.concat(out, ignore_index=True)
 
@@ -154,11 +154,11 @@ def run_pipeline() -> pd.DataFrame:
         "EnergyRenew",
     ]
 
-    print("\n[2/10] Scoping to Total Sub-Category...")
-    dfs = [df[df["Sub-Category"] == "Total"].copy() for df in dfs]
+    print("\n[2/10] Scoping to Total Sub_Category...")
+    dfs = [df[df["Sub_Category"] == "Total"].copy() for df in dfs]
 
     print("\n[3/10] Cleaning redundant columns...")
-    drop_cols = ["Metric Group", "Category", "Sub-Category"]
+    drop_cols = ["Metric_Group", "Category", "Sub_Category"]
     dfs = [df.drop(columns=drop_cols, errors="ignore") for df in dfs]
 
     print("\n[4/10] Restricting years to 2020–2024...")
@@ -222,6 +222,9 @@ def run_pipeline() -> pd.DataFrame:
     comb_pc = apply_monthly_pca(comb, ["V1", "V2", "V3", "V4", "V5", "V6"])
     print("      ✓ Use sklearn to standardise for each Year-Month combination")
     print("      ✓ Add first principal component to data")
+
+    print("\n[10/11] Writing file to disk")
+    comb_pc.to_csv(path_or_buf=Path("data/scores.csv"))
 
     return comb_pc
 

@@ -110,7 +110,7 @@ with kpi_cols[2]:
             ].sum()
             st.metric(
                 "Total Energy",
-                f"{total_energy/1000:.1f} GWh",
+                f"{total_energy / 1000:.1f} GWh",
                 help="Total energy consumption",
             )
     else:
