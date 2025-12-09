@@ -42,9 +42,9 @@ class EECAEnergyConsumptionTransformer(ProcessedLayer):
             input_path: Path to raw Excel file
             output_path: Path to save processed CSV file
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("EECA ENERGY CONSUMPTION: Transform Raw to Processed")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Step 1: Load raw data
         print("\n[1/3] Loading raw Excel data...")
@@ -62,6 +62,11 @@ class EECAEnergyConsumptionTransformer(ProcessedLayer):
 
         # Step 2: Data cleaning and transformation
         print("\n[2/3] Applying transformations:")
+
+        # Create fossil fuel and boiler flags
+        df["FossilFuelFlag"] = (df["fuelGroup"] == "Fossil Fuels").astype(int)
+        df["BoilerFlag"] = (df["technology"] == "Boiler Systems").astype(int)
+        print("      - Created flags for fossil fuels and boilers")
 
         # Standardize fuel categories
         fuel_map = {
@@ -92,10 +97,23 @@ class EECAEnergyConsumptionTransformer(ProcessedLayer):
             )
 
         # Select and rename columns
-        df = df[["SectorGroup", "energyValue", "Category", "Year"]].rename(
-            columns={"SectorGroup": "Sub-Category"}
-        )
+        df = df[
+            [
+                "SectorGroup",
+                "energyValue",
+                "Category",
+                "Year",
+                "FossilFuelFlag",
+                "BoilerFlag",
+            ]
+        ].rename(columns={"SectorGroup": "Sub-Category"})
         print(f"      - Selected {len(df.columns)} columns")
+
+        # Reassign fishing to Commercial in Sub-Categories
+        df["Sub-Category"] = df["Sub-Category"].replace(
+            {"Agriculture, Forestry and Fishing": "Commercial"}
+        )
+        print("      - Reassigned fishing group to commercial Sub-Category")
 
         # Remove rows where energyValue is missing
         initial_rows = len(df)
@@ -107,61 +125,19 @@ class EECAEnergyConsumptionTransformer(ProcessedLayer):
         else:
             print("      - No missing energyValue values found")
 
-        # Split the Yearly numbers by month - using an approximate season split
-        # Define months and seasonal weights (example: more energy in winter)
-        df_months = pd.DataFrame(
-            {
-                "Month": range(1, 13),
-                # Rough pattern for NZ: winter (Jun–Aug) highest, summer (Dec–Feb) lowest
-                "season_weight": [
-                    0.7,
-                    0.8,
-                    0.9,
-                    1.0,
-                    1.1,
-                    1.2,
-                    1.3,
-                    1.2,
-                    1.1,
-                    1.0,
-                    0.9,
-                    0.8,
-                ],
-            }
-        )
-        # Normalise weights so they sum to 12 (so totals are preserved)
-        df_months["season_weight"] = df_months["season_weight"] * (
-            1 / df_months["season_weight"].sum()
-        )
-
-        # Cross join years × months
-        energy_count_before = df.energyValue.sum()
-        df = (
-            df.assign(key=1)
-            .merge(df_months.assign(key=1), on="key")
-            .drop("key", axis=1)
-        )
-
-        # Apply seasonal weights
-        df["energyValue"] = df["energyValue"] * df["season_weight"]
-        df.drop(columns=["season_weight"], inplace=True)
-        print(
-            "      - Added Month column by spitting yearly data using seasonal approximation"
-        )
-        print(
-            f"      - Total Energy values match: {df.energyValue.sum() == energy_count_before}"
-        )
+        # Add metadata columns
+        df = df.assign(**{"Month": "Total"})
 
         # Step 3: Save processed data
         print("\n[3/3] Saving processed data...")
         print(f"      Output: {output_path}")
         self.write_csv(df, output_path)
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"✓ Transformation complete: {len(df)} rows saved")
         print(f"  Years covered: {df['Year'].min()} - {df['Year'].max()}")
         print(f"  Categories: {', '.join(sorted(df['Category'].unique()))}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
 
 def main():

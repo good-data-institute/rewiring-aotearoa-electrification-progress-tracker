@@ -7,7 +7,7 @@ This script handles raw data extraction:
 
 from pathlib import Path
 
-from etl.apis.emi_retail import EMIRetailAPI
+from etl.apis.demo_emi_retail import EMIRetailAPI
 from etl.core.config import get_settings
 
 
@@ -48,9 +48,9 @@ class EMIRetailExtractor:
         Args:
             output_path: Path to save raw CSV file
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("EMI RETAIL: Extract Raw Data")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         print("\n[1/1] Extracting data from EMI Retail API...")
         print(f"      Parameters: {self.api.params.model_dump()}")
@@ -63,9 +63,9 @@ class EMIRetailExtractor:
         self.api.fetch_data(output_path=output_path)
         print("      ✓ Raw data saved")
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"✓ Extraction complete: {output_path}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
 
 def main():
@@ -73,7 +73,9 @@ def main():
     settings = get_settings()
 
     # Define output path in raw directory
-    output_path = settings.raw_dir / "emi_retail" / "emi_retail_20250801_20250831.csv"
+    output_path = (
+        settings.raw_dir / "demo_emi_retail" / "emi_retail_20250801_20250831.csv"
+    )
 
     # Create extractor with default parameters
     extractor = EMIRetailExtractor(

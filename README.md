@@ -94,7 +94,7 @@ python -m backend.main
 
 **Terminal 2 - Dashboard:**
 ```bash
-streamlit run frontend/streamlit_app.py
+streamlit run frontend/Introduction.py
 shiny run frontend/shiny_app.py --port 8502
 ```
 

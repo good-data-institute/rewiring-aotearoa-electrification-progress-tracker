@@ -48,9 +48,9 @@ class GICGasConnectionsTransformer(ProcessedLayer):
             input_path: Path to raw Excel file
             output_path: Path to save processed CSV file
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("GIC GAS CONNECTIONS: Transform Raw to Processed")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Step 1: Load raw data
         print("\n[1/4] Loading raw Excel data...")
@@ -75,6 +75,15 @@ class GICGasConnectionsTransformer(ProcessedLayer):
         print(
             f"      ✓ Loaded {len(region_corr)} region mappings from '{self.api.params.region_sheet_name}' sheet"
         )
+
+        # Reallocate some regions to align with other datasets
+        new_allocations = {
+            "Hawkes Bay": "Hawke's Bay",
+            "Manawatu": "Manawatu-Whanganui",
+            "Wanganui": "Manawatu-Whanganui",
+        }
+        region_corr["Region"] = region_corr["Region"].replace(new_allocations)
+        print("      ✓ Reallocated some regions for alignment with other data")
 
         # Display sample
         print("\n      Sample raw data (first 3 rows):")
@@ -142,9 +151,9 @@ class GICGasConnectionsTransformer(ProcessedLayer):
         if "NEW" in df.columns:
             print(f"      Total new connections: {df['NEW'].sum():,.0f}")
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"✓ Transformation complete: {output_path}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
 
 def main():

@@ -22,9 +22,9 @@ class EMIRetailTransformer(ProcessedLayer):
             input_path: Path to raw CSV file
             output_path: Path to save processed CSV file
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("EMI RETAIL: Transform Raw to Processed")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Step 1: Load raw data
         print("\n[1/3] Loading raw data...")
@@ -66,9 +66,9 @@ class EMIRetailTransformer(ProcessedLayer):
         print(f"      Output: {output_path}")
         self.write_csv(df, output_path)
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"✓ Transformation complete: {output_path}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
 
 def main():
@@ -76,8 +76,10 @@ def main():
     settings = get_settings()
 
     # Define input (raw) and output (processed) paths
-    input_path = settings.raw_dir / "emi_retail" / "emi_retail_20250801_20250831.csv"
-    output_path = settings.processed_dir / "emi_retail" / "emi_retail_cleaned.csv"
+    input_path = (
+        settings.raw_dir / "demo_emi_retail" / "emi_retail_20250801_20250831.csv"
+    )
+    output_path = settings.processed_dir / "demo_emi_retail" / "emi_retail_cleaned.csv"
 
     # Check if raw data exists
     if not input_path.exists():

@@ -35,9 +35,9 @@ class EMIGenerationExtractor:
         Args:
             output_dir: Directory to save raw CSV files
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("EMI ELECTRICITY GENERATION: Extract Raw Data")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Ensure output directory exists
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -87,10 +87,10 @@ class EMIGenerationExtractor:
 
         print("      ✓ Saved: poc_region_concordance.csv")
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"✓ Extraction complete: {output_dir}")
         print(f"  Files extracted: {len(file_manifest)}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
 
 def main():

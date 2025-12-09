@@ -1,0 +1,11 @@
+[runner]
+# Faster reruns
+fastReruns = true
+
+[ui]
+# Hide the hamburger menu
+hideTopBar = false
+
+[client]
+# Show error details
+showErrorDetails = true

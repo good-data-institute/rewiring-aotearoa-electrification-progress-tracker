@@ -20,9 +20,9 @@ class GICGasConnectionsAnalytics(MetricsLayer):
             input_path: Path to processed GIC gas connections CSV
             output_path: Path to save analytics CSV
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("GIC GAS CONNECTIONS: Analytics")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Step 1: Load processed data
         print("\n[1/3] Loading processed data...")
@@ -43,7 +43,7 @@ class GICGasConnectionsAnalytics(MetricsLayer):
 
         # Add metadata columns
         analytics_df = analytics_df.copy().assign(
-            **{"Metric Group": "Energy", "Category": "Gas", "Sub-Category": "Total"}
+            **{"Metric Group": "Gas", "Category": "Total", "Sub-Category": "Total"}
         )
 
         print(f"      - Total new connections: {analytics_df['_10_P1_Gas'].sum():,.0f}")

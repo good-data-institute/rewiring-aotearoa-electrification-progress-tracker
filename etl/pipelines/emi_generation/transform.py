@@ -27,9 +27,9 @@ class EMIGenerationTransformer(ProcessedLayer):
             input_dir: Directory containing raw CSV files
             output_path: Path to save processed CSV file
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("EMI ELECTRICITY GENERATION: Transform Raw to Processed")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Step 1: Load manifest and raw data files
         print("\n[1/5] Loading raw data files...")
@@ -124,7 +124,7 @@ class EMIGenerationTransformer(ProcessedLayer):
         df["Type"] = df["Fuel_Code"].isin(renewables).astype(int)
         renewable_count = df["Type"].sum()
         print(
-            f"      - Classified fuel types: {renewable_count:,} renewable, {len(df)-renewable_count:,} non-renewable"
+            f"      - Classified fuel types: {renewable_count:,} renewable, {len(df) - renewable_count:,} non-renewable"
         )
 
         # Convert numeric columns (trading periods) and sum across them
@@ -160,14 +160,14 @@ class EMIGenerationTransformer(ProcessedLayer):
         print(f"      Output: {output_path}")
         self.write_csv(df, output_path)
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"✓ Transformation complete: {len(df)} rows saved")
         print(
             f"  Date range: {df['Trading_Date'].min().strftime('%Y-%m-%d')} to {df['Trading_Date'].max().strftime('%Y-%m-%d')}"
         )
         print(f"  Total generation: {df['kWh'].sum():,.0f} kWh")
         print(f"  Regions: {', '.join(sorted(df['Region'].unique()))}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
 
 def main():

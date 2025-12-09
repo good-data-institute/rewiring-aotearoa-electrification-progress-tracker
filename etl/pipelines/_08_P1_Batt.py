@@ -24,12 +24,13 @@ class Processor_08Batt(MetricsLayer):
         print("EMI BATTERY AND SOLAR: 08_P1_Batt")
         print(f"{'=' * 80}")
 
-        print("\n[1/3] Loading processed data...")
+        print("\n[1/5] Loading processed data...")
         df = self.read_csv(input_path)
         print(f"      ✓ Loaded {len(df)} rows")
 
-        print("\n[2/3] Calculating battery capacity installed...")
-        batt_df = (
+        # Step 3: Calculate analytics BY Sub-Category
+        print("\n[2/5] Calculating battery capacity installed BY Sub-Category")
+        batt_df1 = (
             df.loc[df["Fuel type"] == "Battery (standalone)"]
             .groupby(["Year", "Month", "Region", "Sub-Category"], as_index=False)[
                 "Total capacity installed (MW)"
@@ -37,18 +38,42 @@ class Processor_08Batt(MetricsLayer):
             .sum()
             .rename(columns={"Total capacity installed (MW)": "_08_P1_Batt"})
         )
-        print(f"      ✓ Aggregated {len(batt_df)} grouped rows")
+        print(f"      ✓ Aggregated {len(batt_df1)} grouped rows")
 
         # Add metadata columns
-        batt_df = batt_df.assign(**{"Metric Group": "Energy", "Category": "Solar"})
+        batt_df1 = batt_df1.assign(**{"Metric Group": "Energy", "Category": "Solar"})
 
-        # Step 3: Save analytics
-        print("\n[3/3] Saving metric...")
-        self.write_csv(batt_df, output_path)
+        # Step 3: Calculate analytics ACROSS Sub-Category
+        print("\n[3/5] Calculating battery capacity installed ACROSS Sub-Category")
+        batt_df2 = (
+            df.loc[df["Fuel type"] == "Battery (standalone)"]
+            .groupby(["Year", "Month", "Region"], as_index=False)[
+                "Total capacity installed (MW)"
+            ]
+            .sum()
+            .rename(columns={"Total capacity installed (MW)": "_08_P1_Batt"})
+        )
+        print(f"      ✓ Aggregated {len(batt_df2)} grouped rows")
 
-        print(f"\n✓ Analytics complete: {len(batt_df)} rows saved")
-        print(f"  Years covered: {batt_df['Year'].min()} - {batt_df['Year'].max()}")
-        print(f"  Regions: {', '.join(sorted(batt_df['Region'].unique()))}")
+        # Add metadata columns
+        batt_df2 = batt_df2.assign(
+            **{"Metric Group": "Solar", "Category": "Total", "Sub-Category": "Total"}
+        )
+
+        # Step 4: Join datasets
+        print("\n[4/5] Combining BY and ACROSS dataset")
+        out_df = batt_df1._append(batt_df2)
+        print(f"      ✓ Calculated {len(out_df)} battery penetration records")
+        print("      ✓ Provide percentages and counts")
+
+        # Step 5: Save analytics
+        print("\n[5/5] Saving metric...")
+        self.write_csv(out_df, output_path)
+
+        print(f"\n✓ Analytics complete: {len(out_df)} rows saved")
+        print(f"  Years covered: {out_df['Year'].min()} - {out_df['Year'].max()}")
+        print(f"  Regions: {', '.join(sorted(out_df['Region'].unique()))}")
+        print(f"  Sub-Categories: {', '.join(sorted(out_df['Sub-Category'].unique()))}")
 
 
 def main():

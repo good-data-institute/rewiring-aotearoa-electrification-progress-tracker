@@ -122,7 +122,7 @@ async def get_processed_data(
     """Get data from processed layer with optional filtering.
 
     Args:
-        dataset: Dataset name (e.g., "emi_retail", "eeca", "gic", "emi_generation")
+        dataset: Dataset name (e.g., "demo_emi_retail", "eeca", "gic", "emi_generation")
         limit: Maximum number of rows to return
         offset: Number of rows to skip
         filter_json: JSON string of filters (e.g., '{"Year": {"gte": 2020}}')
@@ -185,7 +185,7 @@ async def get_metrics_data(
     """Get data from metrics layer with optional filtering.
 
     Args:
-        dataset: Dataset name (e.g., "emi_retail", "eeca", "gic", "emi_generation")
+        dataset: Dataset name (e.g., "demo_emi_retail", "eeca", "gic", "emi_generation")
         limit: Maximum number of rows to return
         offset: Number of rows to skip
         filter_json: JSON string of filters (e.g., '{"Year": {"gte": 2020, "lte": 2025}}')
