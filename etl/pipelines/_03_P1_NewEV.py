@@ -13,6 +13,7 @@ import pandas as pd
 
 from etl.core.config import get_settings
 from etl.core.pipeline import MetricsLayer
+from etl.core.mappings import EV_REGION_MAP
 
 
 class WakaKotahiNewEVCountAnalytics(MetricsLayer):
@@ -41,6 +42,25 @@ class WakaKotahiNewEVCountAnalytics(MetricsLayer):
         df_new_bev = df[(df["Fuel_Type"] == "BEV") & (df["Condition"] == "NEW")].copy()
         print(f"      - Filtered to {len(df_new_bev):,} new BEV records")
 
+        # Assign Districts to Regions
+        df_new_bev["Region"] = df_new_bev["Region"].fillna("UNKNOWN")
+        df_reg = df_new_bev.rename(columns={"Region": "District"})
+        df_reg["Region"] = df_reg["District"].map(EV_REGION_MAP)
+
+        # identify unmapped districts
+        missing = df_reg[df_reg["Region"].isna()]["District"].unique()
+
+        if len(missing) > 0:
+            print("      ! Unmapped districts found:")
+            for d in missing:
+                print(f"        • {d}")
+        else:
+            print("      - All districts mapped cleanly.")
+        print(
+            f"      - Districts (n = {df_reg['District'].nunique()}) "
+            f"mapped to Regions (n = {df_reg['Region'].nunique()})"
+        )
+
         # Define the category/sub-category combinations we want
         category_combinations = [
             ("Private", "Light Passenger Vehicle"),
@@ -53,9 +73,9 @@ class WakaKotahiNewEVCountAnalytics(MetricsLayer):
 
         for category, sub_category in category_combinations:
             # Filter data
-            df_filtered = df_new_bev[
-                (df_new_bev["Category"] == category)
-                & (df_new_bev["Sub_Category"] == sub_category)
+            df_filtered = df_reg[
+                (df_reg["Category"] == category)
+                & (df_reg["Sub_Category"] == sub_category)
             ].copy()
 
             if len(df_filtered) == 0:
