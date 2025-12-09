@@ -107,8 +107,8 @@ def apply_monthly_pca(df: pd.DataFrame, metric_cols: List[str]) -> pd.DataFrame:
         # loading_df = pd.DataFrame({"Metric": metric_cols, "Loading_PC1": loadings})
 
         # print(loading_df.to_string(index=False))
-
-    return pd.concat(out, ignore_index=True)
+    result = pd.concat(out, ignore_index=True)
+    return result[["Year", "Region", "Month", "PC"]]
 
 
 # =============================================================================
@@ -136,7 +136,9 @@ def read_csv_checked(path: str) -> pd.DataFrame:
 
 
 def run_pipeline() -> pd.DataFrame:
-    print("\n[1/10] Loading metric data...")
+    print("\n[1/11] Loading metric data...")
+    M1 = read_csv_checked("data/metrics/waka_kotahi_mvr/01_P1_EV_analytics.csv")
+    M2 = read_csv_checked("data/metrics/waka_kotahi_mvr/02_P1_FF_analytics.csv")
     M6a = read_csv_checked("data/metrics/emi_battery_solar/_06a_P1_BattPen.csv")
     M6b = read_csv_checked("data/metrics/emi_battery_solar/_06b_P1_BattPen.csv")
     M7 = read_csv_checked("data/metrics/emi_battery_solar/_07_P1_Sol.csv")
@@ -144,8 +146,10 @@ def run_pipeline() -> pd.DataFrame:
     M10 = read_csv_checked("data/metrics/gic/gic_gas_connections_analytics.csv")
     M12 = read_csv_checked("data/metrics/emi_generation/emi_generation_analytics.csv")
 
-    dfs = [M6a, M6b, M7, M8, M10, M12]
+    dfs = [M1, M2, M6a, M6b, M7, M8, M10, M12]
     metric_names = [
+        "_01_P1_EV",
+        "_02_P1_FF",
         "_06a_P1_BattPen",
         "_06b_P1_BattPen",
         "_07_P1_Sol",
@@ -154,26 +158,29 @@ def run_pipeline() -> pd.DataFrame:
         "EnergyRenew",
     ]
 
-    print("\n[2/10] Scoping to Total Sub_Category...")
+    print("\n[2/11] Scoping to Total Sub_Category...")
     dfs = [df[df["Sub_Category"] == "Total"].copy() for df in dfs]
 
-    print("\n[3/10] Cleaning redundant columns...")
+    print("\n[3/11] Cleaning redundant columns...")
     drop_cols = ["Metric_Group", "Category", "Sub_Category"]
     dfs = [df.drop(columns=drop_cols, errors="ignore") for df in dfs]
 
-    print("\n[4/10] Restricting years to 2020–2024...")
+    print("\n[4/11] Restricting years to 2020–2024...")
     dfs = [df[(df["Year"] >= 2020) & (df["Year"] <= 2024)].copy() for df in dfs]
 
-    print("\n[5/10] Extracting key columns...")
+    print("\n[5/11] Extracting key columns...")
     interim = []
+    full_joined = []
     for df, metric in zip(dfs, metric_names):
         if metric not in df.columns:
             raise KeyError(f"Expected metric column '{metric}' not found.")
         tmp = df[["Year", "Region", "Month", metric]].rename(columns={metric: "Metric"})
+        tmp2 = df[["Year", "Region", "Month", metric]]
         interim.append(tmp)
+        full_joined.append(tmp2)
 
-    print("\n[6/10] Creating full Region-Year-Month grid...")
-    regions = sorted(M6a["Region"].unique())
+    print("\n[6/11] Creating full Region-Year-Month grid...")
+    regions = sorted(M1["Region"].unique())
     full = factor_grid(
         Region=regions,
         Year=np.arange(2020, 2025),
@@ -181,15 +188,27 @@ def run_pipeline() -> pd.DataFrame:
     )
     print(f"      ✓ Grid has {len(full)} rows")
 
-    print("\n[7/10] Joining metric datasets to full grid...")
+    print("\n[7/11] Joining metric datasets to full grid...")
     completed = []
-    for df in interim:
+    full_joined2 = []
+    for df, df2 in zip(interim, full_joined):
         merged = full.merge(df, how="left", on=["Region", "Year", "Month"]).fillna(0)
+        merged2 = full.merge(df2, how="left", on=["Region", "Year", "Month"]).fillna(0)
         completed.append(merged)
+        full_joined2.append(merged2)
 
-    print("\n[8/10] Transforming metrics...")
+    actuals_df = reduce(
+        lambda left, right: pd.merge(
+            left, right, how="outer", on=["Year", "Month", "Region"]
+        ),
+        full_joined2,
+    )
+
+    print("\n[8/11] Transforming metrics...")
 
     kinds = [
+        "Realvalue",
+        "Realvalue",
         "Percentage",
         "Percentage",
         "Realvalue",
@@ -210,7 +229,7 @@ def run_pipeline() -> pd.DataFrame:
     print("      ✓ Normalised values by month")
     print("      ✓ Prepared data for join")
 
-    print("\n[9/10] Joining transformed metrics...")
+    print("\n[9/11] Joining transformed metrics...")
     comb = reduce(
         lambda left, right: pd.merge(
             left, right, how="outer", on=["Year", "Month", "Region"]
@@ -218,15 +237,25 @@ def run_pipeline() -> pd.DataFrame:
         transformed,
     )
 
-    print("\n[10/10] Running month-specific PCA...")
-    comb_pc = apply_monthly_pca(comb, ["V1", "V2", "V3", "V4", "V5", "V6"])
+    print("\n[10/11] Running month-specific PCA...")
+    comb_pc = apply_monthly_pca(comb, ["V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8"])
     print("      ✓ Use sklearn to standardise for each Year-Month combination")
     print("      ✓ Add first principal component to data")
 
-    print("\n[10/11] Writing file to disk")
-    comb_pc.to_csv(path_or_buf=Path("data/scores.csv"))
+    sendOut = pd.merge(
+        comb_pc, actuals_df, how="outer", on=["Year", "Month", "Region"], indicator=True
+    )
+    assert (sendOut["_merge"] == "both").all(), (
+        "Merge mismatch detected:\n"
+        + sendOut.loc[
+            sendOut["_merge"] != "both", ["Year", "Month", "Region", "_merge"]
+        ].to_string(index=False)
+    )
 
-    return comb_pc
+    print("\n[10/11] Writing file to disk")
+    sendOut.to_csv(path_or_buf=Path("data/scores.csv"))
+
+    return sendOut
 
 
 # =============================================================================
