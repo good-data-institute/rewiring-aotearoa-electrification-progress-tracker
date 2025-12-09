@@ -111,4 +111,5 @@ EV_REGION_MAP = {
     "TIMARU DISTRICT": "Canterbury",
     "NELSON CITY": "Nelson",
     "CHATHAM ISLANDS TERRITORY": "Southland",
+    "UNKNOWN": "Unknown",
 }

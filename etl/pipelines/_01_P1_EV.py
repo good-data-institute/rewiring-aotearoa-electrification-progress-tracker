@@ -42,6 +42,7 @@ class WakaKotahiEVCountAnalytics(MetricsLayer):
         print(f"      - Filtered to {len(df_bev):,} BEV records")
 
         # Assign Districts to Regions
+        df_bev["Region"] = df_bev["Region"].fillna("UNKNOWN")
         df_reg = df_bev.rename(columns={"Region": "District"})
         df_reg["Region"] = df_reg["District"].map(EV_REGION_MAP)
 
@@ -118,6 +119,21 @@ class WakaKotahiEVCountAnalytics(MetricsLayer):
         # Combine all results
         analytics_df = comb_df._append(total_grouped)
         print("      - Added 'Total' groups to Category, Sub_Category and Fuel_Type")
+
+        # Check that totals operate as expected
+        tots = analytics_df[
+            (analytics_df["Category"] == "Total")
+            & (analytics_df["Sub_Category"] == "Total")
+            & (analytics_df["Fuel_Type"] == "Total")
+        ]["_01_P1_EV"].sum()
+
+        ntots = analytics_df[
+            (analytics_df["Category"] != "Total")
+            & (analytics_df["Sub_Category"] != "Total")
+            & (analytics_df["Fuel_Type"] != "Total")
+        ]["_01_P1_EV"].sum()
+
+        assert tots == ntots, f"Totals mismatch: Total={tots}, Non-Totals={ntots}"
 
         # Reorder columns
         analytics_df = analytics_df[

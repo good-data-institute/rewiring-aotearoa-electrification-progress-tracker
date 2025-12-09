@@ -39,6 +39,7 @@ class WakaKotahiFossilFuelCountAnalytics(MetricsLayer):
         print("\n[2/3] Aggregating fossil fuel vehicle counts...")
 
         # Assign Districts to Regions
+        df["Region"] = df["Region"].fillna("UNKNOWN")
         df_reg = df.rename(columns={"Region": "District"})
         df_reg["Region"] = df_reg["District"].map(EV_REGION_MAP)
 
@@ -117,6 +118,21 @@ class WakaKotahiFossilFuelCountAnalytics(MetricsLayer):
         # Combine all results
         analytics_df = comb_df._append(total_grouped)
         print("      - Added 'Total' groups to Category, Sub_Category and Fuel_Type")
+
+        # Check that totals operate as expected
+        tots = analytics_df[
+            (analytics_df["Category"] == "Total")
+            & (analytics_df["Sub_Category"] == "Total")
+            & (analytics_df["Fuel_Type"] == "Total")
+        ]["_02_P1_FF"].sum()
+
+        ntots = analytics_df[
+            (analytics_df["Category"] != "Total")
+            & (analytics_df["Sub_Category"] != "Total")
+            & (analytics_df["Fuel_Type"] != "Total")
+        ]["_02_P1_FF"].sum()
+
+        assert tots == ntots, f"Totals mismatch: Total={tots}, Non-Totals={ntots}"
 
         # Reorder columns
         analytics_df = analytics_df[
