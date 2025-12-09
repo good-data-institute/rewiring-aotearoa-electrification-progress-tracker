@@ -73,10 +73,10 @@ class WakaKotahiFossilFuelCountAnalytics(MetricsLayer):
         for fuel_type in fossil_fuel_types:
             for category, sub_category in category_combinations:
                 # Filter data
-                df_filtered = df[
-                    (df["Fuel_Type"] == fuel_type)
-                    & (df["Category"] == category)
-                    & (df["Sub_Category"] == sub_category)
+                df_filtered = df_reg[
+                    (df_reg["Fuel_Type"] == fuel_type)
+                    & (df_reg["Category"] == category)
+                    & (df_reg["Sub_Category"] == sub_category)
                 ].copy()
 
                 if len(df_filtered) == 0:
