@@ -12,6 +12,33 @@ import plotly.colors
 import requests
 import streamlit as st
 
+
+def add_global_refresh_button():
+    """Add a global 'Refresh All Data' button to the sidebar.
+
+    This button clears all Streamlit caches and reloads the page,
+    forcing all data to be re-fetched from S3.
+    """
+    st.sidebar.markdown("---")
+    if st.sidebar.button(
+        "🔄 Refresh All Data", use_container_width=True, type="primary"
+    ):
+        st.cache_data.clear()
+        st.rerun()
+
+
+def add_page_refresh_button(button_text: str = "🔄 Refresh This Page"):
+    """Add a page-specific refresh button.
+
+    This simply reloads the page, re-fetching only the data used on this page.
+
+    Args:
+        button_text: Text to display on the button
+    """
+    if st.button(button_text, use_container_width=True):
+        st.rerun()
+
+
 # NZ Region coordinates for mapping (from reflex_demo)
 NZ_REGIONS_COORDS = {
     "Northland": {"lat": -35.7, "lon": 174.3},
