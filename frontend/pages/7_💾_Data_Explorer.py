@@ -33,7 +33,7 @@ st.set_page_config(page_title="Data Explorer", page_icon="💾", layout="wide")
 st.title("💾 Data Explorer")
 st.markdown("**Browse, filter, and export raw datasets with metadata**")
 
-add_global_refresh_button()
+add_global_refresh_button(API_BASE_URL)
 
 # Add tabs for different views
 tab1, tab2 = st.tabs(["📊 Explore Data", "📋 All Metrics"])
@@ -170,7 +170,7 @@ with tab1:
         with col1:
             st.success(f"✓ Loaded {len(df):,} rows")
         with col2:
-            add_page_refresh_button()
+            add_page_refresh_button(datasets=[dataset_key])
 
         # Metric Metadata Display
         if selected_metadata:
@@ -224,13 +224,13 @@ with tab1:
                     "Null Count": df.isnull().sum(),
                 }
             )
-            st.dataframe(col_info, use_container_width=True)
+            st.dataframe(col_info, width="stretch")
 
         # Summary Statistics
         with st.expander("Summary Statistics"):
             numeric_cols = df.select_dtypes(include=["number"]).columns
             if len(numeric_cols) > 0:
-                st.dataframe(df[numeric_cols].describe(), use_container_width=True)
+                st.dataframe(df[numeric_cols].describe(), width="stretch")
             else:
                 st.info("No numeric columns in dataset")
 
@@ -276,7 +276,7 @@ with tab1:
         df_paginated = create_paginated_dataframe(
             df, page_size=100, page_key=f"data_explorer_{dataset_key}"
         )
-        st.dataframe(df_paginated, use_container_width=True)
+        st.dataframe(df_paginated, width="stretch")
 
         # Download
         st.markdown("---")

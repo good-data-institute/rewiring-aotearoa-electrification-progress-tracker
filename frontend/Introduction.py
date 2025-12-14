@@ -4,10 +4,16 @@ Landing page for the multipage Electrification Progress Tracker dashboard.
 """
 
 import os
+import sys
 
 import requests
 import streamlit as st
 from dotenv import load_dotenv
+
+# Add parent directory to path for imports
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from dashboard_utils import add_global_refresh_button
 
 # Load environment variables
 load_dotenv()
@@ -53,6 +59,10 @@ if not backend_healthy:
     st.stop()
 
 st.success("✓ Backend API is connected and healthy")
+
+# Add global refresh button in sidebar
+st.sidebar.markdown("## 🔄 Data Management")
+add_global_refresh_button(API_BASE_URL)
 
 st.markdown("---")
 

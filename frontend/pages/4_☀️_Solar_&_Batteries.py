@@ -15,6 +15,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dashboard_utils import (
     CHART_COLORS,
+    add_global_refresh_button,
+    add_page_refresh_button,
     fetch_dataset,
     filter_annual_aggregates,
     get_latest_kpi_value,
@@ -32,6 +34,10 @@ st.title("☀️ Solar & Battery Adoption")
 st.markdown("**Distributed energy resources and battery storage analysis**")
 
 st.sidebar.header("🔍 Filters")
+
+# Add global refresh button
+add_global_refresh_button(API_BASE_URL)
+
 year_range = st.sidebar.slider("Year Range", 2013, 2025, (2018, 2025))
 include_annual = st.sidebar.checkbox("Include Annual Aggregates", False)
 
@@ -51,6 +57,15 @@ with st.spinner("Loading solar & battery data..."):
             datasets[dataset_name] = df
         except Exception:
             datasets[dataset_name] = pd.DataFrame()
+
+# Add page-specific refresh button
+SOLAR_DATASETS = [
+    "battery_penetration_commercial",
+    "battery_penetration_residential",
+    "solar_penetration",
+    "battery_capacity",
+]
+add_page_refresh_button(datasets=SOLAR_DATASETS)
 
 # KPIs
 kpi_cols = st.columns(4)
@@ -105,7 +120,7 @@ with col1:
             labels={"_07_P1_Sol": "Solar Capacity (MW)"},
             color_discrete_sequence=["#f39c12"],
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 with col2:
     st.subheader("Battery Adoption Curve")
@@ -124,7 +139,7 @@ with col2:
             labels={"_06b_P1_BattPen": "Battery Penetration %"},
             color_discrete_sequence=["#9b59b6"],
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 st.subheader("Solar & Battery by Sector")
 df_solar = datasets.get("solar_penetration", pd.DataFrame())
@@ -144,7 +159,7 @@ if not df_solar.empty and "_07_P1_Sol" in df_solar.columns:
             labels={"_07_P1_Sol": "Solar (MW)"},
             color_discrete_sequence=CHART_COLORS,
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 st.caption(
     "☀️ Solar and battery adoption shows progress in distributed energy resources"

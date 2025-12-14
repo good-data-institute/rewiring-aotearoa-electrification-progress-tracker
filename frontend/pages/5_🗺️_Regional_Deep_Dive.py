@@ -14,10 +14,14 @@ from dotenv import load_dotenv
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dashboard_utils import (
+    AVAILABLE_DATASETS,
     NZ_REGIONS_COORDS,
+    add_global_refresh_button,
+    add_page_refresh_button,
     fetch_all_datasets,
     filter_annual_aggregates,
 )
+
 
 load_dotenv()
 
@@ -31,6 +35,10 @@ st.title("🗺️ Regional Deep Dive")
 st.markdown("**Interactive regional comparison across all metrics**")
 
 st.sidebar.header("🔍 Filters")
+
+# Add global refresh button
+add_global_refresh_button(API_BASE_URL)
+
 year_range = st.sidebar.slider("Year Range", 2015, 2025, (2020, 2025))
 
 # Fetch data
@@ -40,6 +48,9 @@ with st.spinner("Loading regional data..."):
     )
     for key in datasets:
         datasets[key] = filter_annual_aggregates(datasets[key], False)
+
+# Add page-specific refresh button (all datasets)
+add_page_refresh_button(datasets=AVAILABLE_DATASETS)
 
 # Interactive Map
 st.subheader("Interactive Regional Map")
@@ -90,7 +101,7 @@ if map_metric == "Renewable Energy %":
             )
         )
         fig.update_geos(center=dict(lon=173, lat=-41), projection_scale=15)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 elif map_metric == "Fleet Electrification %":
     df_map = datasets.get("waka_kotahi_fleet_elec", pd.DataFrame())
@@ -124,7 +135,7 @@ elif map_metric == "Fleet Electrification %":
             )
         )
         fig.update_geos(center=dict(lon=173, lat=-41), projection_scale=15)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 st.markdown("---")
 
@@ -155,7 +166,7 @@ if regional_metrics:
     df_regional = regional_metrics[0]
     for df in regional_metrics[1:]:
         df_regional = df_regional.merge(df, on="Region", how="outer")
-    st.dataframe(df_regional.sort_values("Region"), use_container_width=True)
+    st.dataframe(df_regional.sort_values("Region"), width="stretch")
 else:
     st.info("No regional data available")
 
