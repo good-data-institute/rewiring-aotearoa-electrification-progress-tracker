@@ -173,7 +173,8 @@ Or if you're using Visual Studio Code, then after you try to commit then Ruff sh
 
 ### Deploy the dashboard onto Render and AWS
 1. Create an AWS bucket and upload the data folder (which should have been created locally upon running [run_all_pipelines.py](etl\run_all_pipelines.py))
--In the bucket permissions, make the bucket public:![alt text](docs\image.png)
+- In [render.yaml](render.yaml), update the S3 bucket URL
+- In the bucket permissions, make the bucket public:![alt text](docs\image.png)
 
 - ⚠️ This should NOT be done when actually making this dashboard and/or the data in the bucket publicly visible! Only the application requesting the data should have permissions to read the bucket (see [Future Improvements](#Future-Improvements))
 

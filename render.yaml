@@ -6,5 +6,8 @@ services:
     dockerfilePath: ./Dockerfile
     branch: main
     autoDeployTrigger: commit
+    envVars:
+      - key: BUCKET_URL
+        value: https://test-gdi-28924.s3.amazonaws.com/data
     # Render provides PORT automatically - no need to set it
     # The dashboard will be accessible at the Render URL
