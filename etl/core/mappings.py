@@ -106,7 +106,7 @@ EV_REGION_MAP = {
     "HURUNUI DISTRICT": "Canterbury",
     "CHRISTCHURCH CITY": "Canterbury",
     "WAIMATE DISTRICT": "Canterbury",
-    "WAITAKI DISTRICT": "Canterbury",
+    "WAITAKI DISTRICT": "Otago",
     "SELWYN DISTRICT": "Canterbury",
     "TIMARU DISTRICT": "Canterbury",
     "NELSON CITY": "Nelson",
