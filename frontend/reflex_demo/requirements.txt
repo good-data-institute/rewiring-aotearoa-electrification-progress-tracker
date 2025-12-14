@@ -1,4 +1,0 @@
-reflex
-plotly
-boto3
-pandas
