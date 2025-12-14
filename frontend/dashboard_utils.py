@@ -349,7 +349,7 @@ def _fetch_dataset_from_api(
     # Make API request - no limit, fetch all data
     response = requests.get(
         f"{api_base_url}/api/metrics/{dataset}",
-        timeout=30,
+        timeout=60,
     )
     response.raise_for_status()
 
