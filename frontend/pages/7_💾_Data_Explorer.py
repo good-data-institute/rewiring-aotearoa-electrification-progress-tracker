@@ -45,7 +45,7 @@ def fetch_metadata():
     """Fetch metadata for all metrics from the API."""
     try:
         response = requests.get(
-            f"{API_BASE_URL}/api/metrics/metadata/by-sector", timeout=10
+            f"{API_BASE_URL}/api/metrics/metadata/by-sector", timeout=60
         )
         response.raise_for_status()
         return response.json()

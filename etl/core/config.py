@@ -22,7 +22,7 @@ class Settings:
         self.metrics_dir = Path(os.getenv("METRICS_DIR", "./data/metrics"))
 
         # API settings
-        self.api_timeout = int(os.getenv("API_TIMEOUT", "30"))
+        self.api_timeout = int(os.getenv("API_TIMEOUT", "60"))
         self.api_retry_attempts = int(os.getenv("API_RETRY_ATTEMPTS", "3"))
 
         # Backend settings
