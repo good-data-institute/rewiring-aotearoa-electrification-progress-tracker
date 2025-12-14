@@ -90,7 +90,7 @@ EV_REGION_MAP = {
     "PORIRUA CITY": "Wellington",
     "WAIPA DISTRICT": "Waikato",
     "OTOROHANGA DISTRICT": "Waikato",
-    "ROTORUA DISTRICT": "Waikato",
+    "ROTORUA DISTRICT": "Bay of Plenty",
     "WAITOMO DISTRICT": "Waikato",
     "SOUTH WAIKATO DISTRICT": "Waikato",
     "MATAMATA-PIAKO DISTRICT": "Waikato",
