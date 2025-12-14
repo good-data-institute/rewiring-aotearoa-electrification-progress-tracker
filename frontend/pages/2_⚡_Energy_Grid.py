@@ -15,6 +15,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dashboard_utils import (
     CHART_COLORS,
+    add_global_refresh_button,
+    add_page_refresh_button,
     fetch_dataset,
     filter_annual_aggregates,
     get_latest_kpi_value,
@@ -37,6 +39,9 @@ st.markdown("**Electricity generation, consumption, and renewable energy analysi
 
 # Sidebar
 st.sidebar.header("🔍 Filters")
+
+# Add global refresh button
+add_global_refresh_button(API_BASE_URL)
 
 year_range = st.sidebar.slider(
     "Year Range",
@@ -68,6 +73,14 @@ with st.spinner("Loading energy data..."):
         except Exception as e:
             st.sidebar.error(f"Error: {e}")
             datasets[dataset_name] = pd.DataFrame()
+
+# Add page-specific refresh button
+ENERGY_DATASETS = [
+    "eeca_electricity_percentage",
+    "eeca_energy_by_fuel",
+    "emi_generation_analytics",
+]
+add_page_refresh_button(datasets=ENERGY_DATASETS)
 
 # KPIs
 st.subheader("Key Energy Metrics")
@@ -137,7 +150,7 @@ with col1:
             labels={"_13_P1_ElecCons": "Electricity %"},
             color_discrete_sequence=["#3498db"],
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     else:
         st.info("No data available")
 
@@ -155,7 +168,7 @@ with col2:
                 color_discrete_sequence=CHART_COLORS,
             )
             fig.update_layout(xaxis_tickangle=-45)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
         else:
             st.info("No regional data")
     else:
@@ -178,7 +191,7 @@ if not df_fuel.empty and "_14_P1_EnergyxFuel" in df_fuel.columns:
             labels={"_14_P1_EnergyxFuel": "Energy (MWh)"},
             color_discrete_sequence=CHART_COLORS,
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     else:
         st.info("Missing required columns")
 else:
@@ -201,7 +214,7 @@ if not df_renewable.empty and "_12_P1_EnergyRenew" in df_renewable.columns:
             color_continuous_scale="Greens",
             aspect="auto",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     else:
         st.info("Missing month/year columns")
 else:

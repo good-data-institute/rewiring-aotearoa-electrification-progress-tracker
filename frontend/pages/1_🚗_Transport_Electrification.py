@@ -16,6 +16,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dashboard_utils import (
     CHART_COLORS,
+    add_global_refresh_button,
+    add_page_refresh_button,
     aggregate_districts_to_regions,
     calculate_yoy_growth,
     create_paginated_dataframe,
@@ -42,6 +44,9 @@ st.markdown(
 
 # Sidebar filters
 st.sidebar.header("🔍 Filters")
+
+# Add global refresh button
+add_global_refresh_button(API_BASE_URL)
 
 year_range = st.sidebar.slider(
     "Year Range",
@@ -121,6 +126,16 @@ with st.spinner("Loading transport data..."):
             datasets[dataset_name] = pd.DataFrame()
 
 st.success(f"✓ Loaded {len([d for d in datasets.values() if not d.empty])} datasets")
+
+# Add page-specific refresh button
+TRANSPORT_DATASETS = [
+    "waka_kotahi_ev",
+    "waka_kotahi_ff",
+    "waka_kotahi_new_ev",
+    "waka_kotahi_used_ev",
+    "waka_kotahi_fleet_elec",
+]
+add_page_refresh_button(datasets=TRANSPORT_DATASETS)
 
 # KPIs
 st.subheader("Key Transport Metrics")
@@ -264,7 +279,7 @@ with col1:
                 labels={"Count": "Vehicle Count"},
                 color_discrete_map={"Electric": "#2ecc71", "Fossil Fuel": "#e74c3c"},
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
     else:
         st.info("Insufficient data for fleet composition chart")
 
@@ -300,7 +315,7 @@ with col2:
                 labels={"_05_P1_FleetElec": "Fleet Electrification %"},
                 color_discrete_sequence=CHART_COLORS,
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
         else:
             st.info("Missing required columns")
     else:
@@ -346,7 +361,7 @@ with col3:
                 yaxis_title="Vehicle Count",
                 xaxis_title="Year",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
     else:
         st.info("Insufficient data for new vs used comparison")
 
@@ -376,7 +391,7 @@ with col4:
                 color_continuous_scale="Greens",
             )
             fig.update_layout(showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
     else:
         st.info("No regional EV data available")
 
@@ -399,7 +414,7 @@ if not df_ev.empty and "_01_P1_EV" in df_ev.columns and "Year" in df_ev.columns:
         color_continuous_scale="RdYlGn",
     )
     fig.update_layout(showlegend=False)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 else:
     st.info("Insufficient data for YoY growth analysis")
 
@@ -436,7 +451,7 @@ if not df_display.empty:
     df_paginated = create_paginated_dataframe(
         df_display, page_size=100, page_key=f"transport_{dataset_choice}"
     )
-    st.dataframe(df_paginated, use_container_width=True)
+    st.dataframe(df_paginated, width="stretch")
 
     # Download
     csv = df_display.to_csv(index=False)

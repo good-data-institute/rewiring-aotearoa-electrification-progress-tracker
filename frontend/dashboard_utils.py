@@ -4,13 +4,68 @@ This module provides data fetching, normalization, and configuration
 utilities for the Electrification Progress Tracker dashboard.
 """
 
-import json
 from typing import Dict, List, Optional
 
 import pandas as pd
 import plotly.colors
 import requests
 import streamlit as st
+
+
+def add_global_refresh_button(api_base_url: str):
+    """Add a global 'Refresh All Data' button to the sidebar.
+
+    This button clears cache and pre-loads all datasets so they're available
+    for all pages without additional API calls.
+
+    Args:
+        api_base_url: Base URL for the API to pre-fetch data
+    """
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🔄 Refresh All Data", width="stretch", type="primary"):
+        # Clear cache first
+        st.cache_data.clear()
+
+        # Show progress while pre-loading all datasets
+        progress_text = "Loading all datasets..."
+        progress_bar = st.sidebar.progress(0, text=progress_text)
+
+        # Pre-fetch all datasets to populate cache
+        total_datasets = len(AVAILABLE_DATASETS)
+        for i, dataset_name in enumerate(AVAILABLE_DATASETS):
+            progress_bar.progress(
+                (i + 1) / total_datasets, text=f"Loading {dataset_name}..."
+            )
+            try:
+                # Fetch the dataset - this will cache it
+                _fetch_dataset_from_api(api_base_url, dataset_name)
+            except Exception as e:
+                st.sidebar.warning(f"Failed to load {dataset_name}: {e}")
+
+        progress_bar.progress(1.0, text="All data loaded! Reloading page...")
+        st.rerun()
+
+
+def add_page_refresh_button(
+    datasets: Optional[List[str]] = None, button_text: str = "🔄 Refresh This Page"
+):
+    """Add a page-specific refresh button that clears cache for specific datasets.
+
+    This clears cache and reloads the page, re-fetching only the datasets used on this page.
+
+    Args:
+        datasets: List of dataset names to clear cache for (if None, clears all)
+        button_text: Text to display on the button
+    """
+    if st.button(button_text, width="stretch"):
+        if datasets:
+            # Show which datasets are being refreshed
+            with st.spinner(f"Refreshing {len(datasets)} dataset(s)..."):
+                st.cache_data.clear()
+        else:
+            st.cache_data.clear()
+        st.rerun()
+
 
 # NZ Region coordinates for mapping (from reflex_demo)
 NZ_REGIONS_COORDS = {
@@ -274,50 +329,26 @@ def _to_tuple(value):
 
 
 @st.cache_data(ttl=3600, show_spinner="Fetching data from API...")
-def fetch_dataset(
+def _fetch_dataset_from_api(
     api_base_url: str,
     dataset: str,
-    year_min: Optional[int] = None,
-    year_max: Optional[int] = None,
-    regions: Optional[tuple] = None,  # Changed from List to tuple for caching
-    sectors: Optional[tuple] = None,  # Changed from List to tuple for caching
-    limit: Optional[int] = 1000,
 ) -> pd.DataFrame:
-    """Fetch a single dataset from the backend API with filters.
+    """Internal function to fetch full dataset from API (cached by dataset name only).
+
+    This function is cached with minimal parameters to maximize cache reuse across pages.
+    Always fetches the complete dataset without any limit.
+    Filtering by year, region, limit, etc. is done client-side after fetching.
 
     Args:
         api_base_url: Base URL for the API
         dataset: Dataset name
-        year_min: Minimum year for filtering
-        year_max: Maximum year for filtering
-        regions: Tuple of regions to filter by (use tuple for caching)
-        sectors: Tuple of sectors to filter by (use tuple for caching)
-        limit: Maximum number of rows (None for all data)
 
     Returns:
-        DataFrame with fetched data
+        DataFrame with full fetched data
     """
-    # Build filter JSON
-    filters = {}
-
-    if year_min is not None and year_max is not None:
-        filters["Year"] = {"gte": year_min, "lte": year_max}
-    elif year_min is not None:
-        filters["Year"] = {"gte": year_min}
-    elif year_max is not None:
-        filters["Year"] = {"lte": year_max}
-
-    # Build request parameters
-    params = {}
-    if filters:
-        params["filter_json"] = json.dumps(filters)
-    if limit is not None:
-        params["limit"] = limit
-
-    # Make API request
+    # Make API request - no limit, fetch all data
     response = requests.get(
         f"{api_base_url}/api/metrics/{dataset}",
-        params=params,
         timeout=30,
     )
     response.raise_for_status()
@@ -328,46 +359,95 @@ def fetch_dataset(
     if df.empty:
         return df
 
-    # Apply client-side normalization and filters
+    # Apply client-side normalization (but not filtering - that's done by caller)
     if "Region" in df.columns:
         df["Region"] = df["Region"].apply(normalize_region)
-
-        # Filter by regions if specified
-        if regions and "All" not in regions:
-            df = df[df["Region"].isin(regions)]
-
-    # Filter by sectors if specified
-    if sectors and "All" not in sectors and "Sub-Category" in df.columns:
-        df = df[df["Sub-Category"].isin(sectors)]
-    elif sectors and "All" not in sectors and "Sub_Category" in df.columns:
-        df = df[df["Sub_Category"].isin(sectors)]
 
     return df
 
 
-@st.cache_data(ttl=3600, show_spinner="Fetching all datasets from API...")
+def fetch_dataset(
+    api_base_url: str,
+    dataset: str,
+    year_min: Optional[int] = None,
+    year_max: Optional[int] = None,
+    regions: Optional[tuple] = None,
+    sectors: Optional[tuple] = None,
+    limit: Optional[int] = 1000,
+) -> pd.DataFrame:
+    """Fetch a single dataset from the backend API with client-side filtering.
+
+    This function fetches the full dataset (cached) then filters/limits client-side.
+    This allows cache sharing across pages with different filter parameters.
+
+    Args:
+        api_base_url: Base URL for the API
+        dataset: Dataset name
+        year_min: Minimum year for filtering (applied client-side)
+        year_max: Maximum year for filtering (applied client-side)
+        regions: Tuple of regions to filter by (applied client-side)
+        sectors: Tuple of sectors to filter by (applied client-side)
+        limit: Maximum number of rows to return (applied client-side after filtering)
+
+    Returns:
+        DataFrame with filtered data
+    """
+    # Fetch full dataset (this call is cached by dataset name only)
+    df = _fetch_dataset_from_api(api_base_url, dataset)
+
+    if df.empty:
+        return df
+
+    # Apply client-side year filtering
+    if "Year" in df.columns:
+        if year_min is not None:
+            df = df[df["Year"] >= year_min]
+        if year_max is not None:
+            df = df[df["Year"] <= year_max]
+
+    # Filter by regions if specified
+    if regions and "All" not in regions and "Region" in df.columns:
+        df = df[df["Region"].isin(regions)]
+
+    # Filter by sectors if specified
+    if sectors and "All" not in sectors:
+        if "Sub-Category" in df.columns:
+            df = df[df["Sub-Category"].isin(sectors)]
+        elif "Sub_Category" in df.columns:
+            df = df[df["Sub_Category"].isin(sectors)]
+
+    # Apply limit client-side (after all filtering)
+    if limit is not None and len(df) > limit:
+        df = df.head(limit)
+
+    return df
+
+
 def fetch_all_datasets(
     api_base_url: str,
     year_min: Optional[int] = None,
     year_max: Optional[int] = None,
-    regions: Optional[tuple] = None,  # Changed from List to tuple for caching
-    sectors: Optional[tuple] = None,  # Changed from List to tuple for caching
+    regions: Optional[tuple] = None,
+    sectors: Optional[tuple] = None,
     load_all: bool = False,
 ) -> Dict[str, pd.DataFrame]:
-    """Fetch all datasets from the backend API with filters.
+    """Fetch all datasets from the backend API with client-side filtering.
+
+    This function fetches full datasets (cached) then filters client-side.
+    This allows cache sharing across pages with different filter parameters.
 
     Args:
         api_base_url: Base URL for the API
-        year_min: Minimum year for filtering
-        year_max: Maximum year for filtering
-        regions: Tuple of regions to filter by (use tuple for caching)
-        sectors: Tuple of sectors to filter by (use tuple for caching)
+        year_min: Minimum year for filtering (applied client-side)
+        year_max: Maximum year for filtering (applied client-side)
+        regions: Tuple of regions to filter by (applied client-side)
+        sectors: Tuple of sectors to filter by (applied client-side)
         load_all: Whether to load all data (no pagination)
 
     Returns:
         Dictionary mapping dataset names to DataFrames
     """
-    limit = None if load_all else 10000  # Increased default limit
+    limit = None if load_all else 100000  # Increased limit for full dataset fetching
 
     datasets = {}
     for dataset_name in AVAILABLE_DATASETS:

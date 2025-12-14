@@ -33,6 +33,11 @@ class Settings:
         self.streamlit_port = int(os.getenv("STREAMLIT_PORT", "8501"))
         self.shiny_port = int(os.getenv("SHINY_PORT", "8502"))
 
+        # AWS
+        self.bucket_url = os.getenv(
+            "BUCKET_URL", "https://your-bucket-name.s3.amazonaws.com"
+        )
+
         # Create directories
         self._create_directories()
 

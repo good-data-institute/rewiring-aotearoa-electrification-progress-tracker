@@ -15,6 +15,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dashboard_utils import (
     CHART_COLORS,
+    add_global_refresh_button,
+    add_page_refresh_button,
     fetch_dataset,
     filter_annual_aggregates,
     get_latest_kpi_value,
@@ -37,6 +39,10 @@ st.markdown("**Gas connections and heating energy consumption analysis**")
 
 # Sidebar
 st.sidebar.header("🔍 Filters")
+
+# Add global refresh button
+add_global_refresh_button(API_BASE_URL)
+
 year_range = st.sidebar.slider("Year Range", 2015, 2025, (2018, 2025))
 include_annual = st.sidebar.checkbox("Include Annual Aggregates", False)
 
@@ -52,6 +58,10 @@ with st.spinner("Loading buildings data..."):
             datasets[dataset_name] = df
         except Exception:
             datasets[dataset_name] = pd.DataFrame()
+
+# Add page-specific refresh button
+BUILDINGS_DATASETS = ["gic_analytics", "eeca_boiler_energy", "eeca_energy_by_fuel"]
+add_page_refresh_button(datasets=BUILDINGS_DATASETS)
 
 # KPIs
 kpi_cols = st.columns(3)
@@ -113,7 +123,7 @@ with col1:
             labels={"_10_P1_Gas": "New Connections"},
             color_discrete_sequence=["#e74c3c"],
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
 
 with col2:
     st.subheader("Boiler Energy by Sector")
@@ -128,7 +138,7 @@ with col2:
                 labels={"_11_P1_EnergyFF": "Energy (MWh)"},
                 color_discrete_sequence=CHART_COLORS,
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
 st.subheader("Heating Fuel Transition")
 df_fuel = datasets.get("eeca_energy_by_fuel", pd.DataFrame())
@@ -150,7 +160,7 @@ if not df_fuel.empty and "_14_P1_EnergyxFuel" in df_fuel.columns:
                 labels={"_14_P1_EnergyxFuel": "Energy (MWh)"},
                 color_discrete_sequence=CHART_COLORS,
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
 
 st.caption(
     "💡 Lower gas connections and boiler energy indicate progress in building electrification"

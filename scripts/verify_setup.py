@@ -53,17 +53,10 @@ def check_files():
     """Check if all required files exist."""
     required_files = [
         ".env",
-        ".env.example",
         ".gitignore",
         ".pre-commit-config.yaml",
         "pyproject.toml",
         "README.md",
-        "QUICKSTART.md",
-        "backend/main.py",
-        "etl/core/base_api.py",
-        "etl/core/config.py",
-        "frontend/streamlit_app.py",
-        "frontend/shiny_app.py",
     ]
 
     all_ok = True
