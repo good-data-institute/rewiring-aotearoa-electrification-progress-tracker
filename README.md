@@ -127,12 +127,22 @@ shiny run frontend/shiny_app.py --port 8502 # only for demonstration purposes
 python .\scripts\verify_setup.py
 ```
 
-🎉 Done! The following URLs should work now:
+Fix anything that comes up after the script runs, if needed.
+
+### 5. Celebrate 🎉
+
+The following URLs should work now:
 
 - Backend API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 - Streamlit: http://localhost:8501
 - Shiny: http://localhost:8502
+
+### 6. Access the dashboard online
+
+As of December 2025, the Streamlit dashboard is deployed into a staging environment on Render and is accessible at https://electrification-dashboard-udy4.onrender.com.
+
+When accessing the dashboard for the first time, click 'Refresh All Data' to populate the dashboard with the latest set of metrics and metadata.
 
 ## 🔧 Development
 
