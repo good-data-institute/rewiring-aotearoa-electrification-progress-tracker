@@ -63,7 +63,7 @@ EV_REGION_MAP = {
     "SOUTH TARANAKI DISTRICT": "Taranaki",
     "HASTINGS DISTRICT": "Hawkes Bay",
     "NAPIER CITY": "Hawkes Bay",
-    "RANGITIKEI DISTRICT": "Hawkes Bay",
+    "RANGITIKEI DISTRICT": "Manawatu",
     "WAIROA DISTRICT": "Hawkes Bay",
     "CENTRAL HAWKE'S BAY DISTRICT": "Hawkes Bay",
     "WESTERN BAY OF PLENTY DISTRICT": "Bay of Plenty",
