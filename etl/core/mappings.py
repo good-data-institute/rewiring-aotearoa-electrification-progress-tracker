@@ -6,7 +6,7 @@ EMI_REGION_MAP = {
     "Thames Valley": "Waikato",
     "Ashburton": "Canterbury",
     "King Country": "Waikato",
-    "Waitaki": "Canterbury",  # Could also be Otago, depending on boundary
+    "Waitaki": "Otago",
     "Manawatu": "Manawatu",
     "Dunedin": "Otago",
     "Central Canterbury": "Canterbury",
