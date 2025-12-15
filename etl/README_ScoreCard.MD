@@ -1,3 +1,11 @@
+---
+title: "README - ScoreCard"
+author: "GDI"
+date: "16 December 2025"
+lang: en
+standalone: true
+---
+
 ## Status
 
 This index is **not final in any sense**. It is shared explicitly as a **conversation starter**, not as a finished product, endorsed methodology, or recommended public-facing metric.
