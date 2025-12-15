@@ -18,13 +18,13 @@ A data engineering project for tracking electrification progress in Aotearoa New
 - **Type Safety**: Pydantic validation throughout
 - **Code Quality**: Pre-commit hooks with Ruff
 
-### [Three-Layer Data Architecture](docs\ARCHITECTURE.md)
+### [Three-Layer Data Architecture](docs/ARCHITECTURE.md)
 Data is extracted, processed, and stored in multiple forms (see link above for more information):
 1. **Raw Layer** (`data/raw/`): Original data exactly as received from APIs
 2. **Processed Layer** (`data/processed/`): Cleaned, validated, standardized data
 3. **Metrics Layer** (`data/metrics/`): Business-ready analytics and aggregations
 
-### [ETL Pipeline](docs\ETL_GUIDE.md)
+### [ETL Pipeline](docs/ETL_GUIDE.md)
 Each data source has separate scripts (see link above for more information):
 - **`extract.py`**: Fetch raw data from API → save to `data/raw/`
 - **`transform.py`**: Read raw data → clean/transform → save to `data/processed/`
@@ -62,7 +62,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 git clone https://github.com/good-data-institute/rewiring-aotearoa-electrification-progress-tracker.git
 cd rewiring-aotearoa-electrification-progress-tracker
 uv venv --python 3.12
-.venv\Scripts\Activate.ps1
+.venv/Scripts/Activate.ps1
 uv sync
 pre-commit install
 Copy-Item .env.example .env
@@ -81,7 +81,7 @@ cp .env.example .env
 
 ### 2. Run ETL Pipelines
 
-#### Option 1: Run [run_all_pipelines.py](etl\run_all_pipelines.py)
+#### Option 1: Run [run_all_pipelines.py](etl/run_all_pipelines.py)
 
 ```bash
 python -m etl.run_all_pipelines
@@ -124,7 +124,7 @@ shiny run frontend/shiny_app.py --port 8502 # only for demonstration purposes
 
 ### 4. Verify Setup
 ```bash
-python .\scripts\verify_setup.py
+python ./scripts/verify_setup.py
 ```
 
 Fix anything that comes up after the script runs, if needed.
@@ -172,23 +172,23 @@ Or if you're using Visual Studio Code, then after you try to commit then Ruff sh
 ```
 
 ### Deploy the dashboard onto Render and AWS
-1. Create an AWS bucket and upload the data folder (which should have been created locally upon running [run_all_pipelines.py](etl\run_all_pipelines.py))
+1. Create an AWS bucket and upload the data folder (which should have been created locally upon running [run_all_pipelines.py](etl/run_all_pipelines.py))
 - In [render.yaml](render.yaml), update the S3 bucket URL
-- In the bucket permissions, make the bucket public:![alt text](docs\image.png)
+- In the bucket permissions, make the bucket public:![alt text](docs/image.png)
 
-- ⚠️ This should NOT be done when actually making this dashboard and/or the data in the bucket publicly visible! Only the application requesting the data should have permissions to read the bucket (see [Future Improvements](#Future-Improvements))
+- ⚠️ This should NOT be done when actually making this dashboard and/or the data in the bucket publicly visible! Only the application requesting the data should have permissions to read the bucket (see [Future Improvements](https://github.com/good-data-institute/rewiring-aotearoa-electrification-progress-tracker?tab=readme-ov-file#-future-improvements))
 
 2. The dashboard itself is already deployed to Render into via [this blueprint](render.yaml) in the metrics-dashboard project, so you should see the latest changes upon every push to main
-- If you don't, log into RA's Render dashboard via the credentials RA provided to GDI in Slack and manually deploy from there
-- RA's Render dashboard is also where you can debug any deployment/networking issues
+- If you don't, log into RA's Render dashboard via the credentials RA provided to GDI in Slack and manually deploy from there: https://dashboard.render.com/web/srv-d4cqf2ali9vc73c5gpag <img width="1561" height="503" alt="image" src="https://github.com/user-attachments/assets/4db8786f-ce6e-4dad-9f56-262e5607c582" />
+- The link above is also where you can debug any deployment/networking issues by looking at the logs on the right-hand side
 
 ### Change something in the data pipelines at any stage
 
 1. Make the change as usual via a PR
-2. Run [run_all_pipelines.py](etl\run_all_pipelines.py) (or just the part/s that you updated and any processing/metrics that depend on it)
+2. Run [run_all_pipelines.py](etl/run_all_pipelines.py) (or just the part/s that you updated and any processing/metrics that depend on it)
 3. Copy over the data directory into the same location as all your other data in AWS
 
-This is intentionally done as a manual step to avoid overcomplicating things at this stage (see [Future Improvements](#Future-Improvements))
+This is intentionally done as a manual step to avoid overcomplicating things at this stage (see [Future Improvements](https://github.com/good-data-institute/rewiring-aotearoa-electrification-progress-tracker?tab=readme-ov-file#-future-improvements))
 
 ### See my latest changes in the dashboard
 
@@ -197,13 +197,13 @@ In its current form, there are several places in this repository where informati
 #### Data-related changes
 Click any of the refresh buttons on the dashboard to fetch the latest data from S3
 - Note that you won't see any data-related changes if you haven't run the ETL code you've changed and uploaded that data to AWS first
-- Also, you may need to update the file mappings in [repository.py](backend\repository.py) to see any new/renamed data
+- Also, you may need to update the file mappings in [repository.py](backend/repository.py) to see any new/renamed data
 
 #### Metadata-related changes
 Update one or more of the files depending on what exactly you want to do:
-- [metadata.py](backend\metadata.py)
-- [mappings.py](etl\core\mappings.py)
-- [dashboard_utils.py](frontend\dashboard_utils.py)
+- [metadata.py](backend/metadata.py)
+- [mappings.py](etl/core/mappings.py)
+- [dashboard_utils.py](frontend/dashboard_utils.py)
 
 Then go through the usual process (PR into main, deploy into Render, refresh the data)
 
