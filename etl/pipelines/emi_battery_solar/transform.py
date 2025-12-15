@@ -40,7 +40,7 @@ class EMIBatterySolarTransformer(ProcessedLayer):
             fp = input_dir / filename
             if fp.exists():
                 df = pd.read_csv(fp)
-                df["Sub-Category"] = filename.split("_")[0].capitalize()
+                df["Sub_Category"] = filename.split("_")[0].capitalize()
                 dfs.append(df)
                 print(f"      ✓ Loaded: {filename} ({len(df)} rows)")
             else:

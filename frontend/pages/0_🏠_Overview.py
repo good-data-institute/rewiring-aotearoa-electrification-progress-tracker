@@ -236,8 +236,8 @@ with kpi_cols2[3]:
         latest, delta = get_latest_kpi_value(df_boiler, "_11_P1_EnergyFF")
         st.metric(
             "Fossil Boiler Energy",
-            f"{latest/1000:.1f} GWh",
-            f"{delta/1000:+.1f} GWh",
+            f"{latest / 1000:.1f} GWh",
+            f"{delta / 1000:+.1f} GWh",
             delta_color="inverse",
             help="Lower is better - fossil fuel energy for boilers",
         )

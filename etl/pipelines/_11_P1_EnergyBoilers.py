@@ -1,7 +1,7 @@
 """Analytics: EECA Energy Consumption of Fossil Fuel Boilers.
 
 This script creates analytics-ready aggregated data showing
-energy consumption by year and sector (sub-category).
+energy consumption by year and sector (Sub_Category).
 Converts energy values from terajoules to MWh.
 """
 
@@ -17,7 +17,7 @@ class EECAEnergyBoilersAnalytics(MetricsLayer):
     def process(self, input_path: Path, output_path: Path) -> None:
         """Create energy consumption from Fossil Fuel Boilers.
 
-        Aggregates energy consumption by Year and Sub-Category (sector),
+        Aggregates energy consumption by Year and Sub_Category (sector),
         then converts from terajoules to MWh.
 
         Args:
@@ -42,12 +42,12 @@ class EECAEnergyBoilersAnalytics(MetricsLayer):
         print("\n[3/6] Aggregating energy consumption by sector")
 
         # Group and summarise
-        grouped1 = filtered.groupby(["Year", "Sub-Category"], as_index=False)[
+        grouped1 = filtered.groupby(["Year", "Sub_Category"], as_index=False)[
             "energyValue"
         ].sum()
         print(
             f"      - Aggregated to {len(grouped1)} rows "
-            f"({df['Year'].nunique()} years × {df['Sub-Category'].nunique()} sectors)"
+            f"({df['Year'].nunique()} years × {df['Sub_Category'].nunique()} sectors)"
         )
 
         # Step 4: Calculate analytics
@@ -55,7 +55,7 @@ class EECAEnergyBoilersAnalytics(MetricsLayer):
 
         # Group and summarise
         grouped2 = df.groupby(["Year"], as_index=False)["energyValue"].sum()
-        grouped2 = grouped2.assign(**{"Sub-Category": "Total"})
+        grouped2 = grouped2.assign(**{"Sub_Category": "Total"})
         print(
             f"      - Aggregated to {len(grouped2)} rows ({df['Year'].nunique()} years)"
         )
@@ -67,7 +67,7 @@ class EECAEnergyBoilersAnalytics(MetricsLayer):
         # Add metadata
         out_df = out_df.assign(
             **{
-                "Metric Group": "Grid",
+                "Metric_Group": "Grid",
                 "Month": "Total",
                 "Region": "Total",
                 "Category": "Total",
@@ -86,7 +86,7 @@ class EECAEnergyBoilersAnalytics(MetricsLayer):
 
         print(f"\n✓ Analytics complete: {len(out_df)} rows saved")
         print(f"  Years covered: {out_df['Year'].min()} - {out_df['Year'].max()}")
-        print(f"  Sectors: {out_df['Sub-Category'].unique()}")
+        print(f"  Sectors: {out_df['Sub_Category'].unique()}")
 
 
 def main():

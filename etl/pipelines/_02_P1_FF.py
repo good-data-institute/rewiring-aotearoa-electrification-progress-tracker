@@ -13,6 +13,7 @@ import pandas as pd
 
 from etl.core.config import get_settings
 from etl.core.pipeline import MetricsLayer
+from etl.core.mappings import EV_REGION_MAP
 
 
 class WakaKotahiFossilFuelCountAnalytics(MetricsLayer):
@@ -25,9 +26,9 @@ class WakaKotahiFossilFuelCountAnalytics(MetricsLayer):
             input_path: Path to processed MVR Parquet file
             output_path: Path to save analytics CSV
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("WAKA KOTAHI MVR: Fossil Fuel Vehicle Count Analytics (_02_P1_FF)")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Step 1: Load processed data
         print("\n[1/3] Loading processed data...")
@@ -36,6 +37,25 @@ class WakaKotahiFossilFuelCountAnalytics(MetricsLayer):
 
         # Step 2: Calculate analytics
         print("\n[2/3] Aggregating fossil fuel vehicle counts...")
+
+        # Assign Districts to Regions
+        df["Region"] = df["Region"].fillna("UNKNOWN")
+        df_reg = df.rename(columns={"Region": "District"})
+        df_reg["Region"] = df_reg["District"].map(EV_REGION_MAP)
+
+        # identify unmapped districts
+        missing = df_reg[df_reg["Region"].isna()]["District"].unique()
+
+        if len(missing) > 0:
+            print("      ! Unmapped districts found:")
+            for d in missing:
+                print(f"        • {d}")
+        else:
+            print("      - All districts mapped cleanly.")
+        print(
+            f"      - Districts (n = {df_reg['District'].nunique()}) "
+            f"mapped to Regions (n = {df_reg['Region'].nunique()})"
+        )
 
         # Define fuel types to track
         fossil_fuel_types = ["HEV", "PHEV", "FCEV", "Petrol", "Diesel"]
@@ -53,10 +73,10 @@ class WakaKotahiFossilFuelCountAnalytics(MetricsLayer):
         for fuel_type in fossil_fuel_types:
             for category, sub_category in category_combinations:
                 # Filter data
-                df_filtered = df[
-                    (df["Fuel_Type"] == fuel_type)
-                    & (df["Category"] == category)
-                    & (df["Sub_Category"] == sub_category)
+                df_filtered = df_reg[
+                    (df_reg["Fuel_Type"] == fuel_type)
+                    & (df_reg["Category"] == category)
+                    & (df_reg["Sub_Category"] == sub_category)
                 ].copy()
 
                 if len(df_filtered) == 0:
@@ -80,7 +100,39 @@ class WakaKotahiFossilFuelCountAnalytics(MetricsLayer):
                 )
 
         # Combine all results
-        analytics_df = pd.concat(all_results, ignore_index=True)
+        comb_df = pd.concat(all_results, ignore_index=True)
+
+        # Add a total group
+        total_grouped = comb_df.groupby(["Year", "Month", "Region"], as_index=False)[
+            "_02_P1_FF"
+        ].sum()
+        total_grouped = total_grouped.assign(
+            **{
+                "Metric_Group": "Transport",
+                "Category": "Total",
+                "Sub_Category": "Total",
+                "Fuel_Type": "Total",
+            }
+        )
+
+        # Combine all results
+        analytics_df = comb_df._append(total_grouped)
+        print("      - Added 'Total' groups to Category, Sub_Category and Fuel_Type")
+
+        # Check that totals operate as expected
+        tots = analytics_df[
+            (analytics_df["Category"] == "Total")
+            & (analytics_df["Sub_Category"] == "Total")
+            & (analytics_df["Fuel_Type"] == "Total")
+        ]["_02_P1_FF"].sum()
+
+        ntots = analytics_df[
+            (analytics_df["Category"] != "Total")
+            & (analytics_df["Sub_Category"] != "Total")
+            & (analytics_df["Fuel_Type"] != "Total")
+        ]["_02_P1_FF"].sum()
+
+        assert tots == ntots, f"Totals mismatch: Total={tots}, Non-Totals={ntots}"
 
         # Reorder columns
         analytics_df = analytics_df[
@@ -106,6 +158,10 @@ class WakaKotahiFossilFuelCountAnalytics(MetricsLayer):
             f"  Years covered: {analytics_df['Year'].min()} - {analytics_df['Year'].max()}"
         )
         print(f"  Fuel types: {', '.join(sorted(analytics_df['Fuel_Type'].unique()))}")
+        print(f"  Category: {', '.join(sorted(analytics_df['Category'].unique()))}")
+        print(
+            f"  Sub_Category: {', '.join(sorted(analytics_df['Sub_Category'].unique()))}"
+        )
 
 
 def main():

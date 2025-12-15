@@ -12,6 +12,7 @@ import pandas as pd
 
 from etl.core.config import get_settings
 from etl.core.pipeline import MetricsLayer
+from etl.core.mappings import EV_REGION_MAP
 
 
 class WakaKotahiEVCountAnalytics(MetricsLayer):
@@ -24,9 +25,9 @@ class WakaKotahiEVCountAnalytics(MetricsLayer):
             input_path: Path to processed MVR Parquet file
             output_path: Path to save analytics CSV
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("WAKA KOTAHI MVR: EV Count Analytics (_01_P1_EV)")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Step 1: Load processed data
         print("\n[1/3] Loading processed data...")
@@ -39,6 +40,25 @@ class WakaKotahiEVCountAnalytics(MetricsLayer):
         # Filter for BEVs only
         df_bev = df[df["Fuel_Type"] == "BEV"].copy()
         print(f"      - Filtered to {len(df_bev):,} BEV records")
+
+        # Assign Districts to Regions
+        df_bev["Region"] = df_bev["Region"].fillna("UNKNOWN")
+        df_reg = df_bev.rename(columns={"Region": "District"})
+        df_reg["Region"] = df_reg["District"].map(EV_REGION_MAP)
+
+        # identify unmapped districts
+        missing = df_reg[df_reg["Region"].isna()]["District"].unique()
+
+        if len(missing) > 0:
+            print("      ! Unmapped districts found:")
+            for d in missing:
+                print(f"        • {d}")
+        else:
+            print("      - All districts mapped cleanly.")
+        print(
+            f"      - Districts (n = {df_reg['District'].nunique()}) "
+            f"mapped to Regions (n = {df_reg['Region'].nunique()})"
+        )
 
         # Define the category/sub-category combinations we want
         metrics_to_generate = [
@@ -54,9 +74,9 @@ class WakaKotahiEVCountAnalytics(MetricsLayer):
 
         for category, sub_category in metrics_to_generate:
             # Filter data
-            df_filtered = df_bev[
-                (df_bev["Category"] == category)
-                & (df_bev["Sub_Category"] == sub_category)
+            df_filtered = df_reg[
+                (df_reg["Category"] == category)
+                & (df_reg["Sub_Category"] == sub_category)
             ].copy()
 
             if len(df_filtered) == 0:
@@ -81,7 +101,39 @@ class WakaKotahiEVCountAnalytics(MetricsLayer):
             )
 
         # Combine all results
-        analytics_df = pd.concat(all_results, ignore_index=True)
+        comb_df = pd.concat(all_results, ignore_index=True)
+
+        # Add a total group
+        total_grouped = comb_df.groupby(["Year", "Month", "Region"], as_index=False)[
+            "_01_P1_EV"
+        ].sum()
+        total_grouped = total_grouped.assign(
+            **{
+                "Metric_Group": "Transport",
+                "Category": "Total",
+                "Sub_Category": "Total",
+                "Fuel_Type": "Total",
+            }
+        )
+
+        # Combine all results
+        analytics_df = comb_df._append(total_grouped)
+        print("      - Added 'Total' groups to Category, Sub_Category and Fuel_Type")
+
+        # Check that totals operate as expected
+        tots = analytics_df[
+            (analytics_df["Category"] == "Total")
+            & (analytics_df["Sub_Category"] == "Total")
+            & (analytics_df["Fuel_Type"] == "Total")
+        ]["_01_P1_EV"].sum()
+
+        ntots = analytics_df[
+            (analytics_df["Category"] != "Total")
+            & (analytics_df["Sub_Category"] != "Total")
+            & (analytics_df["Fuel_Type"] != "Total")
+        ]["_01_P1_EV"].sum()
+
+        assert tots == ntots, f"Totals mismatch: Total={tots}, Non-Totals={ntots}"
 
         # Reorder columns
         analytics_df = analytics_df[
