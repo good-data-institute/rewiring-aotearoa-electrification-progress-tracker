@@ -30,9 +30,9 @@ class WakaKotahiMVRTransformer(ProcessedLayer):
             input_path: Path to raw Parquet file
             output_path: Path to save processed Parquet file
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("WAKA KOTAHI MOTOR VEHICLE REGISTER: Transform Raw to Processed")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Ensure output directory exists
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -123,10 +123,10 @@ class WakaKotahiMVRTransformer(ProcessedLayer):
 
         con.close()
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"✓ Transformation complete: {output_path}")
         print(f"  Rows processed: {processed_count:,}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
 
 def main():

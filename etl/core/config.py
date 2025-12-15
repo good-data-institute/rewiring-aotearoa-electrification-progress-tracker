@@ -22,7 +22,7 @@ class Settings:
         self.metrics_dir = Path(os.getenv("METRICS_DIR", "./data/metrics"))
 
         # API settings
-        self.api_timeout = int(os.getenv("API_TIMEOUT", "30"))
+        self.api_timeout = int(os.getenv("API_TIMEOUT", "60"))
         self.api_retry_attempts = int(os.getenv("API_RETRY_ATTEMPTS", "3"))
 
         # Backend settings
@@ -32,6 +32,11 @@ class Settings:
         # Frontend settings
         self.streamlit_port = int(os.getenv("STREAMLIT_PORT", "8501"))
         self.shiny_port = int(os.getenv("SHINY_PORT", "8502"))
+
+        # AWS
+        self.bucket_url = os.getenv(
+            "BUCKET_URL", "https://your-bucket-name.s3.amazonaws.com"
+        )
 
         # Create directories
         self._create_directories()

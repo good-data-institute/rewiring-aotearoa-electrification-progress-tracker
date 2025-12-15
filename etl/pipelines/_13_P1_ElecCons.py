@@ -66,9 +66,9 @@ class EECAElectricityPercentageAnalytics(MetricsLayer):
         # Add metadata fields
         analytics_df = analytics_df.copy().assign(
             **{
-                "Metric Group": "Grid",
+                "Metric_Group": "Grid",
                 "Category": "Total",
-                "Sub-Category": "Total",
+                "Sub_Category": "Total",
                 "Region": "Total",
             }
         )

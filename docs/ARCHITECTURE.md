@@ -1,13 +1,86 @@
 # System Architecture
 
-This document describes the system design, data flow, and technical architecture.
+This document describes the system design, data flow, and technical architecture for the Rewiring Aotearoa Electrification Progress Tracker.
 
-## Data Flow Visualization
+## High-Level System Overview
+
+```mermaid
+flowchart LR
+    %% External Data Sources
+    ExtAPIs[("External APIs<br/>(EMI, EECA, GIC<br/>Waka Kotahi)")]
+
+    %% ETL Pipeline Layer
+    subgraph ETL["ETL Pipeline (/etl)"]
+        direction TB
+        APIs["API Clients<br/>/etl/apis"]
+        Core["Core Logic<br/>/etl/core"]
+        Pipelines["Pipeline Scripts<br/>/etl/pipelines"]
+
+        APIs --> Core
+        Core --> Pipelines
+    end
+
+    %% Data Storage Layer
+    subgraph Storage["Data Storage (/data)"]
+        direction TB
+        Raw[("Raw Data<br/>/data/raw")]
+        Processed[("Processed Data<br/>/data/processed")]
+        Metrics[("Metrics Data<br/>/data/metrics")]
+
+        Raw --> Processed
+        Processed --> Metrics
+    end
+
+    %% Backend Layer
+    subgraph Backend["Backend API (/backend)"]
+        direction TB
+        Repository["Repository<br/>DuckDB Queries"]
+        API["FastAPI<br/>REST Endpoints"]
+
+        Repository --> API
+    end
+
+    %% Frontend Layer
+    subgraph Frontend["Frontend Apps (/frontend)"]
+        direction TB
+        Streamlit["Streamlit App<br/>Introduction.py"]
+        Shiny["Shiny App<br/>shiny_app.py"]
+
+        Streamlit ~~~ Shiny
+    end
+
+    %% User
+    User([User])
+
+    %% Main Flow
+    ExtAPIs -->|"Extract"| ETL
+    ETL -->|"Load"| Storage
+    Storage -->|"Query"| Backend
+    Backend -->|"HTTP/JSON"| Frontend
+    Frontend -->|"View"| User
+
+    %% Styling
+    classDef external color:#000000,fill:#e1f5ff,stroke:#0288d1,stroke-width:2px
+    classDef etl color:#000000,fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    classDef storage color:#000000,fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef backend color:#000000,fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    classDef frontend color:#000000,fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef user color:#000000,fill:#fff9c4,stroke:#f57f17,stroke-width:3px
+
+    class ExtAPIs external
+    class ETL,APIs,Core,Pipelines etl
+    class Storage,Raw,Processed,Metrics storage
+    class Backend,Repository,API backend
+    class Frontend,Streamlit,Shiny frontend
+    class User user
+```
+
+## Detailed Data Flow Visualization
 
 ```mermaid
 flowchart TB
     subgraph "Raw Layer (Extraction)"
-        API["External API<br/>(EMI, EECA, GIC)"]
+        API["External API<br/>(EMI, EECA, GIC<br/>Waka Kotahi)"]
         APIClient["API Client<br/>(Pydantic-validated)"]
         Extract["Extract Script<br/><br/>etl/pipelines/*/extract.py<br/>- Fetch from API<br/>- Save raw data<br/>- No transformation"]
         Raw["Raw Layer<br/>(Original Data)<br/><br/>data/raw/*/*.csv/xlsx"]
@@ -152,7 +225,7 @@ flowchart TB
     classDef rawStyle color:#000000,fill:#ffcccc,stroke:#cc0000,stroke-width:2px
     classDef processedStyle color:#000000,fill:#cccccc,stroke:#666666,stroke-width:2px
     classDef metricsStyle color:#000000,fill:#ffffcc,stroke:#cccc00,stroke-width:2px
-    classDef serverStylecolor:#000000, fill:#e6ccff,stroke:#9933ff,stroke-width:2px
+    classDef serverStyle color:#000000,fill:#e6ccff,stroke:#9933ff,stroke-width:2px
 
     class Start,Extract rawStyle
     class Transform processedStyle

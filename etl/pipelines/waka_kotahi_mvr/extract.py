@@ -42,9 +42,9 @@ class WakaKotahiMVRExtractor:
         Args:
             output_path: Path to save raw Parquet file
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("WAKA KOTAHI MOTOR VEHICLE REGISTER: Extract Raw Data")
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Ensure output directory exists
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -92,10 +92,10 @@ class WakaKotahiMVRExtractor:
         if parquet_writer:
             parquet_writer.close()
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(f"✓ Extraction complete: {output_path}")
         print(f"  Total rows extracted: {total_rows:,}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
 
 def main():

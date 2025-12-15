@@ -106,14 +106,14 @@ class EECAEnergyConsumptionTransformer(ProcessedLayer):
                 "FossilFuelFlag",
                 "BoilerFlag",
             ]
-        ].rename(columns={"SectorGroup": "Sub-Category"})
+        ].rename(columns={"SectorGroup": "Sub_Category"})
         print(f"      - Selected {len(df.columns)} columns")
 
         # Reassign fishing to Commercial in Sub-Categories
-        df["Sub-Category"] = df["Sub-Category"].replace(
+        df["Sub_Category"] = df["Sub_Category"].replace(
             {"Agriculture, Forestry and Fishing": "Commercial"}
         )
-        print("      - Reassigned fishing group to commercial Sub-Category")
+        print("      - Reassigned fishing group to commercial Sub_Category")
 
         # Remove rows where energyValue is missing
         initial_rows = len(df)

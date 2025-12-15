@@ -1,7 +1,7 @@
 """Analytics: Battery penetration
 
 This script calculates the monthly percentage of solar installs that include
-batteries by  region and sub-category.
+batteries by  region and Sub_Category.
 """
 
 from pathlib import Path
@@ -28,14 +28,14 @@ class Processor_06aBattPen(MetricsLayer):
         df = self.read_csv(input_path)
         print(f"      ✓ Loaded {len(df)} rows")
 
-        # Step 2: Calculate analytics BY Sub-Category
+        # Step 2: Calculate analytics BY Sub_Category
         print(
-            "\n[2/5] Calculating battery penetration (solar installs with batteries) BY Sub-Category"
+            "\n[2/5] Calculating battery penetration (solar installs with batteries) BY Sub_Category"
         )
 
         all_solar1 = (
             df.loc[df["Fuel type"].isin(["Solar", "Solar (with battery)"])]
-            .groupby(["Year", "Month", "Region", "Sub-Category"], as_index=False)[
+            .groupby(["Year", "Month", "Region", "Sub_Category"], as_index=False)[
                 "ICP count - new installations"
             ]
             .sum()
@@ -44,7 +44,7 @@ class Processor_06aBattPen(MetricsLayer):
 
         solar_with_batt1 = (
             df.loc[df["Fuel type"] == "Solar (with battery)"]
-            .groupby(["Year", "Month", "Region", "Sub-Category"], as_index=False)[
+            .groupby(["Year", "Month", "Region", "Sub_Category"], as_index=False)[
                 "ICP count - new installations"
             ]
             .sum()
@@ -53,7 +53,7 @@ class Processor_06aBattPen(MetricsLayer):
 
         merged1 = all_solar1.merge(
             solar_with_batt1,
-            on=["Year", "Month", "Region", "Sub-Category"],
+            on=["Year", "Month", "Region", "Sub_Category"],
             how="outer",
         ).fillna(0)
         merged1["_06a_P1_BattPen"] = (
@@ -64,11 +64,11 @@ class Processor_06aBattPen(MetricsLayer):
         print(f"      ✓ Calculated {len(merged1)} battery penetration records")
 
         # Add metadata columns
-        merged1 = merged1.assign(**{"Metric Group": "Energy", "Category": "Solar"})
+        merged1 = merged1.assign(**{"Metric_Group": "Energy", "Category": "Solar"})
 
-        # Step 3: Calculate analytics ACROSS Sub-Category
+        # Step 3: Calculate analytics ACROSS Sub_Category
         print(
-            "\n[3/5] Calculating battery penetration (solar installs with batteries) ACROSS Sub-Category"
+            "\n[3/5] Calculating battery penetration (solar installs with batteries) ACROSS Sub_Category"
         )
 
         all_solar2 = (
@@ -103,7 +103,7 @@ class Processor_06aBattPen(MetricsLayer):
 
         # Add metadata columns
         merged2 = merged2.assign(
-            **{"Metric Group": "Solar", "Category": "Total", "Sub-Category": "Total"}
+            **{"Metric_Group": "Solar", "Category": "Total", "Sub_Category": "Total"}
         )
 
         # Step 4: Join datasets
@@ -119,7 +119,7 @@ class Processor_06aBattPen(MetricsLayer):
         print(f"\n✓ Analytics complete: {len(out_df)} rows saved")
         print(f"  Years covered: {out_df['Year'].min()} - {out_df['Year'].max()}")
         print(f"  Regions: {', '.join(sorted(out_df['Region'].unique()))}")
-        print(f"  Sub-Categories: {', '.join(sorted(out_df['Sub-Category'].unique()))}")
+        print(f"  Sub-Categories: {', '.join(sorted(out_df['Sub_Category'].unique()))}")
 
 
 def main():

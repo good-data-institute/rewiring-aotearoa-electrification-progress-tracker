@@ -18,6 +18,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dashboard_utils import (
     CHART_COLORS,
     NZ_REGIONS_COORDS,
+    add_global_refresh_button,
+    add_page_refresh_button,
     fetch_all_datasets,
     filter_annual_aggregates,
     get_latest_kpi_value,
@@ -44,6 +46,9 @@ st.markdown("**Holistic view of electrification progress across all sectors**")
 
 # Sidebar filters
 st.sidebar.header("🔍 Filters")
+
+# Add global refresh button
+add_global_refresh_button(API_BASE_URL)
 
 year_range = st.sidebar.slider(
     "Year Range",
@@ -74,6 +79,25 @@ for dataset_name, df in datasets.items():
         datasets[dataset_name] = filter_annual_aggregates(df, include_annual)
 
 st.success(f"✓ Loaded {len([d for d in datasets.values() if not d.empty])} datasets")
+
+# Add page-specific refresh button
+OVERVIEW_DATASETS = [
+    "waka_kotahi_fleet_elec",
+    "waka_kotahi_ev",
+    "waka_kotahi_ff",
+    "waka_kotahi_new_ev",
+    "waka_kotahi_used_ev",
+    "eeca_electricity_percentage",
+    "eeca_energy_by_fuel",
+    "eeca_boiler_energy",
+    "emi_generation_analytics",
+    "gic_analytics",
+    "battery_penetration_commercial",
+    "battery_penetration_residential",
+    "solar_penetration",
+    "battery_capacity",
+]
+add_page_refresh_button(datasets=OVERVIEW_DATASETS)
 
 # KPI Cards
 st.subheader("Key Performance Indicators")
@@ -212,8 +236,8 @@ with kpi_cols2[3]:
         latest, delta = get_latest_kpi_value(df_boiler, "_11_P1_EnergyFF")
         st.metric(
             "Fossil Boiler Energy",
-            f"{latest/1000:.1f} GWh",
-            f"{delta/1000:+.1f} GWh",
+            f"{latest / 1000:.1f} GWh",
+            f"{delta / 1000:+.1f} GWh",
             delta_color="inverse",
             help="Lower is better - fossil fuel energy for boilers",
         )
@@ -308,7 +332,7 @@ with col1:
             color_discrete_sequence=CHART_COLORS,
         )
         fig.update_layout(height=400)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     else:
         st.info("Insufficient data for normalized comparison")
 
@@ -418,7 +442,7 @@ with col2:
             coastlinecolor="rgb(204, 204, 204)",
         )
         fig.update_layout(height=400, margin=dict(l=0, r=0, t=0, b=0))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     else:
         st.info("Insufficient data for regional map")
 
@@ -441,7 +465,7 @@ with col3:
             color_discrete_sequence=["#2ecc71"],
         )
         fig.update_layout(height=300)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     else:
         st.info("No EV data available")
 
@@ -469,7 +493,7 @@ with col4:
             color_discrete_sequence=CHART_COLORS,
         )
         fig.update_layout(height=300)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     else:
         st.info("No fuel mix data available")
 

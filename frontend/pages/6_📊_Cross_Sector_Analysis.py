@@ -14,7 +14,10 @@ from dotenv import load_dotenv
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dashboard_utils import (
+    AVAILABLE_DATASETS,
     CHART_COLORS,
+    add_global_refresh_button,
+    add_page_refresh_button,
     fetch_all_datasets,
     filter_annual_aggregates,
     normalize_to_0_100,
@@ -34,6 +37,10 @@ st.markdown(
 )
 
 st.sidebar.header("🔍 Filters")
+
+# Add global refresh button
+add_global_refresh_button(API_BASE_URL)
+
 year_range = st.sidebar.slider("Year Range", 2015, 2025, (2018, 2025))
 
 with st.spinner("Loading data..."):
@@ -42,6 +49,9 @@ with st.spinner("Loading data..."):
     )
     for key in datasets:
         datasets[key] = filter_annual_aggregates(datasets[key], False)
+
+# Add page-specific refresh button (all datasets)
+add_page_refresh_button(datasets=AVAILABLE_DATASETS)
 
 # Normalized Timeline
 st.subheader("Normalized Multi-Metric Timeline (0-100 Scale)")
@@ -134,7 +144,7 @@ if normalized_data:
         color_discrete_sequence=CHART_COLORS,
     )
     fig.update_layout(height=500)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 else:
     st.info("Insufficient data for normalized comparison")
 
@@ -191,7 +201,7 @@ if len(corr_data) >= 2:
         zmax=1,
     )
     fig.update_layout(height=500)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
     st.info(
         "💡 **Interpretation**: Positive correlation (blue) means metrics move together. "

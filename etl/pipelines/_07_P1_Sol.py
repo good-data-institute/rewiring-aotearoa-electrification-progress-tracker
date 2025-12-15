@@ -1,7 +1,7 @@
 """Analytics: MW of solar installed.
 
 This script creates analytics-ready aggregated data showing
-monthly MW of solar installed by region and sub-category.
+monthly MW of solar installed by region and Sub_Category.
 """
 
 from pathlib import Path
@@ -14,7 +14,7 @@ class Processor_07Sol(MetricsLayer):
     """Calculate MW of solar installed."""
 
     def process(self, input_path: Path, output_path: Path) -> None:
-        """Aggregate monthly MW of solar installed by region and sub-category.
+        """Aggregate monthly MW of solar installed by region and Sub_Category.
 
         Args:
             input_path: Path to processed CSV
@@ -30,10 +30,10 @@ class Processor_07Sol(MetricsLayer):
         print(f"      ✓ Loaded {len(df)} rows")
 
         # Step 2: Calculate analytics
-        print("\n[2/5] Calculating solar capacity installed BY Sub-Category")
+        print("\n[2/5] Calculating solar capacity installed BY Sub_Category")
         solar_df1 = (
             df.loc[df["Fuel type"].isin(["Solar", "Solar (with battery)"])]
-            .groupby(["Year", "Month", "Region", "Sub-Category"], as_index=False)[
+            .groupby(["Year", "Month", "Region", "Sub_Category"], as_index=False)[
                 "Total capacity installed (MW)"
             ]
             .sum()
@@ -42,10 +42,10 @@ class Processor_07Sol(MetricsLayer):
         print(f"      ✓ Aggregated {len(solar_df1)} grouped rows")
 
         # Add metadata columns
-        solar_df1 = solar_df1.assign(**{"Metric Group": "Energy", "Category": "Solar"})
+        solar_df1 = solar_df1.assign(**{"Metric_Group": "Solar", "Category": "Total"})
 
         # Step 3: Calculate analytics
-        print("\n[3/5] Calculating solar capacity installed ACROSS Sub-Category")
+        print("\n[3/5] Calculating solar capacity installed ACROSS Sub_Category")
         solar_df2 = (
             df.loc[df["Fuel type"].isin(["Solar", "Solar (with battery)"])]
             .groupby(["Year", "Month", "Region"], as_index=False)[
@@ -58,7 +58,7 @@ class Processor_07Sol(MetricsLayer):
 
         # Add metadata columns
         solar_df2 = solar_df2.assign(
-            **{"Metric Group": "Solar", "Category": "Total", "Sub-Category": "Total"}
+            **{"Metric_Group": "Solar", "Category": "Total", "Sub_Category": "Total"}
         )
 
         # Step 4: Join datasets
@@ -74,7 +74,7 @@ class Processor_07Sol(MetricsLayer):
         print(f"\n✓ Analytics complete: {len(out_df)} rows saved")
         print(f"  Years covered: {out_df['Year'].min()} - {out_df['Year'].max()}")
         print(f"  Regions: {', '.join(sorted(out_df['Region'].unique()))}")
-        print(f"  Sub-Categories: {', '.join(sorted(out_df['Sub-Category'].unique()))}")
+        print(f"  Sub-Categories: {', '.join(sorted(out_df['Sub_Category'].unique()))}")
 
 
 def main():

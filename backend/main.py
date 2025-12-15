@@ -11,6 +11,7 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
+from backend.metadata import get_all_metadata, get_metadata, get_metadata_by_sector
 from backend.repository import DataRepository
 from etl.core.config import get_settings
 
@@ -109,6 +110,77 @@ async def list_datasets(layer: str = Query("metrics", enum=["processed", "metric
         logger.error(f"Error listing datasets for layer {layer}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Error listing datasets: {str(e)}"
+        ) from e
+
+
+@app.get("/api/metrics/metadata")
+async def get_all_metrics_metadata():
+    """Get metadata for all metrics.
+
+    Returns:
+        JSON with metadata for all metrics, optionally grouped by sector
+    """
+    try:
+        all_metadata = get_all_metadata()
+        return {
+            "metrics": {
+                key: metadata.to_dict() for key, metadata in all_metadata.items()
+            },
+            "count": len(all_metadata),
+        }
+    except Exception as e:
+        logger.error("Error retrieving metrics metadata", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving metadata: {str(e)}"
+        ) from e
+
+
+@app.get("/api/metrics/metadata/by-sector")
+async def get_metrics_metadata_by_sector():
+    """Get metadata for all metrics grouped by sector.
+
+    Returns:
+        JSON with metadata grouped by sector
+    """
+    try:
+        by_sector = get_metadata_by_sector()
+        return {
+            "sectors": {
+                sector: [m.to_dict() for m in metrics]
+                for sector, metrics in by_sector.items()
+            },
+            "count": len(by_sector),
+        }
+    except Exception as e:
+        logger.error("Error retrieving metrics metadata by sector", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving metadata: {str(e)}"
+        ) from e
+
+
+@app.get("/api/metrics/{dataset}/metadata")
+async def get_dataset_metadata(dataset: str):
+    """Get metadata for a specific dataset.
+
+    Args:
+        dataset: Dataset key
+
+    Returns:
+        JSON with metadata for the specified dataset
+    """
+    try:
+        metadata = get_metadata(dataset)
+        if not metadata:
+            raise HTTPException(
+                status_code=404, detail=f"Metadata not found for dataset: {dataset}"
+            )
+        return metadata.to_dict()
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error retrieving metadata for {dataset}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Error retrieving metadata: {str(e)}"
         ) from e
 
 
@@ -235,6 +307,44 @@ async def get_metrics_data(
         logger.error(f"Error querying metrics data for {dataset}", exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Error querying data: {str(e)}"
+        ) from e
+
+
+@app.post("/api/metrics/{dataset}/refresh")
+async def refresh_metric(dataset: str):
+    """Signal that metric cache should be refreshed.
+
+    This endpoint doesn't run any ETL pipelines - it just provides a hook
+    for the frontend to know when to invalidate its cache and re-fetch data.
+
+    Args:
+        dataset: Dataset key to refresh
+
+    Returns:
+        JSON with refresh acknowledgment
+    """
+    try:
+        # Get metadata for the dataset
+        metadata = get_metadata(dataset)
+        if not metadata:
+            raise HTTPException(status_code=404, detail=f"Dataset not found: {dataset}")
+
+        logger.info(f"Cache refresh requested for metric: {dataset}")
+
+        return {
+            "status": "success",
+            "dataset": dataset,
+            "metric_id": metadata.metric_id,
+            "friendly_name": metadata.friendly_name,
+            "message": f"Cache refresh triggered for {metadata.friendly_name}",
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error processing refresh request for {dataset}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Error processing refresh: {str(e)}"
         ) from e
 
 

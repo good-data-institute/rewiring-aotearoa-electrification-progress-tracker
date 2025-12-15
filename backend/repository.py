@@ -19,7 +19,7 @@ class DataRepository:
         """Initialize repository with settings."""
         self.settings = get_settings()
         self._connection = None
-        self.s3_base = "https://test-gdi-28924.s3.amazonaws.com/data"
+        self.s3_base = self.settings.bucket_url  # the folder in which the data is located e.g., "https://my-s3-bucket.s3.amazonaws.com/data"
 
     @property
     def connection(self):
