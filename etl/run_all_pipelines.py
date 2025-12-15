@@ -71,7 +71,7 @@ def discover_metrics(pipelines_dir: Path):
 def main():
     """Execute all ETL pipelines."""
     results = []
-    pipelines_dir = Path(__file__).parent / "etl" / "pipelines"
+    pipelines_dir = Path(__file__).parent / "pipelines"
 
     # ====================================================================
     # EXTRACT
