@@ -13,9 +13,9 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 def run_pipeline(name: str, main_func):
     """Run a pipeline and track success/failure."""
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print(f"Running: {name}")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     try:
         main_func()
         return True, None

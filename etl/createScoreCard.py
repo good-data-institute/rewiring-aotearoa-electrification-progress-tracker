@@ -253,7 +253,7 @@ def run_pipeline() -> pd.DataFrame:
     )
 
     print("\n[10/11] Writing file to disk")
-    sendOut.to_csv(path_or_buf=Path("data/scores.csv"))
+    sendOut.to_csv(path_or_buf=Path("data/ScoreCard.csv"))
 
     return sendOut
 
