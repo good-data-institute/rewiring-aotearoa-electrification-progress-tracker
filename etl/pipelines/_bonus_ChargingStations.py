@@ -27,11 +27,11 @@ class EECAChargingStationsMetrics(MetricsLayer):
             input_path: Path to raw CSV file
             output_path: Path to save combined metrics CSV
         """
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print(
             "EECA CHARGING STATIONS: Metrics - Total Points (_bonus_ChargingStations)"
         )
-        print(f"{'='*80}")
+        print(f"{'=' * 80}")
 
         # Step 1: Load raw data
         print("\n[1/3] Loading data...")
@@ -78,13 +78,13 @@ class EECAChargingStationsMetrics(MetricsLayer):
         metrics_df.to_csv(output_path, index=False)
         print(f"      ✓ Saved metrics CSV: {output_path}")
 
-        print(f"\n{'='*80}")
+        print(f"\n{'=' * 80}")
         print("✓ EECA Charging Stations metrics complete")
         print(
             f"  Years covered: {metrics_df['Year'].min()} - {metrics_df['Year'].max()}"
         )
         print(f"  Regions covered: {metrics_df['Region'].nunique()}")
-        print(f"{'='*80}\n")
+        print(f"{'=' * 80}\n")
 
 
 def main():

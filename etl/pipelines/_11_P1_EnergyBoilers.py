@@ -36,7 +36,7 @@ class EECAEnergyBoilersAnalytics(MetricsLayer):
         # Step 2: Filter to Fossil Fuel Boilers
         print("\n[2/6] Filter to Fossil Fuel Boilers")
         filtered = df[(df["FossilFuelFlag"] == 1) & (df["BoilerFlag"] == 1)]
-        filtered = df.drop(columns=["FossilFuelFlag", "BoilerFlag"])
+        filtered = filtered.drop(columns=["FossilFuelFlag", "BoilerFlag"])
 
         # Step 3: Calculate analytics
         print("\n[3/6] Aggregating energy consumption by sector")
