@@ -75,6 +75,12 @@ def check_files():
 
 def check_directories():
     """Check if data directories exist."""
+    from pathlib import Path
+
+    # Add project root to Python path
+    project_root = Path(__file__).resolve().parent.parent  # adjust if script is nested
+    sys.path.append(str(project_root))
+
     from etl.core.config import get_settings
 
     settings = get_settings()

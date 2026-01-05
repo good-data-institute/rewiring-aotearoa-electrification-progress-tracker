@@ -125,15 +125,17 @@ class WakaKotahiEVCountAnalytics(MetricsLayer):
             (analytics_df["Category"] == "Total")
             & (analytics_df["Sub_Category"] == "Total")
             & (analytics_df["Fuel_Type"] == "Total")
-        ]["_01_P1_EV"].sum()
+        ]
 
         ntots = analytics_df[
             (analytics_df["Category"] != "Total")
             & (analytics_df["Sub_Category"] != "Total")
             & (analytics_df["Fuel_Type"] != "Total")
-        ]["_01_P1_EV"].sum()
+        ]
 
-        assert tots == ntots, f"Totals mismatch: Total={tots}, Non-Totals={ntots}"
+        assert (
+            tots["_01_P1_EV"].sum() == ntots["_01_P1_EV"].sum()
+        ), f"Totals mismatch: Total={tots}, Non-Totals={ntots}"
 
         # Reorder columns
         analytics_df = analytics_df[
@@ -154,14 +156,11 @@ class WakaKotahiEVCountAnalytics(MetricsLayer):
         self.write_csv(analytics_df, output_path)
 
         print(f"\n✓ Analytics complete: {len(analytics_df):,} rows saved")
-        print(
-            f"  Total EVs across all categories: {analytics_df['_01_P1_EV'].sum():,.0f}"
-        )
-        print(
-            f"  Years covered: {analytics_df['Year'].min()} - {analytics_df['Year'].max()}"
-        )
-        print(f"  Categories: {analytics_df['Category'].nunique()}")
-        print(f"  Sub-categories: {analytics_df['Sub_Category'].nunique()}")
+        print(f"  Total EV vehicles: {ntots["_01_P1_EV"].sum():,.0f}")
+        print(f"  Years covered: {ntots['Year'].min()} - {ntots['Year'].max()}")
+        print(f"  Fuel types: {', '.join(sorted(ntots['Fuel_Type'].unique()))}")
+        print(f"  Category: {', '.join(sorted(ntots['Category'].unique()))}")
+        print(f"  Sub_Category: {', '.join(sorted(ntots['Sub_Category'].unique()))}")
 
 
 def main():

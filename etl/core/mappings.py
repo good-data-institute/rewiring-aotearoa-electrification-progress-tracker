@@ -113,3 +113,22 @@ EV_REGION_MAP = {
     "CHATHAM ISLANDS TERRITORY": "Wellington",
     "UNKNOWN": "Unknown",
 }
+
+EECA_CHARGING_STATIONS_REGION_MAP = {
+    "Marlborough": "Marlborough",
+    "Auckland": "Auckland",
+    "Unknown": "Unknown",
+    "Waikato": "Waikato",
+    "Taranaki": "Taranaki",
+    "Otago": "Otago",
+    "Southland": "Southland",
+    "Hawke's Bay": "Hawkes Bay",
+    "Wellington": "Wellington",
+    "West Coast": "West Coast",
+    "Canterbury": "Canterbury",
+    "Northland": "Northland",
+    "Nelson-Tasman": "Nelson",  # Could be Tasman
+    "Bay of Plenty": "Bay of Plenty",
+    "Manawatu-Whanganui": "Manawatu",
+    "Gisborne": "Gisbourne",
+}

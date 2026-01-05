@@ -125,7 +125,7 @@ st.markdown("---")
 st.markdown("""
 ### ✨ Key Features
 
-- **14 Comprehensive Datasets**: EECA, EMI, GIC, and Waka Kotahi data sources
+- **15 Comprehensive Datasets**: EECA, EMI, GIC, and Waka Kotahi data sources
 - **District & Region Views**: Toggle between 67 districts and 16 aggregated regions for transport metrics
 - **Interactive Visualizations**: Plotly charts with filtering, zooming, and hover details
 - **Pagination for Large Datasets**: Efficient handling of 100k+ row datasets
@@ -135,8 +135,8 @@ st.markdown("""
 
 ### 📈 Metrics Covered
 
-**Transport (5 metrics)**
-- EV Count, Fossil Fuel Vehicles, New EV Sales, Used EV Imports, Fleet Electrification %
+**Transport (6 metrics)**
+- EV Count, Fossil Fuel Vehicles, New EV Sales, Used EV Imports, Fleet Electrification %, EV Charging Stations
 
 **Energy Grid (3 metrics)**
 - Electricity Share, Renewable Generation, Energy by Fuel Type
@@ -177,8 +177,8 @@ col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.metric(
         label="Total Datasets",
-        value="14",
-        help="EECA (3), EMI (4), GIC (1), Waka Kotahi (5), Plus boiler energy",
+        value="15",
+        help="EECA (4), EMI (4), GIC (1), Waka Kotahi (5), Plus boiler energy",
     )
 
 with col2:

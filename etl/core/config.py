@@ -35,7 +35,8 @@ class Settings:
 
         # AWS
         self.bucket_url = os.getenv(
-            "BUCKET_URL", "https://your-bucket-name.s3.amazonaws.com"
+            "BUCKET_URL",
+            "https://gdi-rewiring-aotearoa-test.s3.ap-southeast-2.amazonaws.com/data",
         )
 
         # Create directories

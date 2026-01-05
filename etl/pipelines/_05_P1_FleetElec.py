@@ -1,8 +1,14 @@
-"""Analytics: Waka Kotahi MVR - Fleet Electrification Percentage.
+"""
+Analytics: Waka Kotahi MVR - Fleet Electrification Percentage.
 
 This script creates analytics-ready aggregated data showing
-the percentage of vehicle fleet that is electrified (BEV)
-by region, category, and sub-category.
+the percentage of the vehicle fleet that is electrified (BEV)
+by year, month, and region.
+
+Fleet model:
+- One row per vehicle (OBJECTID)
+- Vehicle enters fleet at its earliest observed registration event
+- Vehicles remain in fleet indefinitely (no scrappage model)
 
 Metric ID: _05_P1_FleetElec
 """
@@ -13,136 +19,158 @@ import pandas as pd
 
 from etl.core.config import get_settings
 from etl.core.pipeline import MetricsLayer
+from etl.core.mappings import EV_REGION_MAP
 
 
 class WakaKotahiFleetElectrificationAnalytics(MetricsLayer):
     """Analytics processor for fleet electrification percentage."""
 
     def process(self, input_path: Path, output_path: Path) -> None:
-        """Create fleet electrification percentage analytics by region, category, and time.
-
-        Args:
-            input_path: Path to processed MVR Parquet file
-            output_path: Path to save analytics CSV
-        """
         print(f"\n{'=' * 80}")
         print("WAKA KOTAHI MVR: Fleet Electrification % Analytics (_05_P1_FleetElec)")
         print(f"{'=' * 80}")
 
+        # ------------------------------------------------------------------
         # Step 1: Load processed data
-        print("\n[1/3] Loading processed data...")
+        # ------------------------------------------------------------------
+        print("\n[1/4] Loading processed data...")
         df = pd.read_parquet(input_path)
-        print(f"      Loaded {len(df):,} rows from {input_path.name}")
+        print(f"      Loaded {len(df):,} rows")
 
-        # Step 2: Calculate analytics
-        print("\n[2/3] Calculating fleet electrification percentages...")
+        # ------------------------------------------------------------------
+        # Step 2: Reduce to one row per vehicle (earliest observed event)
+        # ------------------------------------------------------------------
+        print("\n[2/4] Identifying first observed registration per vehicle...")
 
-        # Define the category/sub-category combinations we want
-        category_combinations = [
-            ("Private", "Light Passenger Vehicle"),
-            ("Commercial", "Light Passenger Vehicle"),
-            ("Private", "Light Commercial Vehicle"),
-            ("Commercial", "Light Commercial Vehicle"),
+        df = df.sort_values(["OBJECTID", "Year", "Month"])
+
+        # Assign Districts to Regions
+        df["Region"] = df["Region"].fillna("UNKNOWN")
+        df_reg = df.rename(columns={"Region": "District"})
+        df_reg["Region"] = df_reg["District"].map(EV_REGION_MAP)
+
+        # identify unmapped districts
+        missing = df_reg[df_reg["Region"].isna()]["District"].unique()
+
+        if len(missing) > 0:
+            print("      ! Unmapped districts found:")
+            for d in missing:
+                print(f"        • {d}")
+        else:
+            print("      - All districts mapped cleanly.")
+        print(
+            f"      - Districts (n = {df_reg['District'].nunique()}) "
+            f"mapped to Regions (n = {df_reg['Region'].nunique()})"
+        )
+
+        vehicles = df_reg.groupby("OBJECTID", as_index=False).first()
+
+        print(f"      Identified {len(vehicles):,} unique vehicles")
+
+        # ------------------------------------------------------------------
+        # Step 3: Build cumulative fleet counts by region
+        # ------------------------------------------------------------------
+        print("\n[3/4] Building cumulative fleet...")
+
+        # Vehicles entering fleet per month
+        fleet_additions = (
+            vehicles.groupby(["Year", "Month", "Region"])["OBJECTID"]
+            .count()
+            .rename("new_vehicles")
+        )
+
+        # BEV vehicles entering fleet per month
+        ev_additions = (
+            vehicles[vehicles["Fuel_Type"] == "BEV"]
+            .groupby(["Year", "Month", "Region"])["OBJECTID"]
+            .count()
+            .rename("new_ev_vehicles")
+        )
+
+        # Merge monthly additions
+        fleet = (
+            pd.merge(
+                fleet_additions,
+                ev_additions,
+                left_index=True,
+                right_index=True,
+                how="left",
+            )
+            .fillna(0)
+            .sort_index()
+        )
+
+        # Cumulative totals per region
+        fleet["total_fleet"] = fleet.groupby(level="Region")["new_vehicles"].cumsum()
+
+        fleet["ev_fleet"] = fleet.groupby(level="Region")["new_ev_vehicles"].cumsum()
+
+        # Fleet electrification %
+        fleet["_05_P1_FleetElec"] = fleet["ev_fleet"] / fleet["total_fleet"] * 100
+
+        fleet = fleet.reset_index()
+
+        # ------------------------------------------------------------------
+        # Step 4: Finalise output
+        # ------------------------------------------------------------------
+        fleet["Metric_Group"] = "Transport"
+        fleet["Category"] = "Total"
+        fleet["Sub_Category"] = "Total"
+        fleet["Fuel_Type"] = "BEV"
+
+        analytics_df = fleet[
+            [
+                "Year",
+                "Month",
+                "Region",
+                "Metric_Group",
+                "Category",
+                "Sub_Category",
+                "Fuel_Type",
+                "_05_P1_FleetElec",
+            ]
         ]
 
-        all_results = []
+        # ------------------------------------------------------------------
+        # Sanity checks
+        # ------------------------------------------------------------------
+        max_pct = analytics_df["_05_P1_FleetElec"].max()
+        min_pct = analytics_df["_05_P1_FleetElec"].min()
 
-        for category, sub_category in category_combinations:
-            # Filter data for this category/sub-category
-            df_filtered = df[
-                (df["Category"] == category) & (df["Sub_Category"] == sub_category)
-            ].copy()
+        print(f"      Fleet electrification range: " f"{min_pct:.3f}% – {max_pct:.3f}%")
 
-            if len(df_filtered) == 0:
-                print(f"      - No data for {category} - {sub_category}, skipping")
-                continue
+        assert 0 <= min_pct
+        assert max_pct <= 5, "Fleet electrification unexpectedly high"
 
-            # Calculate total fleet count
-            total_fleet = (
-                df_filtered.groupby(["Year", "Month", "Region"])["OBJECTID"]
-                .count()
-                .rename("total_fleet")
-            )
-
-            # Calculate EV (BEV) fleet count
-            ev_fleet = (
-                df_filtered[df_filtered["Fuel_Type"] == "BEV"]
-                .groupby(["Year", "Month", "Region"])["OBJECTID"]
-                .count()
-                .rename("ev_fleet")
-            )
-
-            # Merge and calculate percentage
-            grouped = pd.merge(
-                total_fleet, ev_fleet, left_index=True, right_index=True, how="left"
-            ).fillna(0)
-
-            # Calculate percentage (0-100 scale)
-            grouped["_05_P1_FleetElec"] = (
-                grouped["ev_fleet"] / grouped["total_fleet"] * 100
-            )
-            grouped = grouped.reset_index()
-
-            # Add metadata
-            grouped["Metric_Group"] = "Transport"
-            grouped["Category"] = category
-            grouped["Sub_Category"] = sub_category
-            grouped["Fuel_Type"] = None  # N/A for percentage metrics
-
-            # Select final columns
-            grouped = grouped[
-                [
-                    "Year",
-                    "Month",
-                    "Region",
-                    "Metric_Group",
-                    "Category",
-                    "Sub_Category",
-                    "Fuel_Type",
-                    "_05_P1_FleetElec",
-                ]
-            ]
-
-            all_results.append(grouped)
-            avg_percent = grouped["_05_P1_FleetElec"].mean()
-            max_percent = grouped["_05_P1_FleetElec"].max()
-            print(
-                f"      - {category} {sub_category}: {len(grouped):,} rows, "
-                f"avg: {avg_percent:.2f}%, max: {max_percent:.2f}%"
-            )
-
-        # Combine all results
-        analytics_df = pd.concat(all_results, ignore_index=True)
-
-        # Step 3: Save analytics
-        print("\n[3/3] Saving analytics...")
+        # ------------------------------------------------------------------
+        # Step 5: Save analytics
+        # ------------------------------------------------------------------
+        print("\n[4/4] Saving analytics...")
         self.write_csv(analytics_df, output_path)
 
         print(f"\n✓ Analytics complete: {len(analytics_df):,} rows saved")
         print(
-            f"  Overall average electrification: {analytics_df['_05_P1_FleetElec'].mean():.2f}%"
-        )
-        print(
-            f"  Years covered: {analytics_df['Year'].min()} - {analytics_df['Year'].max()}"
+            f"  Years covered: {analytics_df['Year'].min()} – "
+            f"{analytics_df['Year'].max()}"
         )
 
 
 def main():
-    """Main function to run the analytics pipeline."""
     settings = get_settings()
 
-    # Define input and output paths
     input_path = settings.processed_dir / "waka_kotahi_mvr" / "mvr_processed.parquet"
+
     output_path = (
         settings.metrics_dir / "waka_kotahi_mvr" / "05_P1_FleetElec_analytics.csv"
     )
 
-    # Create analytics processor
     processor = WakaKotahiFleetElectrificationAnalytics()
 
-    # Run the analytics process
     try:
-        processor.process(input_path=input_path, output_path=output_path)
+        processor.process(
+            input_path=input_path,
+            output_path=output_path,
+        )
     except Exception as e:
         print(f"\n✗ Analytics failed: {e}")
         raise
