@@ -101,6 +101,39 @@ class WakaKotahiNewEVCountAnalytics(MetricsLayer):
 
         # Combine all results
         analytics_df = pd.concat(all_results, ignore_index=True)
+        comb_df = pd.concat(all_results, ignore_index=True)
+
+        # Add a total group
+        total_grouped = comb_df.groupby(["Year", "Month", "Region"], as_index=False)[
+            "_03_P1_NewEV"
+        ].sum()
+        total_grouped = total_grouped.assign(
+            **{
+                "Metric_Group": "Transport",
+                "Category": "Total",
+                "Sub_Category": "Total",
+                "Fuel_Type": "Total",
+            }
+        )
+
+        # Combine all results
+        analytics_df = comb_df._append(total_grouped)
+        print("      - Added 'Total' groups to Category, Sub_Category and Fuel_Type")
+
+        # Check that totals operate as expected
+        tots = analytics_df[
+            (analytics_df["Category"] == "Total")
+            & (analytics_df["Sub_Category"] == "Total")
+            & (analytics_df["Fuel_Type"] == "Total")
+        ]["_03_P1_NewEV"].sum()
+
+        ntots = analytics_df[
+            (analytics_df["Category"] != "Total")
+            & (analytics_df["Sub_Category"] != "Total")
+            & (analytics_df["Fuel_Type"] != "Total")
+        ]["_03_P1_NewEV"].sum()
+
+        assert tots == ntots, f"Totals mismatch: Total={tots}, Non-Totals={ntots}"
 
         # Reorder columns
         analytics_df = analytics_df[
@@ -121,7 +154,7 @@ class WakaKotahiNewEVCountAnalytics(MetricsLayer):
         self.write_csv(analytics_df, output_path)
 
         print(f"\n✓ Analytics complete: {len(analytics_df):,} rows saved")
-        print(f"  Total new EVs purchased: {analytics_df['_03_P1_NewEV'].sum():,.0f}")
+        print(f"  Total new EVs purchased: {ntots:,.0f}")
         print(
             f"  Years covered: {analytics_df['Year'].min()} - {analytics_df['Year'].max()}"
         )

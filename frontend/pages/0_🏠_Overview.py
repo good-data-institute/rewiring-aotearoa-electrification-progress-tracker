@@ -54,7 +54,7 @@ year_range = st.sidebar.slider(
     "Year Range",
     min_value=2015,
     max_value=2025,
-    value=(2020, 2025),
+    value=(2018, 2025),
     help="Select the time period for analysis",
 )
 
@@ -108,40 +108,62 @@ kpi_cols = st.columns(4)
 with kpi_cols[0]:
     df_fleet = datasets.get("waka_kotahi_fleet_elec", pd.DataFrame())
     if not df_fleet.empty and "_05_P1_FleetElec" in df_fleet.columns:
-        latest, delta = get_latest_kpi_value(df_fleet, "_05_P1_FleetElec")
-        st.metric(
-            "Fleet Electrification",
-            f"{latest:.2f}%",
-            f"{delta:+.2f}%",
-            help="Percentage of vehicle fleet that is electric",
-        )
+        if "Year" in df_fleet.columns:
+            latest_year = df_fleet["Year"].max()
+            latest_val = df_fleet[df_fleet["Year"] == latest_year][
+                "_05_P1_FleetElec"
+            ].mean()
+            if latest_year > year_range[0]:
+                prev_val = df_fleet[df_fleet["Year"] == (latest_year - 1)][
+                    "_05_P1_FleetElec"
+                ].mean()
+                delta = latest_val - prev_val
+            else:
+                delta = 0
+            st.metric(
+                "Fleet Electrification",
+                f"{latest_val:.2f}%",
+                "Overall fleet electrification for selected period",
+            )
+        else:
+            st.metric("Fleet Electrification", "N/A")
     else:
         st.metric("Fleet Electrification", "N/A")
 
 # KPI 2: Total EVs on Road
 with kpi_cols[1]:
     df_ev = datasets.get("waka_kotahi_ev", pd.DataFrame())
+
     if not df_ev.empty and "_01_P1_EV" in df_ev.columns:
-        # Sum across latest year
-        if "Year" in df_ev.columns:
+        total_evs = df_ev[df_ev["Category"] == "Total"]["_01_P1_EV"].sum()
+
+        # Calculate last 12 months registrations
+        if "Year" in df_ev.columns and "Month" in df_ev.columns:
             latest_year = df_ev["Year"].max()
-            total_evs = df_ev[df_ev["Year"] == latest_year]["_01_P1_EV"].sum()
-            # Get previous year for delta
-            if latest_year > year_range[0]:
-                prev_evs = df_ev[df_ev["Year"] == (latest_year - 1)]["_01_P1_EV"].sum()
-                delta = total_evs - prev_evs
-            else:
-                delta = 0
-            st.metric(
-                "Total EVs",
-                f"{int(total_evs):,}",
-                f"{int(delta):+,}",
-                help="Total electric vehicles on road",
-            )
+            latest_month = df_ev[df_ev["Year"] == latest_year]["Month"].max()
+
+            last_12_months = df_ev[
+                ((df_ev["Year"] == latest_year) & (df_ev["Month"] <= latest_month))
+                | ((df_ev["Year"] == latest_year - 1) & (df_ev["Month"] > latest_month))
+            ]
+            last_12_months_total = last_12_months[
+                last_12_months["Category"] == "Total"
+            ]["_01_P1_EV"].sum()
         else:
-            st.metric("Total EVs", "N/A")
+            # If only yearly data, use latest year
+            last_12_months_total = df_ev[df_ev["Category"] == "Total"][
+                "_01_P1_EV"
+            ].sum()
+
+        # Total EV Registrations
+        st.metric(
+            "Total EV Registrations",
+            f"{int(total_evs):,}",
+            f"{int(last_12_months_total):,} registered in the past 12 months",
+            help="Total number of EVs registered during the selected period",
+        )
     else:
-        st.metric("Total EVs", "N/A")
+        st.metric("Total EV Registrations", "N/A")
 
 # KPI 3: Electricity Share
 with kpi_cols[2]:
@@ -340,10 +362,17 @@ with col1:
 with col2:
     st.markdown("**Regional Electrification Progress**")
 
-    # Calculate composite score for each region
     regional_scores = {}
 
-    # Fleet electrification contribution
+    def normalize(series):
+        """Normalize a pandas Series to 0–100 safely"""
+        if series.max() == series.min():
+            return pd.Series(50, index=series.index)
+        return 100 * (series - series.min()) / (series.max() - series.min())
+
+    # -----------------------------
+    # Fleet electrification (25%)
+    # -----------------------------
     df_fleet = datasets.get("waka_kotahi_fleet_elec", pd.DataFrame())
     if (
         not df_fleet.empty
@@ -351,12 +380,14 @@ with col2:
         and "_05_P1_FleetElec" in df_fleet.columns
     ):
         fleet_by_region = df_fleet.groupby("Region")["_05_P1_FleetElec"].mean()
-        for region, value in fleet_by_region.items():
-            regional_scores[region] = (
-                regional_scores.get(region, 0) + value * 25
-            )  # 25% weight
+        fleet_norm = normalize(fleet_by_region)
 
-    # Renewable generation contribution
+        for region, value in fleet_norm.items():
+            regional_scores[region] = regional_scores.get(region, 0) + value * 0.25
+
+    # ---------------------------------
+    # Renewable generation share (25%)
+    # ---------------------------------
     df_renewable = datasets.get("emi_generation_analytics", pd.DataFrame())
     if (
         not df_renewable.empty
@@ -366,12 +397,14 @@ with col2:
         renewable_by_region = df_renewable.groupby("Region")[
             "_12_P1_EnergyRenew"
         ].mean()
-        for region, value in renewable_by_region.items():
-            regional_scores[region] = (
-                regional_scores.get(region, 0) + value * 25 * 100
-            )  # 25% weight, convert to %
+        renewable_norm = normalize(renewable_by_region)
 
-    # Battery penetration contribution
+        for region, value in renewable_norm.items():
+            regional_scores[region] = regional_scores.get(region, 0) + value * 0.25
+
+    # ---------------------------------
+    # Residential battery penetration (25%)
+    # ---------------------------------
     df_battery = datasets.get("battery_penetration_residential", pd.DataFrame())
     if (
         not df_battery.empty
@@ -379,12 +412,14 @@ with col2:
         and "_06b_P1_BattPen" in df_battery.columns
     ):
         battery_by_region = df_battery.groupby("Region")["_06b_P1_BattPen"].mean()
-        for region, value in battery_by_region.items():
-            regional_scores[region] = (
-                regional_scores.get(region, 0) + value * 25
-            )  # 25% weight
+        battery_norm = normalize(battery_by_region)
 
-    # Gas connections contribution (inverted - lower is better)
+        for region, value in battery_norm.items():
+            regional_scores[region] = regional_scores.get(region, 0) + value * 0.25
+
+    # ---------------------------------
+    # Gas connections (25%, inverted)
+    # ---------------------------------
     df_gas = datasets.get("gic_analytics", pd.DataFrame())
     if (
         not df_gas.empty
@@ -392,57 +427,64 @@ with col2:
         and "_10_P1_Gas" in df_gas.columns
     ):
         gas_by_region = df_gas.groupby("Region")["_10_P1_Gas"].sum()
-        if len(gas_by_region) > 0:
-            gas_normalized = 100 - (
-                100
-                * (gas_by_region - gas_by_region.min())
-                / (gas_by_region.max() - gas_by_region.min())
-            )
-            for region, value in gas_normalized.items():
-                regional_scores[region] = (
-                    regional_scores.get(region, 0) + value * 25
-                )  # 25% weight
+        gas_norm = normalize(gas_by_region)
+        gas_inverted = 100 - gas_norm
 
+        for region, value in gas_inverted.items():
+            regional_scores[region] = regional_scores.get(region, 0) + value * 0.25
+
+    # -----------------------------
+    # Build map
+    # -----------------------------
     if regional_scores:
         df_scores = pd.DataFrame(
             list(regional_scores.items()), columns=["Region", "Progress_Score"]
         )
+
+        # Map region centroids
         df_scores["lat"] = df_scores["Region"].map(
             lambda r: NZ_REGIONS_COORDS.get(r, {}).get("lat")
         )
         df_scores["lon"] = df_scores["Region"].map(
             lambda r: NZ_REGIONS_COORDS.get(r, {}).get("lon")
         )
+
         df_scores = df_scores.dropna(subset=["lat", "lon"])
 
         fig = go.Figure(
-            data=go.Scattergeo(
+            go.Scattermapbox(
                 lon=df_scores["lon"],
                 lat=df_scores["lat"],
                 text=df_scores["Region"],
                 mode="markers",
                 marker=dict(
-                    size=df_scores["Progress_Score"] / 3,
+                    size=10 + df_scores["Progress_Score"] / 5,
                     color=df_scores["Progress_Score"],
                     colorscale="Viridis",
+                    cmin=0,
+                    cmax=100,
                     showscale=True,
-                    colorbar=dict(title="Score"),
-                    line=dict(width=1, color="white"),
+                    colorbar=dict(title="Progress Score"),
                 ),
-                hovertemplate="<b>%{text}</b><br>Progress Score: %{marker.color:.1f}<extra></extra>",
+                hovertemplate=(
+                    "<b>%{text}</b><br>"
+                    "Progress Score: %{marker.color:.1f}/100"
+                    "<extra></extra>"
+                ),
             )
         )
 
-        fig.update_geos(
-            center=dict(lon=173, lat=-41),
-            projection_scale=15,
-            showcountries=True,
-            showland=True,
-            landcolor="rgb(243, 243, 243)",
-            coastlinecolor="rgb(204, 204, 204)",
+        fig.update_layout(
+            mapbox=dict(
+                style="carto-positron",
+                center=dict(lon=173.5, lat=-41.2),
+                zoom=3.9,
+            ),
+            height=400,
+            margin=dict(l=0, r=0, t=0, b=0),
         )
-        fig.update_layout(height=400, margin=dict(l=0, r=0, t=0, b=0))
-        st.plotly_chart(fig, width="stretch")
+
+        st.plotly_chart(fig, use_container_width=True, config={"scrollZoom": True})
     else:
         st.info("Insufficient data for regional map")
 

@@ -170,6 +170,7 @@ AVAILABLE_DATASETS = [
     "eeca_electricity_percentage",
     "eeca_energy_by_fuel",
     "eeca_boiler_energy",
+    "eeca_charging_stations",
     "gic_analytics",
     "emi_generation_analytics",
     "battery_penetration_commercial",
@@ -279,22 +280,18 @@ def calculate_cumulative(
 
 
 def calculate_yoy_growth(
-    df: pd.DataFrame, value_col: str, groupby_cols: List[str]
+    df: pd.DataFrame,
+    value_col: str,
+    groupby_cols: list | None = None,
 ) -> pd.DataFrame:
-    """Calculate year-over-year growth rate.
+    df = df.copy().sort_values("Year")
 
-    Args:
-        df: DataFrame with time series data
-        value_col: Column to calculate growth for
-        groupby_cols: Columns to group by
+    if groupby_cols:
+        df[f"{value_col}_yoy"] = df.groupby(groupby_cols)[value_col].pct_change() * 100
+    else:
+        df[f"{value_col}_yoy"] = df[value_col].pct_change() * 100
 
-    Returns:
-        DataFrame with YoY growth column added
-    """
-    df = df.copy()
-    df = df.sort_values(["Year"])
-    df[f"{value_col}_yoy"] = df.groupby(groupby_cols)[value_col].pct_change() * 100
-    return df
+    return round(df, 1)
 
 
 def filter_annual_aggregates(

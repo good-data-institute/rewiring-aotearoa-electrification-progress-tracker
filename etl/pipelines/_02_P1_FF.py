@@ -124,15 +124,17 @@ class WakaKotahiFossilFuelCountAnalytics(MetricsLayer):
             (analytics_df["Category"] == "Total")
             & (analytics_df["Sub_Category"] == "Total")
             & (analytics_df["Fuel_Type"] == "Total")
-        ]["_02_P1_FF"].sum()
+        ]
 
         ntots = analytics_df[
             (analytics_df["Category"] != "Total")
             & (analytics_df["Sub_Category"] != "Total")
             & (analytics_df["Fuel_Type"] != "Total")
-        ]["_02_P1_FF"].sum()
+        ]
 
-        assert tots == ntots, f"Totals mismatch: Total={tots}, Non-Totals={ntots}"
+        assert (
+            tots["_02_P1_FF"].sum() == ntots["_02_P1_FF"].sum()
+        ), f"Totals mismatch: Total={tots}, Non-Totals={ntots}"
 
         # Reorder columns
         analytics_df = analytics_df[
@@ -153,15 +155,11 @@ class WakaKotahiFossilFuelCountAnalytics(MetricsLayer):
         self.write_csv(analytics_df, output_path)
 
         print(f"\n✓ Analytics complete: {len(analytics_df):,} rows saved")
-        print(f"  Total fossil fuel vehicles: {analytics_df['_02_P1_FF'].sum():,.0f}")
-        print(
-            f"  Years covered: {analytics_df['Year'].min()} - {analytics_df['Year'].max()}"
-        )
-        print(f"  Fuel types: {', '.join(sorted(analytics_df['Fuel_Type'].unique()))}")
-        print(f"  Category: {', '.join(sorted(analytics_df['Category'].unique()))}")
-        print(
-            f"  Sub_Category: {', '.join(sorted(analytics_df['Sub_Category'].unique()))}"
-        )
+        print(f"  Total fossil fuel vehicles: {ntots["_02_P1_FF"].sum():,.0f}")
+        print(f"  Years covered: {ntots['Year'].min()} - {ntots['Year'].max()}")
+        print(f"  Fuel types: {', '.join(sorted(ntots['Fuel_Type'].unique()))}")
+        print(f"  Category: {', '.join(sorted(ntots['Category'].unique()))}")
+        print(f"  Sub_Category: {', '.join(sorted(ntots['Sub_Category'].unique()))}")
 
 
 def main():

@@ -49,7 +49,9 @@ class WakaKotahiMVRExtractor:
         # Ensure output directory exists
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        print("\n[1/2] Fetching CSV data from Waka Kotahi Open Data Portal...")
+        print(
+            "\n[1/2] Fetching CSV data from Waka Kotahi Open Data Portal... this can take up to 15 minutes..."
+        )
         print(f"      URL: {self.api.params.url[:80]}...")
 
         # Step 1: Fetch CSV data using API client

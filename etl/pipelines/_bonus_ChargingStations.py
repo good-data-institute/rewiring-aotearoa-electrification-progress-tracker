@@ -15,13 +15,14 @@ from pathlib import Path
 import pandas as pd
 from etl.core.config import get_settings
 from etl.core.pipeline import MetricsLayer
+from etl.core.mappings import EECA_CHARGING_STATIONS_REGION_MAP
 
 
 class EECAChargingStationsMetrics(MetricsLayer):
     """Analytics processor for EECA Charging Stations."""
 
     def process(self, input_path: Path, output_path: Path) -> None:
-        """Create charging station metrics aggregated by Year, Month, and Region (Locality and District could also be used).
+        """Create charging station metrics aggregated by Year, Month, and Region.
 
         Args:
             input_path: Path to raw CSV file
@@ -41,18 +42,40 @@ class EECAChargingStationsMetrics(MetricsLayer):
         # Step 2: Clean / convert columns
         print("\n[2/3] Cleaning and converting data...")
         df["Points"] = pd.to_numeric(df["Points"], errors="coerce").fillna(0)
+        df = df.drop(
+            "District", axis=1
+        )  # Drop pre-existing District column, only Region will be used
         df["DateFirstOperational"] = pd.to_datetime(
             df["DateFirstOperational"], errors="coerce"
         )
         df["Year"] = df["DateFirstOperational"].dt.year
         df["Month"] = df["DateFirstOperational"].dt.month
+        df["Kw Rated"] = pd.to_numeric(df["KwRated"], errors="coerce").fillna(0)
 
-        # Step 3: Aggregate by Year, Month, and Region (Locality and District could also be used)
+        # Assign Districts to Regions
+        df["Region"] = df["Region"].fillna("UNKNOWN")
+        df_reg = df.rename(columns={"Region": "District"})
+        df_reg["Region"] = df_reg["District"].map(EECA_CHARGING_STATIONS_REGION_MAP)
+
+        # identify unmapped districts
+        missing = df_reg[df_reg["Region"].isna()]["District"].unique()
+
+        if len(missing) > 0:
+            print("      ! Unmapped districts found:")
+            for d in missing:
+                print(f"        • {d}")
+        else:
+            print("      - All districts mapped cleanly.")
+        print(
+            f"      - Districts (n = {df_reg['District'].nunique()}) "
+            f"mapped to Regions (n = {df_reg['Region'].nunique()})"
+        )
+
+        # Step 3: Aggregate by Year, Month, and Region
         print("\n[3/3] Aggregating total points by Year, Month, and Region...")
-        metrics_df = (
-            df.groupby(["Year", "Month", "Region"], as_index=False)["Points"]
-            .sum()
-            .rename(columns={"Points": "_bonus_ChargingStations"})
+        metrics_df = df_reg.groupby(["Year", "Month", "Region"], as_index=False).agg(
+            _bonus_ChargingStations=("Points", "sum"),
+            Avg_Kw=("Kw Rated", "mean"),  # average kW per station
         )
 
         # Add static metadata columns
@@ -69,6 +92,7 @@ class EECAChargingStationsMetrics(MetricsLayer):
                 "Metric_Group",
                 "Category",
                 "Sub_Category",
+                "Avg_Kw",
                 "_bonus_ChargingStations",
             ]
         ]
@@ -94,7 +118,7 @@ def main():
     # Input raw CSV from extractor
     input_path = settings.raw_dir / "eeca" / "eeca_charging_stations_raw.csv"
     # Output CSV for combined metrics
-    output_path = settings.metrics_dir / "eeca" / "bonus_ChargingStations_analytics.csv"
+    output_path = settings.metrics_dir / "eeca" / "eeca_charging_stations_analytics.csv"
 
     processor = EECAChargingStationsMetrics()
 

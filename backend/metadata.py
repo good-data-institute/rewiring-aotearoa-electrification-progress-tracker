@@ -162,6 +162,25 @@ METRICS_METADATA: Dict[str, MetricMetadata] = {
             "etl.pipelines.waka_kotahi_mvr.transform",
         ],
     ),
+    "eeca_charging_stations": MetricMetadata(
+        dataset_key="eeca_charging_stations",
+        metric_id="_bonus_ChargingStations",
+        friendly_name="EECA - Charging Stations",
+        description="Absolute number of public EV charging stations around NZ",
+        sector="Transport",
+        source_api="EECA API",
+        pipeline_file="etl/pipelines/_bonus_ChargingStations.py",
+        pipeline_module="etl.pipelines._bonus_ChargingStations.py",
+        input_file="data/raw/eeca/eeca_charging_stations_raw.csv",
+        output_file="data/metrics/eeca/eeca_charging_stations_analytics.csv",
+        dimensions=["Year", "Month", "Region", "Category", "Sub_Category"],
+        categories=["Public"],
+        sub_categories=["Charging Station"],
+        unit="count",
+        upstream_dependencies=[
+            "etl.pipelines.eeca_charging_stations.extract",
+        ],
+    ),
     # ========== SOLAR & BATTERY METRICS (EMI Battery/Solar) ==========
     "battery_penetration_commercial": MetricMetadata(
         dataset_key="battery_penetration_commercial",
