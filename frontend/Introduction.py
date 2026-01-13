@@ -142,7 +142,7 @@ st.markdown("""
 - Electricity Share, Renewable Generation, Energy by Fuel Type
 
 **Buildings & Heating (2 metrics)**
-- Gas Connections, Fossil Boiler Energy
+- Gas Connections, Fossil Boiler Energy Consumption
 
 **Solar & Batteries (4 metrics)**
 - Battery Penetration (2 types), Solar Capacity, Battery Capacity
@@ -157,8 +157,8 @@ st.markdown("""
 ### 📊 Data Sources
 
 - **EECA**: Energy Efficiency and Conservation Authority
-- **EMI**: Electricity Market Information (Electricity Authority)
-- **GIC**: Gas Industry Company
+- **EMI**: Electricity Authority EMI
+- **GIC**: Gas Industry Co.
 - **Waka Kotahi**: NZ Transport Agency - Motor Vehicle Register
 
 ### 🔄 Data Freshness
@@ -178,7 +178,7 @@ with col1:
     st.metric(
         label="Total Datasets",
         value="15",
-        help="EECA (4), EMI (4), GIC (1), Waka Kotahi (5), Plus boiler energy",
+        help="EECA (n = 4), EMI (n = 5), GIC (n = 1), Waka Kotahi (n = 5)",
     )
 
 with col2:
