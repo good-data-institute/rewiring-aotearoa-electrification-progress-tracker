@@ -312,8 +312,15 @@ def filter_annual_aggregates(
     if include_annual:
         return df
 
-    # Exclude rows where Month is "Total"
-    return df[df["Month"] != "Total"]
+    # Identify non-annual rows
+    non_annual = df[df["Month"] != "Total"]
+
+    # If there are no non-annual rows, keep the data as-is
+    if non_annual.empty:
+        return df
+
+    # Otherwise, drop annual aggregates
+    return non_annual.copy()
 
 
 def _to_tuple(value):
