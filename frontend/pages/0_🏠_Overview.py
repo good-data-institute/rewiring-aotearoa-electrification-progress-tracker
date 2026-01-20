@@ -169,7 +169,9 @@ with kpi_cols[1]:
 with kpi_cols[2]:
     df_elec = datasets.get("eeca_electricity_percentage", pd.DataFrame())
     if not df_elec.empty and "_13_P1_ElecCons" in df_elec.columns:
-        latest, delta = get_latest_kpi_value(df_elec, "_13_P1_ElecCons")
+        latest, delta = get_latest_kpi_value(
+            df_elec, "_13_P1_ElecCons", aggregate=False
+        )
         st.metric(
             "Electricity Share",
             f"{latest:.1f}%",
@@ -184,7 +186,9 @@ with kpi_cols[3]:
     df_renewable = datasets.get("emi_generation_analytics", pd.DataFrame())
     if not df_renewable.empty and "_12_P1_EnergyRenew" in df_renewable.columns:
         df_renewable["renewable_pct"] = df_renewable["_12_P1_EnergyRenew"]
-        latest, delta = get_latest_kpi_value(df_renewable, "renewable_pct")
+        latest, delta = get_latest_kpi_value(
+            df_renewable, "renewable_pct", aggfunc="mean"
+        )
         st.metric(
             "Renewable Energy",
             f"{latest:.1f}%",
@@ -199,8 +203,27 @@ kpi_cols2 = st.columns(4)
 # KPI 5: Battery Penetration
 with kpi_cols2[0]:
     df_battery = datasets.get("battery_penetration_residential", pd.DataFrame())
-    if not df_battery.empty and "_06b_P1_BattPen" in df_battery.columns:
-        latest, delta = get_latest_kpi_value(df_battery, "_06b_P1_BattPen")
+
+    # Sum over Regions
+    df_battery_out = (
+        df_battery.loc[
+            (df_battery["Category"] == "Total")
+            & (df_battery["Sub_Category"] == "Total"),
+            ["Year", "Month", "TotalICPs", "ICPsWithBatt"],
+        ]
+        .groupby(["Year", "Month"], as_index=False)
+        .sum()
+        .assign(
+            _06b_P1_BattPen=lambda x: 100 * x["ICPsWithBatt"] / x["TotalICPs"],
+            Category="Total",
+            Sub_Category="Total",
+        )
+    )
+
+    if not df_battery_out.empty and "_06b_P1_BattPen" in df_battery_out.columns:
+        latest, delta = get_latest_kpi_value(
+            df_battery_out, "_06b_P1_BattPen", aggregate=False
+        )
         st.metric(
             "Battery Penetration",
             f"{latest:.1f}%",
@@ -227,8 +250,8 @@ with kpi_cols2[1]:
                 delta = 0
             st.metric(
                 "Solar Capacity",
-                f"{total_solar:.1f} MW",
-                f"{delta:+.1f} MW",
+                f"{int(total_solar):,} MW",
+                f"{int(delta):,} MW",
                 help="Total solar capacity installed",
             )
         else:
@@ -255,11 +278,13 @@ with kpi_cols2[2]:
 with kpi_cols2[3]:
     df_boiler = datasets.get("eeca_boiler_energy", pd.DataFrame())
     if not df_boiler.empty and "_11_P1_EnergyFF" in df_boiler.columns:
-        latest, delta = get_latest_kpi_value(df_boiler, "_11_P1_EnergyFF")
+        latest, delta = get_latest_kpi_value(
+            df_boiler, "_11_P1_EnergyFF", aggregate=False
+        )
         st.metric(
             "Fossil Boiler Energy",
-            f"{latest / 1000:.1f} GWh",
-            f"{delta / 1000:+.1f} GWh",
+            f"{int(latest / 1000):,} GWh",
+            f"{int(delta / 1000):,} GWh",
             delta_color="inverse",
             help="Lower is better - fossil fuel energy for boilers",
         )
