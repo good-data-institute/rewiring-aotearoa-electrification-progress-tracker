@@ -183,7 +183,7 @@ with kpi_cols[2]:
 with kpi_cols[3]:
     df_renewable = datasets.get("emi_generation_analytics", pd.DataFrame())
     if not df_renewable.empty and "_12_P1_EnergyRenew" in df_renewable.columns:
-        df_renewable["renewable_pct"] = df_renewable["_12_P1_EnergyRenew"] * 100
+        df_renewable["renewable_pct"] = df_renewable["_12_P1_EnergyRenew"]
         latest, delta = get_latest_kpi_value(df_renewable, "renewable_pct")
         st.metric(
             "Renewable Energy",
