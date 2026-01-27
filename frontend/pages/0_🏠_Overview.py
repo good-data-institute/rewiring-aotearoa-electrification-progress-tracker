@@ -239,25 +239,16 @@ with kpi_cols2[1]:
     if not df_solar.empty and "_07_P1_Sol" in df_solar.columns:
         # Get latest total
         if "Year" in df_solar.columns:
-            latest_year = df_solar["Year"].max()
-            total_solar = df_solar[df_solar["Year"] == latest_year]["_07_P1_Sol"].sum()
-            if latest_year > year_range[0]:
-                prev_solar = df_solar[df_solar["Year"] == (latest_year - 1)][
-                    "_07_P1_Sol"
-                ].sum()
-                delta = total_solar - prev_solar
-            else:
-                delta = 0
+            latest, delta = get_latest_kpi_value(df_solar, "_07_P1_Sol")
             st.metric(
-                "Solar Capacity",
-                f"{int(total_solar):,} MW",
+                "Monthly Solar Capacity Installed",
+                f"{int(latest):,} MW",
                 f"{int(delta):,} MW",
-                help="Total solar capacity installed",
             )
         else:
-            st.metric("Solar Capacity", "N/A")
+            st.metric("Monthly Solar Capacity Installed", "N/A")
     else:
-        st.metric("Solar Capacity", "N/A")
+        st.metric("Monthly Solar Capacity Installed", "N/A")
 
 # KPI 7: Gas Connections
 with kpi_cols2[2]:
