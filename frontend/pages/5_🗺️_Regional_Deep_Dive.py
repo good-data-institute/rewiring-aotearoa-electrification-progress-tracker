@@ -75,7 +75,12 @@ if map_metric == "Renewable Energy %":
         and "_12_P1_EnergyRenew" in df_map.columns
     ):
         df_map_agg = df_map.groupby("Region")["_12_P1_EnergyRenew"].mean().reset_index()
-        df_map_agg["value"] = df_map_agg["_12_P1_EnergyRenew"] * 100
+        # Normalize to percent only if the data looks like a 0-1 fraction
+        renewable_max = df_map_agg["_12_P1_EnergyRenew"].max()
+        if renewable_max <= 1.2:
+            df_map_agg["value"] = df_map_agg["_12_P1_EnergyRenew"] * 100
+        else:
+            df_map_agg["value"] = df_map_agg["_12_P1_EnergyRenew"]
         df_map_agg["lat"] = df_map_agg["Region"].map(
             lambda r: NZ_REGIONS_COORDS.get(r, {}).get("lat")
         )
@@ -83,6 +88,16 @@ if map_metric == "Renewable Energy %":
             lambda r: NZ_REGIONS_COORDS.get(r, {}).get("lon")
         )
         df_map_agg = df_map_agg.dropna(subset=["lat", "lon"])
+        if not df_map_agg.empty:
+            value_min = df_map_agg["value"].min()
+            value_max = df_map_agg["value"].max()
+            if value_max == value_min:
+                df_map_agg["marker_size"] = 18
+            else:
+                df_map_agg["marker_size"] = (
+                    8
+                    + ((df_map_agg["value"] - value_min) / (value_max - value_min)) * 22
+                )
 
         fig = go.Figure(
             data=go.Scattergeo(
@@ -91,7 +106,7 @@ if map_metric == "Renewable Energy %":
                 text=df_map_agg["Region"],
                 mode="markers",
                 marker=dict(
-                    size=df_map_agg["value"] / 2,
+                    size=df_map_agg["marker_size"],
                     color=df_map_agg["value"],
                     colorscale="Greens",
                     showscale=True,
@@ -101,7 +116,7 @@ if map_metric == "Renewable Energy %":
             )
         )
         fig.update_geos(center=dict(lon=173, lat=-41), projection_scale=15)
-        st.plotly_chart(fig, width="stretch")
+        st.plotly_chart(fig, use_container_width=True)
 
 elif map_metric == "Fleet Electrification %":
     df_map = datasets.get("waka_kotahi_fleet_elec", pd.DataFrame())
