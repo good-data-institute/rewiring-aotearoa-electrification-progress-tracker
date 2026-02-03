@@ -4,7 +4,8 @@ This module provides data fetching, normalization, and configuration
 utilities for the Electrification Progress Tracker dashboard.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Callable, Tuple
+from numpy import isclose
 
 import pandas as pd
 import plotly.colors
@@ -312,8 +313,15 @@ def filter_annual_aggregates(
     if include_annual:
         return df
 
-    # Exclude rows where Month is "Total"
-    return df[df["Month"] != "Total"]
+    # Identify non-annual rows
+    non_annual = df[df["Month"] != "Total"]
+
+    # If there are no non-annual rows, keep the data as-is
+    if non_annual.empty:
+        return df
+
+    # Otherwise, drop annual aggregates
+    return non_annual.copy()
 
 
 def _to_tuple(value):
@@ -466,34 +474,78 @@ def fetch_all_datasets(
     return datasets
 
 
-def get_latest_kpi_value(df: pd.DataFrame, value_col: str) -> tuple[float, float]:
-    """Get the latest KPI value and calculate delta from previous period.
+def _aggregate_over_regions(
+    df: pd.DataFrame,
+    value_col: str,
+    *,
+    aggfunc: str | Callable = "sum",
+) -> pd.DataFrame:
+    input_sum = df[value_col].sum()
 
-    Args:
-        df: DataFrame with Year column and value column
-        value_col: Name of the column containing values
+    out = df.groupby(["Year", "Month"], as_index=False)[value_col].agg(aggfunc)
 
-    Returns:
-        Tuple of (latest_value, delta_from_previous)
-    """
-    if df.empty or value_col not in df.columns or "Year" not in df.columns:
-        return 0.0, 0.0
+    assert not out.empty, "Invariant violated: grouped DataFrame is empty."
 
-    # Sort by year and get latest
-    df_sorted = df.sort_values("Year")
+    if aggfunc == "sum":
+        output_sum = out[value_col].sum()
+        assert isclose(
+            input_sum, output_sum
+        ), f"Aggregation invariant violated: input sum {input_sum} != output sum {output_sum}"
 
-    if len(df_sorted) == 0:
-        return 0.0, 0.0
+    return out
 
-    latest = df_sorted.iloc[-1][value_col]
 
-    if len(df_sorted) < 2:
-        return float(latest), 0.0
+def get_latest_kpi_value(
+    df: pd.DataFrame,
+    value_col: str,
+    *,
+    aggregate: bool = True,
+    aggfunc: str | Callable = "sum",
+) -> Tuple[float, float]:
+    required = {"Year", "Month", "Category", "Sub_Category", value_col}
+    assert not df.empty, "Invariant violated: input DataFrame is empty."
+    assert required.issubset(
+        df.columns
+    ), f"Invariant violated: missing required columns {required - set(df.columns)}"
 
-    previous = df_sorted.iloc[-2][value_col]
-    delta = float(latest - previous)
+    # Total/Total filter first (domain constraint) + explicit copy to avoid SettingWithCopyWarning
+    df_filtered = df.loc[
+        (df["Category"] == "Total") & (df["Sub_Category"] == "Total")
+    ].copy()
 
-    return float(latest), delta
+    assert (
+        not df_filtered.empty
+    ), "Invariant violated: no Total/Total rows after filtering."
+
+    # Fail fast on non-numeric Year/Month (and value_col if you require it)
+    df_filtered.loc[:, "Year"] = pd.to_numeric(df_filtered["Year"], errors="raise")
+    df_filtered.loc[:, value_col] = pd.to_numeric(
+        df_filtered[value_col], errors="raise"
+    )
+
+    assert (
+        not df_filtered[["Year", "Month"]].isna().any().any()
+    ), "Invariant violated: Year and Month contain missing values."
+
+    series_df = (
+        _aggregate_over_regions(df_filtered, value_col, aggfunc=aggfunc)
+        if aggregate
+        else df_filtered.loc[:, ["Year", "Month", value_col]].copy()
+    )
+
+    series_df = series_df.sort_values(["Year", "Month"])
+
+    assert (
+        len(series_df) > 1
+    ), "Invariant violated: at least two KPI values are required."
+
+    latest = series_df.iloc[-1][value_col]
+    previous = series_df.iloc[-2][value_col]
+
+    assert not pd.isna(latest), "Invariant violated: latest KPI value is NA."
+    assert not pd.isna(previous), "Invariant violated: previous KPI value is NA."
+
+    return float(latest), float(latest - previous)
 
 
 def normalize_to_0_100(series: pd.Series) -> pd.Series:
